@@ -16,10 +16,15 @@
 #                                                                         #
 ###########################################################################
 
-from qt import *
-from kdeui import *
-from kdecore import *
-from kfile import *
+#from qt import *
+from PyQt4.QtGui import *
+from PyQt4.QtCore import *
+#from kdeui import *
+#from kdecore import *
+#from kfile import *
+from PyKDE4.kdecore import *
+from PyKDE4.kdeui import *
+from PyKDE4.kio import *
 import sys
 import os.path
 import shutil
@@ -50,25 +55,31 @@ def QDateToSptime(qdate):
 ###########################################################################
 # Try translating this code to C++. I dare ya!
 if standalone:
-    programbase = KDialogBase
+    programbase = KPageDialog
 else:
     programbase = KCModule
 
 class UserConfigApp(programbase):
     def __init__(self,parent=None,name=None):
         global standalone,isroot
-        KGlobal.locale().insertCatalogue("guidance")
+        KGlobal.locale().insertCatalog("guidance")
 
         if standalone:
-            KDialogBase.__init__(self,KJanusWidget.Tabbed,i18n("User Accounts and Groups"),
-                KDialogBase.User1|KDialogBase.Close, KDialogBase.Close)
-            self.setButtonText(KDialogBase.User1,i18n("About"))
+            #KDialogBase.__init__(self,KJanusWidget.Tabbed,i18n("User Accounts and Groups"),
+                #KDialogBase.User1|KDialogBase.Close, KDialogBase.Close)
+            #self.setButtonText(KDialogBase.User1,i18n("About"))
+            KPageDialog.__init__( self, parent )
+            self.setFaceType( KPageDialog.Tabbed )
+            #self.setObjectName( name )
+            #self.setModal( modal )
+            self.setCaption( i18n( "User Accounts and Groups" ) )
+            #self.setButtons( KDialog.User1|KDialog.Close) #TODO
         else:
             KCModule.__init__(self,parent,name)
             self.setButtons(0)
             self.aboutdata = MakeAboutData()
 
-            toplayout = QVBoxLayout( self, 0, KDialog.spacingHint() )
+            toplayout = KVBoxLayout( self, 0, KDialog.spacingHint() )
             tabcontrol = QTabWidget(self)
             toplayout.addWidget(tabcontrol)
             toplayout.setStretchFactor(tabcontrol,1)
@@ -76,7 +87,7 @@ class UserConfigApp(programbase):
         # Create a configuration object.
         self.config = KConfig("userconfigrc")
 
-        KGlobal.iconLoader().addAppDir("guidance")
+        #KIconLoader.global().addAppDir("guidance") #TODO
 
         self.usersToListItems = None
         self.selecteduserid = None
@@ -87,19 +98,21 @@ class UserConfigApp(programbase):
         self.updatingGUI = True
 
 
-        self.aboutus = KAboutApplication(self)
+        #self.aboutus = KAboutApplicationDialog(self) #TODO
 
         # --- User Tab ---
         if standalone:
-            usershbox = self.addHBoxPage("Users")
-            vbox = QVBox(usershbox)
+            usershbox = KHBox()
+            item = self.addPage( usershbox, i18n( "Users" ) )
+            item.setHeader( i18n( "Users" ) )
+            vbox = KVBox(usershbox)
         else:
-            vbox = QVBox(tabcontrol)
+            vbox = KVBox(tabcontrol)
             vbox.setMargin(KDialog.marginHint())
 
         vbox.setSpacing(KDialog.spacingHint())
 
-        hb = QHBox(vbox)
+        hb = KHBox(vbox)
         hb.setSpacing(KDialog.spacingHint())
         vbox.setStretchFactor(hb,0)
 
@@ -110,12 +123,14 @@ class UserConfigApp(programbase):
         label = QLabel(i18n("User Accounts:"),hb)
         hb.setStretchFactor(label,1)
 
-        self.userlist = KListView(vbox)
-        self.userlist.addColumn(i18n("Login Name"))
-        self.userlist.addColumn(i18n("Real Name"))
-        self.userlist.addColumn(i18n("UID"))
+        self.userlist = QTreeWidget(vbox)
+        #self.userlist.addColumn(i18n("Login Name"))
+        #self.userlist.addColumn(i18n("Real Name"))
+        #self.userlist.addColumn(i18n("UID"))
+        self.userlist.setColumnCount( 3 )
         self.userlist.setAllColumnsShowFocus(True)
-        self.userlist.setSelectionMode(QListView.Single)
+        self.userlist.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.userlist.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         self.connect(self.userlist, SIGNAL("selectionChanged(QListViewItem *)"), self.slotListClicked)
         if isroot:
@@ -126,7 +141,7 @@ class UserConfigApp(programbase):
         vbox.setStretchFactor(self.showspecialcheckbox,0)
         self.connect(self.showspecialcheckbox,SIGNAL("toggled(bool)"), self.slotShowSystemToggled)
 
-        hbox = QHBox(vbox)
+        hbox = KHBox(vbox)
         hbox.setSpacing(KDialog.spacingHint())
 
         vbox.setStretchFactor(hbox,0)
@@ -143,10 +158,11 @@ class UserConfigApp(programbase):
         hbox.setStretchFactor(self.deletebutton,1)
         self.connect(self.deletebutton,SIGNAL("clicked()"),self.slotDeleteClicked)
 
-        detailsbox = QVGroupBox(i18n("Details"),vbox)
+        detailsgroupbox = QGroupBox(i18n("Details"),vbox)
+        detailsbox = KVBox( detailsgroupbox )
         userinfovbox = QWidget(detailsbox)
 
-        infogrid = QGridLayout(userinfovbox,3,4)
+        infogrid = QGridLayout(userinfovbox)
         infogrid.setSpacing(KDialog.spacingHint())
 
         label = QLabel(i18n("Login Name:"),userinfovbox)
@@ -190,12 +206,14 @@ class UserConfigApp(programbase):
 
         #--- Groups Tab ---
         if standalone:
-            groupsvbox = self.addVBoxPage(i18n("Groups"))
-            hb = QHBox(groupsvbox)
+            groupsvbox = KVBox()
+            item = self.addPage( groupsvbox, i18n( "Groups" ) )
+            item.setHeader( i18n( "Groups" ) )
+            hb = KHBox(groupsvbox)
         else:
-            groupsvbox = QVBox(tabcontrol)
+            groupsvbox = KVBox(tabcontrol)
             groupsvbox.setMargin(KDialog.marginHint())
-            hb = QHBox(groupsvbox)
+            hb = KHBox(groupsvbox)
 
         topframe = QFrame(groupsvbox)
         groupsvbox.setSpacing(KDialog.spacingHint())
@@ -210,11 +228,14 @@ class UserConfigApp(programbase):
         hb.setStretchFactor(label,1)
 
         groupsplitter = QSplitter(Qt.Vertical,groupsvbox)
-
-        self.grouplist = KListView(groupsplitter)
-        self.grouplist.addColumn(i18n("Group Name"))
-        self.grouplist.addColumn(i18n("GID"))
+        
+        self.grouplist = QTreeWidget(groupsplitter)
+        #self.grouplist.addColumn(i18n("Group Name"))
+        #self.grouplist.addColumn(i18n("GID"))
+        self.userlist.setColumnCount( 2 )
         self.grouplist.setAllColumnsShowFocus(True)
+        self.grouplist.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.grouplist.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.connect(self.grouplist, SIGNAL("selectionChanged(QListViewItem *)"), self.slotGroupListClicked)
 
         if isroot:
@@ -222,14 +243,14 @@ class UserConfigApp(programbase):
         self.connect(self.grouplist, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), 
                 self.slotGroupContext)
 
-        groupbottomvbox = QVBox(groupsplitter)
+        groupbottomvbox = KVBox(groupsplitter)
         groupbottomvbox.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
 
         self.showspecialgroupscheckbox = QCheckBox(i18n("Show system groups"),groupbottomvbox)
         vbox.setStretchFactor(self.showspecialgroupscheckbox,0)
         self.connect(self.showspecialgroupscheckbox,SIGNAL("toggled(bool)"), self.slotShowSystemGroupsToggled)
 
-        hbox = QHBox(groupbottomvbox)
+        hbox = KHBox(groupbottomvbox)
         hbox.setSpacing(KDialog.spacingHint())
 
         groupsvbox.setStretchFactor(hbox,0)
@@ -255,11 +276,14 @@ class UserConfigApp(programbase):
         label = QLabel(i18n("Group Members:"),groupbottomvbox)
         groupsvbox.setStretchFactor(label,0)
 
-        self.groupmemberlist = KListView(groupbottomvbox)
-        self.groupmemberlist.addColumn(i18n("Login Name"))
-        self.groupmemberlist.addColumn(i18n("Real Name"))
-        self.groupmemberlist.addColumn(i18n("UID"))
+        self.groupmemberlist = QTreeWidget(groupbottomvbox)
+        #self.groupmemberlist.addColumn(i18n("Login Name"))
+        #self.groupmemberlist.addColumn(i18n("Real Name"))
+        #self.groupmemberlist.addColumn(i18n("UID"))
+        self.groupmemberlist.setColumnCount( 3 )
         self.groupmemberlist.setAllColumnsShowFocus(True)
+        self.groupmemberlist.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.groupmemberlist.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         if not standalone:
             tabcontrol.addTab(groupsvbox,i18n("Groups"))
@@ -439,7 +463,11 @@ class UserConfigApp(programbase):
         for userobj in users:
             uid = userobj.getUID()
             if self.showsystemaccounts or not userobj.isSystemUser():
-                lvi = KListViewItem(self.userlist,userobj.getUsername(),userobj.getRealName(),unicode(uid))
+                itemstrings = QStringList()
+                itemstrings.append(userobj.getUsername())
+                itemstrings.append(userobj.getRealName())
+                itemstrings.append(unicode(uid))
+                lvi = QTreeWidgetItem(self.userlist,itemstrings)
                 if userobj.isLocked():
                     lvi.setPixmap(0,UserIcon("hi16-encrypted"))
                 self.useridsToListItems[uid] = lvi
@@ -449,7 +477,7 @@ class UserConfigApp(programbase):
                     firstselecteduserid = uid
         self.selecteduserid = firstselecteduserid
         self.__selectUser(self.selecteduserid)
-        self.userlist.ensureItemVisible(self.userlist.currentItem())
+        #self.userlist.ensureItemVisible(self.userlist.currentItem())
 
     #######################################################################
     def __updateUser(self,userid):
@@ -469,7 +497,7 @@ class UserConfigApp(programbase):
         # Only go on if there are actual users.
         if len(self.useridsToListItems)>0:
             lvi = self.useridsToListItems[userid]
-            self.userlist.setSelected(lvi,True)
+            #self.userlist.setSelected(lvi,True)
             self.userlist.setCurrentItem(lvi)
 
             userobj = self.admincontext.lookupUID(userid)
@@ -505,7 +533,10 @@ class UserConfigApp(programbase):
         for groupobj in groups:
             gid = groupobj.getGID()
             if self.showsystemgroups or not groupobj.isSystemGroup():
-                lvi = QListViewItem(self.grouplist,groupobj.getGroupname(),unicode(gid))
+                itemstrings = QStringList()
+                itemstrings.append(groupobj.getGroupname())
+                itemstrings.append(unicode(gid))
+                lvi = QTreeWidgetItem(self.grouplist,itemstrings)
                 self.groupidsToListItems[gid] = lvi
                 if self.selectedgroupid==gid:
                     firstselectedgroupid = gid
@@ -513,14 +544,14 @@ class UserConfigApp(programbase):
                     firstselectedgroupid = gid
         self.selectedgroupid = firstselectedgroupid
         self.__selectGroup(self.selectedgroupid)
-        self.grouplist.ensureItemVisible(self.grouplist.currentItem())
+        #self.grouplist.ensureItemVisible(self.grouplist.currentItem())
 
     #######################################################################
     def __selectGroup(self,groupid):
         if groupid:
             self.selectedgroupid = groupid
             lvi = self.groupidsToListItems[groupid]
-            self.grouplist.setSelected(lvi,True)
+            #self.grouplist.setSelected(lvi,True)
             self.grouplist.setCurrentItem(lvi)
 
             groupobj = self.admincontext.lookupGID(groupid)
@@ -528,21 +559,26 @@ class UserConfigApp(programbase):
             self.groupmemberlist.clear()
             for userobj in members:
                 if userobj!=None:
-                    lvi = QListViewItem(self.groupmemberlist,userobj.getUsername(),userobj.getRealName(),unicode(userobj.getUID()))
+                    itemstrings = QStringList()
+                    itemstrings.append(userobj.getUsername())
+                    itemstrings.append(userobj.getRealName())
+                    itemstrings.append(unicode(userobj.getUID()))
+                    lvi = QTreeWidgetItem(self.groupmemberlist,itemstrings)
             if isroot:
                 self.deletegroupbutton.setDisabled(groupobj.getGID()==0)
 
     #######################################################################
     def __loadOptions(self):
-        self.config.setGroup("General")
-        size = self.config.readSizeEntry("Geometry")
-        if size.isEmpty()==False:
-            self.resize(size)
-        self.config.setGroup("Options")
-        self.showsystemaccounts = self.config.readBoolEntry("ShowSystemAccounts")
-        self.showspecialcheckbox.setChecked(self.showsystemaccounts)
-        self.showsystemgroups = self.config.readBoolEntry("ShowSystemGroups")
-        self.showspecialgroupscheckbox.setChecked(self.showsystemgroups)
+        #self.config.setGroup("General")
+        
+        size = self.config.group("General").readEntry("Geometry")
+        #if size.isEmpty()==False:
+            #self.resize(size)  # TODO
+        #self.config.setGroup("Options")
+        self.showsystemaccounts = self.config.group("Options").readEntry("ShowSystemAccounts")
+        #self.showspecialcheckbox.setChecked(self.showsystemaccounts) # TODO
+        self.showsystemgroups = self.config.group("Options").readEntry("ShowSystemGroups")
+        #self.showspecialgroupscheckbox.setChecked(self.showsystemgroups) # TODO
 
     #######################################################################
     def __saveOptions(self):
@@ -601,37 +637,45 @@ class PrivilegeNames(dict):
 		if name in self: return dict.__getitem__(self,name)
 		return i18n("Be a member of the %s group")%name
 
-class UserEditDialog(KDialogBase):
+class UserEditDialog(KPageDialog):
     def __init__(self,parent,admincontext):
-        KDialogBase.__init__(self,KJanusWidget.Tabbed,i18n("User Account"),KDialogBase.Ok|KDialogBase.Cancel,
-            KDialogBase.Cancel,parent)
+        #KDialogBase.__init__(self,KJanusWidget.Tabbed,i18n("User Account"),KDialogBase.Ok|KDialogBase.Cancel,
+            #KDialogBase.Cancel,parent)
+        KPageDialog.__init__( self, parent )
+        self.setFaceType( KPageDialog.Tabbed )
+        #self.setObjectName( name )
+        self.setModal( True )
+        self.setCaption( i18n( "User Account" ) )
+        #self.setButtons( KDialog.Ok|KDialog.Cancel) # TODO
 
         self.admincontext = admincontext
         self.updatingGUI = True
 
-        detailsvbox = self.addHBoxPage(i18n("Details"))
-        detailspace = QWidget(detailsvbox)
+        detailshbox = KHBox()
+        item = self.addPage( detailshbox, i18n( "Details" ) )
+        item.setHeader( i18n( "Details" ) )
+        detailspace = QWidget(detailshbox)
 
-        infogrid = QGridLayout(detailspace,9,2)
+        infogrid = QGridLayout(detailspace)
         infogrid.setSpacing(self.spacingHint())
-        infogrid.setColStretch(0,0)
-        infogrid.setColStretch(1,1)
+        #infogrid.setColStretch(0,0)
+        #infogrid.setColStretch(1,1)
 
         self.enabledradiogroup = QButtonGroup()
-        self.enabledradiogroup.setRadioButtonExclusive(True)
-        hb = QHBox(detailspace)
+        #self.enabledradiogroup.setRadioButtonExclusive(True)
+        hb = KHBox(detailspace)
         hb.setSpacing(self.spacingHint())
         label = QLabel(hb)
         label.setPixmap(UserIcon("hi32-identity"))
         hb.setStretchFactor(label,0)
         label = QLabel(i18n("Status:"),hb)
         hb.setStretchFactor(label,1)
-        infogrid.addMultiCellWidget(hb,0,1,0,0)
+        infogrid.addWidget(hb,0,1,0,0)
 
         self.enabledradio = QRadioButton(i18n("Enabled"),detailspace)
         infogrid.addWidget(self.enabledradio,0,1)
 
-        hbox = QHBox(detailspace)
+        hbox = KHBox(detailspace)
         hbox.setSpacing(self.spacingHint())
         self.disabledradio = QRadioButton(i18n("Disabled"),hbox)
         hbox.setStretchFactor(self.disabledradio,0)
@@ -640,8 +684,8 @@ class UserEditDialog(KDialogBase):
         hbox.setStretchFactor(label,1)        
         infogrid.addWidget(hbox,1,1)
 
-        self.enabledradiogroup.insert(self.enabledradio,0)
-        self.enabledradiogroup.insert(self.disabledradio,1)
+        self.enabledradiogroup.addButton(self.enabledradio,0)
+        self.enabledradiogroup.addButton(self.disabledradio,1)
 
         label = QLabel(i18n("Login Name:"),detailspace)
         infogrid.addWidget(label,2,0)
@@ -672,7 +716,7 @@ class UserEditDialog(KDialogBase):
         label = QLabel(i18n("Home Directory:"),detailspace)
         infogrid.addWidget(label,7,0)
 
-        hbox = QHBox(detailspace)
+        hbox = KHBox(detailspace)
         hbox.setSpacing(self.spacingHint())
         self.homediredit = KLineEdit("",hbox)
         hbox.setStretchFactor(self.homediredit,1)
@@ -687,35 +731,39 @@ class UserEditDialog(KDialogBase):
 
         self.shelledit = KComboBox(True,detailspace)
         for shell in self.admincontext.getUserShells():
-            self.shelledit.insertItem(shell)
+            self.shelledit.addItem(shell)
         infogrid.addWidget(self.shelledit,8,1)
 
         # Rudd-O rules.  Not so much, but enough to rule.
 	# yeah it's not my finest hour, but it works like a charm over here.  Please feel free to clean up dead code that I commented
 	# I extend my deepest thanks to the people that have worked hard to construct this tool in the first place.  I have no idea who the authors and contributors are, but it would make sense to have all the contributors listed on top of the file.
 	# Privileges and groups tab
-        groupsvbox = self.addHBoxPage(i18n("Privileges and groups"))
+        groupshbox = KHBox()
+        item = self.addPage( groupshbox, i18n( "Privileges and groups" ) )
+        item.setHeader( i18n( "Privileges and groups" ) )
 
 	# Rudd-O now here we create the widget that will hold the group listing, and fill it with the groups.
-        self.privilegeslistview = QListView(groupsvbox)
-	self.privilegeslistview.addColumn(i18n("Privilege"),-1)
-        self.groupslistview = QListView(groupsvbox)
-	self.groupslistview.addColumn(i18n("Secondary group"),-1)
-	groupsvbox.setStretchFactor(self.privilegeslistview,3)
-	groupsvbox.setStretchFactor(self.groupslistview,2)
-	
+        self.privilegeslistview = QListView(groupshbox)
+    #self.privilegeslistview.addColumn(i18n("Privilege"),-1)
+        self.groupslistview = QListView(groupshbox)
+    #self.groupslistview.addColumn(i18n("Secondary group"),-1)
+        groupshbox.setStretchFactor(self.privilegeslistview,3)
+        groupshbox.setStretchFactor(self.groupslistview,2)
+    
         # Password and Security Tab.
-        passwordvbox = self.addVBoxPage(i18n("Password && Security"))
+        passwordvbox = KVBox()
+        item = self.addPage( passwordvbox, i18n( "Password && Security" ))
+        item.setHeader( i18n("Password && Security" ))
 
         passwordspace = QWidget(passwordvbox)
-        passwordgrid = QGridLayout(passwordspace,8,3)
+        passwordgrid = QGridLayout(passwordspace)
         passwordgrid.setSpacing(self.spacingHint())
-        passwordgrid.setColStretch(0,0)
-        passwordgrid.setColStretch(1,0)
-        passwordgrid.setColStretch(2,1)
+        #passwordgrid.setColStretch(0,0)
+        #passwordgrid.setColStretch(1,0)
+        #passwordgrid.setColStretch(2,1)
         passwordvbox.setStretchFactor(passwordspace,0)
 
-        hb = QHBox(passwordspace)
+        hb = KHBox(passwordspace)
         hb.setSpacing(self.spacingHint())
         label = QLabel(hb)
         label.setPixmap(UserIcon("hi32-password"))
@@ -724,7 +772,8 @@ class UserEditDialog(KDialogBase):
         hb.setStretchFactor(label,1)
         passwordgrid.addWidget(hb,0,0)
 
-        self.passwordedit = KPasswordEdit(passwordspace)
+        self.passwordedit = KLineEdit(passwordspace)
+        self.passwordedit.setPasswordMode(True)
         passwordgrid.addWidget(self.passwordedit,0,1)
 
         # Last Change
@@ -735,7 +784,7 @@ class UserEditDialog(KDialogBase):
         passwordgrid.addWidget(self.lastchangelabel,1,1)
 
         self.validradiogroup = QButtonGroup()
-        self.validradiogroup.setRadioButtonExclusive(True)
+        #self.validradiogroup.setRadioButtonExclusive(True) # TODO
 
         # Valid until.
         label = QLabel(i18n("Valid until:"),passwordspace)
@@ -743,7 +792,7 @@ class UserEditDialog(KDialogBase):
         self.validalwaysradio = QRadioButton(i18n("Always"),passwordspace)
         passwordgrid.addWidget(self.validalwaysradio,2,1)
 
-        hbox = QHBox(passwordspace)
+        hbox = KHBox(passwordspace)
         hbox.setSpacing(self.spacingHint())
         self.expireradio = QRadioButton(hbox)
         hbox.setStretchFactor(self.expireradio,0)
@@ -752,18 +801,19 @@ class UserEditDialog(KDialogBase):
         hbox.setStretchFactor(self.expiredate,1)
         passwordgrid.addWidget(hbox,3,1)
 
-        self.validradiogroup.insert(self.validalwaysradio,0)
-        self.validradiogroup.insert(self.expireradio,1)
+        self.validradiogroup.addButton(self.validalwaysradio,0)
+        self.validradiogroup.addButton(self.expireradio,1)
         self.connect(self.validradiogroup,SIGNAL("clicked(int)"),self.slotValidUntilClicked)
 
         # Password Aging & Expiration.
-        passwordaginggroup = QVGroupBox(i18n("Password Aging"),passwordvbox)
-        passwordaginggroup.setInsideSpacing(self.spacingHint())
-        passwordvbox.setStretchFactor(passwordaginggroup,0)
+        passwordaginggroup = QGroupBox(i18n("Password Aging"),passwordvbox)
+        passwordagingbox = KVBox(passwordaginggroup)
+        #passwordagingbox.setInsideSpacing(self.spacingHint())
+        passwordvbox.setStretchFactor(passwordagingbox,0)
 
-        passwordagingwidget = QWidget(passwordaginggroup)
+        passwordagingwidget = QWidget(passwordagingbox)
 
-        passwordaginggrid = QGridLayout(passwordagingwidget,4,3)
+        passwordaginggrid = QGridLayout(passwordagingwidget)
         passwordaginggrid.setSpacing(self.spacingHint())
 
         # [*] Require new password after: [_____5 days]
@@ -774,8 +824,8 @@ class UserEditDialog(KDialogBase):
         passwordaginggrid.addWidget(label,0,1) 
         self.maximumpasswordedit = QSpinBox(passwordagingwidget)
         self.maximumpasswordedit.setSuffix(i18n(" days"))
-        self.maximumpasswordedit.setMinValue(1)
-        self.maximumpasswordedit.setMaxValue(365*5)
+        self.maximumpasswordedit.setMinimum(1)
+        self.maximumpasswordedit.setMaximum(365*5)
         passwordaginggrid.addWidget(self.maximumpasswordedit,0,2)
 
         label = QLabel(i18n("Warn before password expires:"),passwordagingwidget)
@@ -783,8 +833,8 @@ class UserEditDialog(KDialogBase):
         self.warningedit = QSpinBox(passwordagingwidget)
         self.warningedit.setPrefix(i18n("After "))
         self.warningedit.setSuffix(i18n(" days"))
-        self.warningedit.setMinValue(0)
-        self.warningedit.setMaxValue(365*5)
+        self.warningedit.setMinimum(0)
+        self.warningedit.setMaximum(365*5)
         self.warningedit.setSpecialValueText(i18n("Never"))
         passwordaginggrid.addWidget(self.warningedit,1,2)
 
@@ -793,8 +843,8 @@ class UserEditDialog(KDialogBase):
         self.disableexpireedit = QSpinBox(passwordagingwidget)
         self.disableexpireedit.setPrefix(i18n("After "))
         self.disableexpireedit.setSuffix(i18n(" days"))
-        self.disableexpireedit.setMinValue(0)
-        self.disableexpireedit.setMaxValue(365*5)
+        self.disableexpireedit.setMinimum(0)
+        self.disableexpireedit.setMaximum(365*5)
         self.disableexpireedit.setSpecialValueText(i18n("Never"))
         passwordaginggrid.addWidget(self.disableexpireedit,2,2)
 
@@ -811,30 +861,30 @@ class UserEditDialog(KDialogBase):
         spacer = QWidget(passwordvbox)
         passwordvbox.setStretchFactor(spacer,1)
 
-        self.homedirdialog = KDirSelectDialog("/",True,self,"Select Home Directory",True)
+        self.homedirdialog = KDirSelectDialog(KUrl.fromPath("/"),True,self)
         self.createhomedirectorydialog = OverwriteHomeDirectoryDialog(None)
         self.updatingGUI = False
 
     def _repopulateGroupsPrivileges(self,excludegroups=None):
-	# needs listviews to be constructed.  Expects a list of PwdGroups to be excluded
-	
-	# rehash everything
-	self.privilegeslistview.clear()
-	self.groupslistview.clear()
-	self.secondarygroupcheckboxes = {}
-	pn = PrivilegeNames()
-	
-	if excludegroups: excludegroups = [ g.getGroupname() for g in excludegroups ]
-	else: excludegroups = []
-	for group in [g.getGroupname() for g in self.admincontext.getGroups()]:
-		if group in excludegroups: continue
-		if group in pn:
-			name = i18n(unicode(pn[group]).encode(locale.getpreferredencoding()))
-			wid = self.privilegeslistview
-		else:
-			name = unicode(group).encode(locale.getpreferredencoding())
-			wid = self.groupslistview
-		self.secondarygroupcheckboxes[group] = QCheckListItem(wid,name,QCheckListItem.CheckBox)
+        # needs listviews to be constructed.  Expects a list of PwdGroups to be excluded
+        
+        # rehash everything
+        self.privilegeslistview.clear()
+        self.groupslistview.clear()
+        self.secondarygroupcheckboxes = {}
+        pn = PrivilegeNames()
+        
+        if excludegroups: excludegroups = [ g.getGroupname() for g in excludegroups ]
+        else: excludegroups = []
+        for group in [g.getGroupname() for g in self.admincontext.getGroups()]:
+            if group in excludegroups: continue
+            if group in pn:
+                name = i18n(unicode(pn[group]).encode(locale.getpreferredencoding()))
+                wid = self.privilegeslistview
+            else:
+                name = unicode(group).encode(locale.getpreferredencoding())
+                wid = self.groupslistview
+            self.secondarygroupcheckboxes[group] = QCheckListItem(wid,name,QCheckListItem.CheckBox)
 
     ########################################################################
     def showEditUser(self,userid):
@@ -846,13 +896,13 @@ class UserEditDialog(KDialogBase):
         self.selectedgroups = [g.getGroupname() for g in self.userobj.getGroups()
             if g is not self.userobj.getPrimaryGroup()]
         
-	# Rudd-O: now here we tick the appropriate group listing checkbox, and hide the currently active primary group of the user.  We are repopulating because if the user to edit changes, we need to hide the user's secondary group.  FIXME we should repopulate the groups privileges list when the primary group is changed in the other tab -- that is, on the change slot of the primary group drop down.
-	self._repopulateGroupsPrivileges(excludegroups=[self.userobj.getPrimaryGroup()])
-	for group,checkbox in self.secondarygroupcheckboxes.items():
-		if group in self.selectedgroups: checkbox.setState(QCheckListItem.On)
-		else: checkbox.setState(QCheckListItem.Off)
-	
-	self.originalgroups = self.selectedgroups[:]
+        # Rudd-O: now here we tick the appropriate group listing checkbox, and hide the currently active primary group of the user.  We are repopulating because if the user to edit changes, we need to hide the user's secondary group.  FIXME we should repopulate the groups privileges list when the primary group is changed in the other tab -- that is, on the change slot of the primary group drop down.
+        self._repopulateGroupsPrivileges(excludegroups=[self.userobj.getPrimaryGroup()])
+        for group,checkbox in self.secondarygroupcheckboxes.items():
+            if group in self.selectedgroups: checkbox.setState(QCheckListItem.On)
+            else: checkbox.setState(QCheckListItem.Off)
+        
+        self.originalgroups = self.selectedgroups[:]
         self.selectedgroups.sort()
         self.__syncGUI()
         self.uidedit.setReadOnly(True)
@@ -864,20 +914,20 @@ class UserEditDialog(KDialogBase):
             if self.passwordedit.password()!="":
                 self.userobj.setPassword(self.passwordedit.password())
             # Update the groups for this user object. Rudd-O here's when you go in, stud.
-	    # we collect the selected groups
-	    self.selectedgroups = [ group for group,checkbox in self.secondarygroupcheckboxes.items() if checkbox.isOn() ]
+        # we collect the selected groups
+        self.selectedgroups = [ group for group,checkbox in self.secondarygroupcheckboxes.items() if checkbox.isOn() ]
 
-            for g in self.userobj.getGroups(): # this seems wasteful to remove the user from all groups then re-add, why not a cross check?
-                self.userobj.removeFromGroup(g)
-            for gn in self.selectedgroups:
-                self.userobj.addToGroup(self.admincontext.lookupGroupname(gn))
+        for g in self.userobj.getGroups(): # this seems wasteful to remove the user from all groups then re-add, why not a cross check?
+            self.userobj.removeFromGroup(g)
+        for gn in self.selectedgroups:
+            self.userobj.addToGroup(self.admincontext.lookupGroupname(gn))
 
-            primarygroupname = unicode(self.primarygroupedit.currentText())
-            self.userobj.setPrimaryGroup(self.admincontext.lookupGroupname(primarygroupname))
+        primarygroupname = unicode(self.primarygroupedit.currentText())
+        self.userobj.setPrimaryGroup(self.admincontext.lookupGroupname(primarygroupname))
 
-            # Enable/Disable the account            
-            self.userobj.setLocked(self.enabledradiogroup.id(self.enabledradiogroup.selected())!=0)
-            self.admincontext.save()
+        # Enable/Disable the account            
+        self.userobj.setLocked(self.enabledradiogroup.id(self.enabledradiogroup.selected())!=0)
+        self.admincontext.save()
 
     ########################################################################
     def showNewUser(self):
@@ -893,13 +943,13 @@ class UserEditDialog(KDialogBase):
                                 u'plugdev',u'lpadmin',u'scanner']
         homedir = self.__fudgeNewHomeDirectory(self.userobj.getUsername())
         
-	# Rudd-O FIXME: now here we tick the proper groups that should be allowed.  Now it selects what userconfig selected before.  FIXME consider adding a drop down that will select the appropriate profile Limited User, Advanced User or Administrator (and see if there is a config file where these profiles can be read).    We are repopulating because if the user to edit changes, we need to hide the user's secondary group.  FIXME we should repopulate the groups privileges list when the primary group is changed in the other tab -- that is, on the change slot of the primary group drop down.
-	self._repopulateGroupsPrivileges()
-	for group,checkbox in self.secondarygroupcheckboxes.items():
-		if group in self.selectedgroups: checkbox.setState(QCheckListItem.On)
-		else: checkbox.setState(QCheckListItem.Off)
-	
-	self.userobj.setHomeDirectory(homedir)
+        # Rudd-O FIXME: now here we tick the proper groups that should be allowed.  Now it selects what userconfig selected before.  FIXME consider adding a drop down that will select the appropriate profile Limited User, Advanced User or Administrator (and see if there is a config file where these profiles can be read).    We are repopulating because if the user to edit changes, we need to hide the user's secondary group.  FIXME we should repopulate the groups privileges list when the primary group is changed in the other tab -- that is, on the change slot of the primary group drop down.
+        self._repopulateGroupsPrivileges()
+        for group,checkbox in self.secondarygroupcheckboxes.items():
+            if group in self.selectedgroups: checkbox.setState(QCheckListItem.On)
+            else: checkbox.setState(QCheckListItem.Off)
+        
+        self.userobj.setHomeDirectory(homedir)
         self.homediredit.setText(homedir)
 
         shells = self.admincontext.getUserShells()
@@ -1255,108 +1305,113 @@ class RealUserNameValidator(QValidator):
         return unicode(inputstr).replace(":","")
 
 ###########################################################################
-class ListPickerDialog(KDialogBase):
-    def __init__(self,parent,caption,leftlabel,rightlabel):
-        KDialogBase.__init__(self,parent,None,True,caption,KDialogBase.Ok|KDialogBase.Cancel, KDialogBase.Cancel)
+#class ListPickerDialog(KDialog):
+    #def __init__(self,parent,caption,leftlabel,rightlabel):
+        ##KDialogBase.__init__(self,parent,None,True,caption,KDialogBase.Ok|KDialogBase.Cancel, KDialogBase.Cancel)
+        #KDialog.__init__(parent)
+        #KDialog.setCaption(caption)
+        #KDialog.setModal(True)
+        #KDialog.setButtons(KDialog.Ok|KDialog.Cancel)
 
-        self.tophbox = QHBox(self)
-        self.setMainWidget(self.tophbox)
-        self.tophbox.setSpacing(self.spacingHint())
-        # Available Groups
-        vbox = QVBox(self.tophbox)
-        self.tophbox.setStretchFactor(vbox,1)
-        label = QLabel(leftlabel,vbox)
-        vbox.setStretchFactor(label,0)
-        self.availablelist = KListBox(vbox)
-        vbox.setStretchFactor(self.availablelist,1)
+        #self.tophbox = KHBox(self)
+        #self.setMainWidget(self.tophbox)
+        #self.tophbox.setSpacing(self.spacingHint())
+        ## Available Groups
+        #vbox = KVBox(self.tophbox)
+        #self.tophbox.setStretchFactor(vbox,1)
+        #label = QLabel(leftlabel,vbox)
+        #vbox.setStretchFactor(label,0)
+        #self.availablelist = KListBox(vbox)
+        #vbox.setStretchFactor(self.availablelist,1)
 
-        # ->, <- Buttons
-        vbox = QVBox(self.tophbox)
-        self.tophbox.setStretchFactor(vbox,0)
-        spacer = QWidget(vbox);
-        vbox.setStretchFactor(spacer,1)
-        self.addbutton = KPushButton(i18n("Add ->"),vbox)
-        self.connect(self.addbutton,SIGNAL("clicked()"),self.slotAddClicked)
-        vbox.setStretchFactor(self.addbutton,0)
-        self.removebutton = KPushButton(i18n("<- Remove"),vbox)
-        self.connect(self.removebutton,SIGNAL("clicked()"),self.slotRemoveClicked)
-        vbox.setStretchFactor(self.removebutton,0)
-        spacer = QWidget(vbox);
-        vbox.setStretchFactor(spacer,1)
+        ## ->, <- Buttons
+        #vbox = KVBox(self.tophbox)
+        #self.tophbox.setStretchFactor(vbox,0)
+        #spacer = QWidget(vbox);
+        #vbox.setStretchFactor(spacer,1)
+        #self.addbutton = KPushButton(i18n("Add ->"),vbox)
+        #self.connect(self.addbutton,SIGNAL("clicked()"),self.slotAddClicked)
+        #vbox.setStretchFactor(self.addbutton,0)
+        #self.removebutton = KPushButton(i18n("<- Remove"),vbox)
+        #self.connect(self.removebutton,SIGNAL("clicked()"),self.slotRemoveClicked)
+        #vbox.setStretchFactor(self.removebutton,0)
+        #spacer = QWidget(vbox);
+        #vbox.setStretchFactor(spacer,1)
 
-        # Selected Groups
-        vbox = QVBox(self.tophbox)
-        self.tophbox.setStretchFactor(vbox,1)
-        label = QLabel(rightlabel,vbox)
-        vbox.setStretchFactor(label,0)
-        self.selectedlist = KListBox(vbox)
-        vbox.setStretchFactor(self.selectedlist,1)
+        ## Selected Groups
+        #vbox = KVBox(self.tophbox)
+        #self.tophbox.setStretchFactor(vbox,1)
+        #label = QLabel(rightlabel,vbox)
+        #vbox.setStretchFactor(label,0)
+        #self.selectedlist = KListBox(vbox)
+        #vbox.setStretchFactor(self.selectedlist,1)
 
-    #######################################################################
-    def do(self,grouplist,selectedlist):
-        self.selectedlist.clear()
-        for item in selectedlist:
-            self.selectedlist.insertItem(item)
-        self.selectedlist.sort()
+    ########################################################################
+    #def do(self,grouplist,selectedlist):
+        #self.selectedlist.clear()
+        #for item in selectedlist:
+            #self.selectedlist.insertItem(item)
+        #self.selectedlist.sort()
 
-        self.availablelist.clear()
-        for item in grouplist:
-            if item not in selectedlist:
-                self.availablelist.insertItem(item)
-        self.availablelist.sort()
+        #self.availablelist.clear()
+        #for item in grouplist:
+            #if item not in selectedlist:
+                #self.availablelist.insertItem(item)
+        #self.availablelist.sort()
 
-        self._selectFirstAvailable()
-        self.addbutton.setDisabled(self.availablelist.selectedItem()==None)
+        #self._selectFirstAvailable()
+        #self.addbutton.setDisabled(self.availablelist.selectedItem()==None)
 
-        self._selectFirstSelected()
-        self.removebutton.setDisabled(self.selectedlist.selectedItem()==None)
+        #self._selectFirstSelected()
+        #self.removebutton.setDisabled(self.selectedlist.selectedItem()==None)
 
-        if self.exec_loop()==QDialog.Accepted:
-            newlist = []
-            for i in range(self.selectedlist.count()):
-                newlist.append(unicode(self.selectedlist.item(i).text()))
-            return newlist
-        else:
-            return selectedlist
+        #if self.exec_loop()==QDialog.Accepted:
+            #newlist = []
+            #for i in range(self.selectedlist.count()):
+                #newlist.append(unicode(self.selectedlist.item(i).text()))
+            #return newlist
+        #else:
+            #return selectedlist
 
-    #######################################################################
-    def slotAddClicked(self):
-        item = self.availablelist.selectedItem()
-        if item!=None:
-            self.selectedlist.insertItem(item.text())
-            self.availablelist.removeItem(self.availablelist.index(item))
-            self._selectFirstAvailable()
-            self._selectFirstSelected()
-            self.addbutton.setDisabled(self.availablelist.selectedItem()==None)
-            self.removebutton.setDisabled(self.selectedlist.selectedItem()==None)
+    ########################################################################
+    #def slotAddClicked(self):
+        #item = self.availablelist.selectedItem()
+        #if item!=None:
+            #self.selectedlist.insertItem(item.text())
+            #self.availablelist.removeItem(self.availablelist.index(item))
+            #self._selectFirstAvailable()
+            #self._selectFirstSelected()
+            #self.addbutton.setDisabled(self.availablelist.selectedItem()==None)
+            #self.removebutton.setDisabled(self.selectedlist.selectedItem()==None)
 
-    #######################################################################
-    def slotRemoveClicked(self):
-        item = self.selectedlist.selectedItem()
-        if item!=None:
-            self.availablelist.insertItem(item.text())
-            self.selectedlist.removeItem(self.selectedlist.index(item))
-            self._selectFirstAvailable()
-            self._selectFirstSelected()
-            self.addbutton.setDisabled(self.availablelist.selectedItem()==None)
-            self.removebutton.setDisabled(self.selectedlist.selectedItem()==None)
+    ########################################################################
+    #def slotRemoveClicked(self):
+        #item = self.selectedlist.selectedItem()
+        #if item!=None:
+            #self.availablelist.insertItem(item.text())
+            #self.selectedlist.removeItem(self.selectedlist.index(item))
+            #self._selectFirstAvailable()
+            #self._selectFirstSelected()
+            #self.addbutton.setDisabled(self.availablelist.selectedItem()==None)
+            #self.removebutton.setDisabled(self.selectedlist.selectedItem()==None)
 
-    #######################################################################
-    def _selectFirstAvailable(self):
-        if self.availablelist.count()!=0:
-            if self.availablelist.selectedItem()==None:
-                self.availablelist.setSelected(0,True)
+    ########################################################################
+    #def _selectFirstAvailable(self):
+        #if self.availablelist.count()!=0:
+            #if self.availablelist.selectedItem()==None:
+                #self.availablelist.setSelected(0,True)
 
-    #######################################################################
-    def _selectFirstSelected(self):
-        if self.selectedlist.count()!=0:
-            if self.selectedlist.selectedItem()==None:
-                self.selectedlist.setSelected(0,True)
+    ########################################################################
+    #def _selectFirstSelected(self):
+        #if self.selectedlist.count()!=0:
+            #if self.selectedlist.selectedItem()==None:
+                #self.selectedlist.setSelected(0,True)
 
 ###########################################################################
 class UserDeleteDialog(KDialog):
     def __init__(self,parent,admincontext):
-        KDialog.__init__(self,parent,"Delete user dialog",True,Qt.WType_Dialog)
+        KDialog.__init__(self,parent)
+        self.setModal(True)#,Qt.WType_Dialog)
         self.setCaption(i18n("Delete User Account"))
         self.admincontext = admincontext
         self.updatingGUI = True
@@ -1365,17 +1420,17 @@ class UserDeleteDialog(KDialog):
         toplayout.setSpacing(self.spacingHint())
         toplayout.setMargin(self.marginHint())
 
-        contentbox = QHBox(self)
+        contentbox = KHBox(self)
         contentbox.setSpacing(self.spacingHint())
         toplayout.addWidget(contentbox)
         toplayout.setStretchFactor(contentbox,1)
 
         label = QLabel(contentbox)
-        label.setPixmap(KGlobal.iconLoader().loadIcon("messagebox_warning", KIcon.NoGroup, KIcon.SizeMedium,
-            KIcon.DefaultState, None, True))
+        #label.setPixmap(KGlobal.iconLoader().loadIcon("messagebox_warning", KIcon.NoGroup, KIcon.SizeMedium,
+            #KIcon.DefaultState, None, True)) # TODO
         contentbox.setStretchFactor(label,0)
 
-        textbox = QVBox(contentbox)
+        textbox = KVBox(contentbox)
 
         textbox.setSpacing(self.spacingHint())
         textbox.setMargin(self.marginHint())
@@ -1392,7 +1447,7 @@ class UserDeleteDialog(KDialog):
         textbox.setStretchFactor(self.deletegroupcheckbox ,0)
 
         # Buttons
-        buttonbox = QHBox(self)
+        buttonbox = KHBox(self)
         toplayout.addWidget(buttonbox)
 
         buttonbox.setSpacing(self.spacingHint())
@@ -1446,7 +1501,9 @@ class OverwriteHomeDirectoryDialog(KDialog):
     OK_REPLACE = 2
 
     def __init__(self,parent):
-        KDialog.__init__(self,parent,"Create home directory",True,Qt.WType_Dialog)
+        KDialog.__init__(self,parent)
+        self.setModal(True)
+        #,Qt.WType_Dialog)
         self.setCaption(i18n("Create home directory"))
         self.updatingGUI = True
 
@@ -1454,17 +1511,17 @@ class OverwriteHomeDirectoryDialog(KDialog):
         toplayout.setSpacing(self.spacingHint())
         toplayout.setMargin(self.marginHint())
 
-        contentbox = QHBox(self)
+        contentbox = KHBox(self)
         contentbox.setSpacing(self.spacingHint())
         toplayout.addWidget(contentbox)
         toplayout.setStretchFactor(contentbox,1)
 
         label = QLabel(contentbox)
-        label.setPixmap(KGlobal.iconLoader().loadIcon("messagebox_warning", KIcon.NoGroup, KIcon.SizeMedium,
-            KIcon.DefaultState, None, True))
+        #label.setPixmap(KGlobal.iconLoader().loadIcon("messagebox_warning", KIcon.NoGroup, KIcon.SizeMedium,
+            #KIcon.DefaultState, None, True))   # TODO
         contentbox.setStretchFactor(label,0)
 
-        textbox = QVBox(contentbox)
+        textbox = KVBox(contentbox)
 
         textbox.setSpacing(self.spacingHint())
         textbox.setMargin(self.marginHint())
@@ -1474,7 +1531,7 @@ class OverwriteHomeDirectoryDialog(KDialog):
         textbox.setStretchFactor(self.toplabel,0)
 
         self.radiogroup = QButtonGroup()
-        self.radiogroup.setRadioButtonExclusive(True)
+        #self.radiogroup.setRadioButtonExclusive(True)  # TODO
 
         # Use Existing home directory radio button.
         self.usehomedirectoryradio = QRadioButton(i18n("Use the existing directory without changing it."),textbox)
@@ -1484,11 +1541,11 @@ class OverwriteHomeDirectoryDialog(KDialog):
         self.replacehomedirectoryradio = QRadioButton(i18n("Delete the directory and replace it with a new home directory."),textbox)
         textbox.setStretchFactor(self.replacehomedirectoryradio ,0)
 
-        self.radiogroup.insert(self.usehomedirectoryradio,0)
-        self.radiogroup.insert(self.replacehomedirectoryradio,1)
+        self.radiogroup.addButton(self.usehomedirectoryradio,0)
+        self.radiogroup.addButton(self.replacehomedirectoryradio,1)
 
         # Buttons
-        buttonbox = QHBox(self)
+        buttonbox = KHBox(self)
         toplayout.addWidget(buttonbox)
 
         buttonbox.setSpacing(self.spacingHint())
@@ -1527,21 +1584,25 @@ class OverwriteHomeDirectoryDialog(KDialog):
         self.reject()
 
 ###########################################################################
-class GroupEditDialog(KDialogBase):
+class GroupEditDialog(KDialog):
     def __init__(self,parent,admincontext):
-        KDialogBase.__init__(self,parent,None,True,i18n("Edit Group"),KDialogBase.Ok|KDialogBase.Cancel,
-            KDialogBase.Cancel)
+        #KDialogBase.__init__(self,parent,None,True,i18n("Edit Group"),KDialogBase.Ok|KDialogBase.Cancel,
+            #KDialogBase.Cancel)
+        KDialog.__init__(self, parent)
+        self.setModal(True)
+        self.setCaption(i18n("Edit Group"))
+        #self.setButtons(KDialog.Ok|KDialog.Cancel) # TODO
 
         self.admincontext = admincontext
 
-        topvbox = QVBox(self)
+        topvbox = KVBox(self)
         topvbox.setSpacing(self.spacingHint())
         self.setMainWidget(topvbox)
 
         detailspace = QWidget(topvbox)
 
         # Info about the group.
-        editgrid = QGridLayout(detailspace,2,2)
+        editgrid = QGridLayout(detailspace)
         editgrid.setSpacing(self.spacingHint())
 
         label = QLabel(i18n("Group Name:"),detailspace)
@@ -1557,21 +1618,21 @@ class GroupEditDialog(KDialogBase):
         editgrid.addWidget(self.groupidlabel,1,1)
 
         # Available Groups
-        tophbox = QHBox(topvbox)
+        tophbox = KHBox(topvbox)
         tophbox.setSpacing(self.spacingHint())
 
         hbox = tophbox
 
-        vbox = QVBox(hbox)
+        vbox = KVBox(hbox)
         vbox.setSpacing(self.spacingHint())
         hbox.setStretchFactor(vbox,1)
         label = QLabel(i18n("Available Accounts"),vbox)
         vbox.setStretchFactor(label,0)
-        self.availablelist = KListBox(vbox)
+        self.availablelist = KListWidget(vbox)
         vbox.setStretchFactor(self.availablelist,1)
 
         # ->, <- Buttons
-        vbox = QVBox(hbox)
+        vbox = KVBox(hbox)
         vbox.setSpacing(self.spacingHint())
         hbox.setStretchFactor(vbox,0)
         spacer = QWidget(vbox);
@@ -1586,12 +1647,12 @@ class GroupEditDialog(KDialogBase):
         vbox.setStretchFactor(spacer,1)
 
         # Selected Groups
-        vbox = QVBox(hbox)
+        vbox = KVBox(hbox)
         vbox.setSpacing(self.spacingHint())
         hbox.setStretchFactor(vbox,1)
         label = QLabel(i18n("Selected Accounts"),vbox)
         vbox.setStretchFactor(label,0)
-        self.selectedlist = KListBox(vbox)
+        self.selectedlist = KListWidget(vbox)
         vbox.setStretchFactor(self.selectedlist,1)
 
     #######################################################################
@@ -1736,11 +1797,11 @@ def create_userconfig(parent,name):
 
 ##########################################################################
 def MakeAboutData():
-    aboutdata = KAboutData("guidance", programname, version,
-        unicode(i18n("User and Group Configuration Tool")).encode(locale.getpreferredencoding()),
-        KAboutData.License_GPL, "Copyright (C) 2003-2007 Simon Edwards")
-    aboutdata.addAuthor("Simon Edwards", "Developer", "simon@simonzone.com", "http://www.simonzone.com/software/")
-    aboutdata.addAuthor("Sebastian Kügler", "Developer", "sebas@kde.org", "http://vizZzion.org")
+    aboutdata = KAboutData("guidance", "guidance", ki18n(programname), version,
+        ki18n("User and Group Configuration Tool"),
+        KAboutData.License_GPL, ki18n("Copyright (C) 2003-2007 Simon Edwards"))
+    aboutdata.addAuthor(ki18n("Simon Edwards"), ki18n("Developer"), "simon@simonzone.com", "http://www.simonzone.com/software/")
+    aboutdata.addAuthor(ki18n("Sebastian Kügler"), ki18n("Developer"), "sebas@kde.org", "http://vizZzion.org")
     return aboutdata
 
 if standalone:
