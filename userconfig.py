@@ -102,7 +102,7 @@ class UserConfigApp(programbase):
 
         # --- User Tab ---
         if standalone:
-            usershbox = KHBox()
+            usershbox = KHBox(self)
             item = self.addPage( usershbox, i18n( "Users" ) )
             item.setHeader( i18n( "Users" ) )
             vbox = KVBox(usershbox)
@@ -206,7 +206,7 @@ class UserConfigApp(programbase):
 
         #--- Groups Tab ---
         if standalone:
-            groupsvbox = KVBox()
+            groupsvbox = KVBox(self)
             item = self.addPage( groupsvbox, i18n( "Groups" ) )
             item.setHeader( i18n( "Groups" ) )
             hb = KHBox(groupsvbox)
@@ -304,14 +304,14 @@ class UserConfigApp(programbase):
         self.groupeditdialog = GroupEditDialog(None,self.admincontext)
 
     #######################################################################
-    def exec_loop(self):
+    def exec_(self):
         global programbase
         self.__loadOptions()
         self.updatingGUI = True
         self.__updateUserList()
         self.__updateGroupList()
         self.updatingGUI = False
-        programbase.exec_loop(self)
+        programbase.exec_(self)
         self.__saveOptions()
 
     #######################################################################
@@ -327,7 +327,7 @@ class UserConfigApp(programbase):
             cmenu.setItemEnabled(0,False)
             cmenu.setItemEnabled(1,False)
 
-        cmenu.exec_loop(p)
+        cmenu.exec_(p)
 
     #######################################################################
     def slotGroupContext(self,l,v,p):
@@ -337,7 +337,7 @@ class UserConfigApp(programbase):
         if not isroot:
             cmenu.setItemEnabled(0,False)
             cmenu.setItemEnabled(1,False)
-        cmenu.exec_loop(p)
+        cmenu.exec_(p)
 
     #######################################################################        
     def sizeHint(self):
@@ -576,20 +576,20 @@ class UserConfigApp(programbase):
             #self.resize(size)  # TODO
         #self.config.setGroup("Options")
         self.showsystemaccounts = self.config.group("Options").readEntry("ShowSystemAccounts")
-        #self.showspecialcheckbox.setChecked(self.showsystemaccounts) # TODO
+        self.showspecialcheckbox.setChecked(bool(self.showsystemaccounts))
         self.showsystemgroups = self.config.group("Options").readEntry("ShowSystemGroups")
-        #self.showspecialgroupscheckbox.setChecked(self.showsystemgroups) # TODO
+        self.showspecialgroupscheckbox.setChecked(bool(self.showsystemgroups))
 
     #######################################################################
     def __saveOptions(self):
         global isroot
         if isroot:
             return
-        self.config.setGroup("General")
-        self.config.writeEntry("Geometry", self.size())
-        self.config.setGroup("Options")
-        self.config.writeEntry("ShowSystemAccounts",self.showsystemaccounts)
-        self.config.writeEntry("ShowSystemGroups",self.showsystemgroups)
+        #self.config.setGroup("General")
+        #self.config.group("General").writeEntry("Geometry", self.size())   # TODO
+        #self.config.setGroup("Options")
+        self.config.group("Options").writeEntry("ShowSystemAccounts",str(int(self.showsystemaccounts)))
+        self.config.group("Options").writeEntry("ShowSystemGroups",str(int(self.showsystemgroups)))
         self.config.sync()
 
     #######################################################################
@@ -614,28 +614,28 @@ class UserConfigApp(programbase):
 
 # Rudd-O convenience class to map groups to privilege names
 class PrivilegeNames(dict):
-	"""Convenience dict-derived class: map known secondary groups to privilege names, provide default mapping for groups that do not have a description.  This could be replaced by a simple dict() but I simply preferred the class declaration.
-	
-	FIXME This should ideally be included in a more general module so it can be reused."""
+    """Convenience dict-derived class: map known secondary groups to privilege names, provide default mapping for groups that do not have a description.  This could be replaced by a simple dict() but I simply preferred the class declaration.
+    
+    FIXME This should ideally be included in a more general module so it can be reused."""
 
-	def __init__(self):
-		dict.__init__(self, {
-			"plugdev":i18n("Access external storage devices automatically"),
-			"adm":i18n("Administer the system"),
-			"ltsp":i18n("Allow use of FUSE filesystems like LTSP thin client block devices"),
-			"dialout":i18n("Connect to the Internet using a modem"),
-			"syslog":i18n("Monitor system logs"),
-			"fax":i18n("Send and receive faxes"),
-			"cdrom":i18n("Use CD-ROM and DVD drives"),
-			"floppy":i18n("Use floppy drives"),
-			"modem":i18n("Use modems"),
-			"scanner":i18n("Use scanners"),
-		})
+    def __init__(self):
+        dict.__init__(self, {
+            "plugdev":i18n("Access external storage devices automatically"),
+            "adm":i18n("Administer the system"),
+            "ltsp":i18n("Allow use of FUSE filesystems like LTSP thin client block devices"),
+            "dialout":i18n("Connect to the Internet using a modem"),
+            "syslog":i18n("Monitor system logs"),
+            "fax":i18n("Send and receive faxes"),
+            "cdrom":i18n("Use CD-ROM and DVD drives"),
+            "floppy":i18n("Use floppy drives"),
+            "modem":i18n("Use modems"),
+            "scanner":i18n("Use scanners"),
+        })
 
-	def __getitem__(self,name):
-		# This is cruft but I couldn't bring myself to kill it bua!
-		if name in self: return dict.__getitem__(self,name)
-		return i18n("Be a member of the %s group")%name
+    def __getitem__(self,name):
+        # This is cruft but I couldn't bring myself to kill it bua!
+        if name in self: return dict.__getitem__(self,name)
+        return i18n("Be a member of the %s group")%name
 
 class UserEditDialog(KPageDialog):
     def __init__(self,parent,admincontext):
@@ -651,7 +651,7 @@ class UserEditDialog(KPageDialog):
         self.admincontext = admincontext
         self.updatingGUI = True
 
-        detailshbox = KHBox()
+        detailshbox = KHBox(self)
         item = self.addPage( detailshbox, i18n( "Details" ) )
         item.setHeader( i18n( "Details" ) )
         detailspace = QWidget(detailshbox)
@@ -735,23 +735,23 @@ class UserEditDialog(KPageDialog):
         infogrid.addWidget(self.shelledit,8,1)
 
         # Rudd-O rules.  Not so much, but enough to rule.
-	# yeah it's not my finest hour, but it works like a charm over here.  Please feel free to clean up dead code that I commented
-	# I extend my deepest thanks to the people that have worked hard to construct this tool in the first place.  I have no idea who the authors and contributors are, but it would make sense to have all the contributors listed on top of the file.
-	# Privileges and groups tab
-        groupshbox = KHBox()
+        # yeah it's not my finest hour, but it works like a charm over here.  Please feel free to clean up dead code that I commented
+        # I extend my deepest thanks to the people that have worked hard to construct this tool in the first place.  I have no idea who the authors and contributors are, but it would make sense to have all the contributors listed on top of the file.
+        # Privileges and groups tab
+        groupshbox = KHBox(self)
         item = self.addPage( groupshbox, i18n( "Privileges and groups" ) )
         item.setHeader( i18n( "Privileges and groups" ) )
 
-	# Rudd-O now here we create the widget that will hold the group listing, and fill it with the groups.
+        # Rudd-O now here we create the widget that will hold the group listing, and fill it with the groups.
         self.privilegeslistview = QListView(groupshbox)
-    #self.privilegeslistview.addColumn(i18n("Privilege"),-1)
+        #self.privilegeslistview.addColumn(i18n("Privilege"),-1)
         self.groupslistview = QListView(groupshbox)
-    #self.groupslistview.addColumn(i18n("Secondary group"),-1)
+        #self.groupslistview.addColumn(i18n("Secondary group"),-1)
         groupshbox.setStretchFactor(self.privilegeslistview,3)
         groupshbox.setStretchFactor(self.groupslistview,2)
     
         # Password and Security Tab.
-        passwordvbox = KVBox()
+        passwordvbox = KVBox(self)
         item = self.addPage( passwordvbox, i18n( "Password && Security" ))
         item.setHeader( i18n("Password && Security" ))
 
@@ -908,7 +908,7 @@ class UserEditDialog(KPageDialog):
         self.uidedit.setReadOnly(True)
         self.updatingGUI = False
         self.homedirectoryislinked = False
-        if self.exec_loop()==QDialog.Accepted:
+        if self.exec_()==QDialog.Accepted:
             self.__updateObjectFromGUI(self.userobj)
             # Set the password.
             if self.passwordedit.password()!="":
@@ -969,7 +969,7 @@ class UserEditDialog(KPageDialog):
         self.updatingGUI = False
         self.homedirectoryislinked = True
         self.passwordedit.erase()
-        if self.exec_loop()==QDialog.Accepted:
+        if self.exec_()==QDialog.Accepted:
             self.__updateObjectFromGUI(self.userobj)
 
             makehomedir = True
@@ -1188,7 +1188,7 @@ class UserEditDialog(KPageDialog):
         fileurl = KURL()
         fileurl.setPath(self.homediredit.text())
         self.homedirdialog.setCurrentURL(fileurl)
-        if self.homedirdialog.exec_loop()==QDialog.Accepted:
+        if self.homedirdialog.exec_()==QDialog.Accepted:
             self.homediredit.setText(self.homedirdialog.url().path())
             self.homedirectoryislinked = False
 
@@ -1365,7 +1365,7 @@ class RealUserNameValidator(QValidator):
         #self._selectFirstSelected()
         #self.removebutton.setDisabled(self.selectedlist.selectedItem()==None)
 
-        #if self.exec_loop()==QDialog.Accepted:
+        #if self.exec_()==QDialog.Accepted:
             #newlist = []
             #for i in range(self.selectedlist.count()):
                 #newlist.append(unicode(self.selectedlist.item(i).text()))
@@ -1475,7 +1475,7 @@ class UserDeleteDialog(KDialog):
         primarygroupname = primarygroupobj.getGroupname()
         self.deletegroupcheckbox.setText(i18n("Delete group '%1' (%2)").arg(primarygroupname).arg(primarygroupobj.getGID()))
         self.deletegroupcheckbox.setChecked(len(primarygroupobj.getUsers())==1)
-        if self.exec_loop()==QDialog.Accepted:
+        if self.exec_()==QDialog.Accepted:
             self.admincontext.removeUser(userobj)
             if self.deletedirectorycheckbox.isChecked():
                 self.admincontext.removeHomeDirectory(userobj)
@@ -1569,7 +1569,7 @@ class OverwriteHomeDirectoryDialog(KDialog):
             .arg(userobj.getHomeDirectory()).arg(userobj.getUsername()) )
         self.radiogroup.setButton(0)
 
-        if self.exec_loop()==QDialog.Accepted:
+        if self.exec_()==QDialog.Accepted:
             if self.radiogroup.selectedId()==0:
                 return OverwriteHomeDirectoryDialog.OK_KEEP
             else:
@@ -1670,7 +1670,7 @@ class GroupEditDialog(KDialog):
 
         self.__updateLists(availablemembers,originalmembers)
 
-        if self.exec_loop()==QDialog.Accepted:
+        if self.exec_()==QDialog.Accepted:
             newmembers = []
             for i in range(self.selectedlist.count()):
                 newmembers.append(unicode(self.selectedlist.item(i).text()))
@@ -1707,7 +1707,7 @@ class GroupEditDialog(KDialog):
 
         self.__updateLists(availablemembers,[])
 
-        if self.exec_loop()==QDialog.Accepted:
+        if self.exec_()==QDialog.Accepted:
             self.groupobj.setGroupname(unicode(self.groupnamelabel.text()))
             newgroupid = int(unicode(self.groupidlabel.text()))
             self.groupobj.setGID(newgroupid)
@@ -1811,4 +1811,4 @@ if standalone:
 
     kapp = KApplication()
     userconfigapp = UserConfigApp()
-    userconfigapp.exec_loop()
+    userconfigapp.exec_()
