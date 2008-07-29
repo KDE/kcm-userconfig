@@ -16,6 +16,11 @@
 #                                                                         #
 ###########################################################################
 
+# KDE imports
+from PyKDE4.kdecore import *
+
+import locale
+
 # Rudd-O convenience class to map groups to privilege names
 class PrivilegeNames(dict):
     """Convenience dict-derived class: map known secondary groups to privilege names, provide default mapping for groups that do not have a description.  This could be replaced by a simple dict() but I simply preferred the class declaration.

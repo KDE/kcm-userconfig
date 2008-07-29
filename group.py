@@ -24,6 +24,8 @@ from PyQt4.QtCore import *
 from PyKDE4.kdecore import *
 from PyKDE4.kdeui import *
 
+import locale
+
 class GroupEditDialog(KDialog):
     def __init__(self,parent,admincontext):
         #KDialogBase.__init__(self,parent,None,True,i18n("Edit Group"),KDialogBase.Ok|KDialogBase.Cancel,

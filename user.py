@@ -25,6 +25,23 @@ from PyKDE4.kdecore import *
 from PyKDE4.kdeui import *
 from PyKDE4.kio import *
 
+import locale
+
+# userconfig imports
+from util.groups import PrivilegeNames
+
+###########################################################################
+def SptimeToQDate(sptime):
+    t = QDateTime()
+    t.setTime_t(0)
+    return t.addDays(sptime).date()
+
+###########################################################################
+def QDateToSptime(qdate):
+    x = QDateTime()
+    x.setTime_t(0)
+    return x.daysTo(QDateTime(qdate))
+
 class UserEditDialog(KPageDialog):
     def __init__(self,parent,admincontext):
         #KDialogBase.__init__(self,KJanusWidget.Tabbed,i18n("User Account"),KDialogBase.Ok|KDialogBase.Cancel,
@@ -58,7 +75,7 @@ class UserEditDialog(KPageDialog):
         hb.setStretchFactor(label,0)
         label = QLabel(i18n("Status:"),hb)
         hb.setStretchFactor(label,1)
-        infogrid.addWidget(hb,0,1,0,0)
+        infogrid.addWidget(hb,0,1,1,1)
 
         self.enabledradio = QRadioButton(i18n("Enabled"),detailspace)
         infogrid.addWidget(self.enabledradio,0,1)
@@ -131,9 +148,9 @@ class UserEditDialog(KPageDialog):
         item.setHeader( i18n( "Privileges and groups" ) )
 
         # Rudd-O now here we create the widget that will hold the group listing, and fill it with the groups.
-        self.privilegeslistview = QListView(groupshbox)
+        self.privilegeslistview = QListWidget(groupshbox)
         #self.privilegeslistview.addColumn(i18n("Privilege"),-1)
-        self.groupslistview = QListView(groupshbox)
+        self.groupslistview = QListWidget(groupshbox)
         #self.groupslistview.addColumn(i18n("Secondary group"),-1)
         groupshbox.setStretchFactor(self.privilegeslistview,3)
         groupshbox.setStretchFactor(self.groupslistview,2)
@@ -272,7 +289,7 @@ class UserEditDialog(KPageDialog):
             else:
                 name = unicode(group).encode(locale.getpreferredencoding())
                 wid = self.groupslistview
-            self.secondarygroupcheckboxes[group] = QCheckListItem(wid,name,QCheckListItem.CheckBox)
+            self.secondarygroupcheckboxes[group] = QListWidgetItem(name, wid)
 
     ########################################################################
     def showEditUser(self,userid):
@@ -280,15 +297,15 @@ class UserEditDialog(KPageDialog):
         self.newusermode = False
         self.userobj = self.admincontext.lookupUID(userid)
         self.userid = userid
-        self.passwordedit.erase()
+        self.passwordedit.clear()
         self.selectedgroups = [g.getGroupname() for g in self.userobj.getGroups()
             if g is not self.userobj.getPrimaryGroup()]
         
         # Rudd-O: now here we tick the appropriate group listing checkbox, and hide the currently active primary group of the user.  We are repopulating because if the user to edit changes, we need to hide the user's secondary group.  FIXME we should repopulate the groups privileges list when the primary group is changed in the other tab -- that is, on the change slot of the primary group drop down.
         self._repopulateGroupsPrivileges(excludegroups=[self.userobj.getPrimaryGroup()])
         for group,checkbox in self.secondarygroupcheckboxes.items():
-            if group in self.selectedgroups: checkbox.setState(QCheckListItem.On)
-            else: checkbox.setState(QCheckListItem.Off)
+            if group in self.selectedgroups: checkbox.setCheckState(Qt.Checked)
+            else: checkbox.setCheckState(Qt.Unchecked)
         
         self.originalgroups = self.selectedgroups[:]
         self.selectedgroups.sort()
@@ -302,20 +319,20 @@ class UserEditDialog(KPageDialog):
             if self.passwordedit.password()!="":
                 self.userobj.setPassword(self.passwordedit.password())
             # Update the groups for this user object. Rudd-O here's when you go in, stud.
-        # we collect the selected groups
-        self.selectedgroups = [ group for group,checkbox in self.secondarygroupcheckboxes.items() if checkbox.isOn() ]
+            # we collect the selected groups
+            self.selectedgroups = [ group for group,checkbox in self.secondarygroupcheckboxes.items() if checkbox.checkState() == Qt.Checked ]
 
-        for g in self.userobj.getGroups(): # this seems wasteful to remove the user from all groups then re-add, why not a cross check?
-            self.userobj.removeFromGroup(g)
-        for gn in self.selectedgroups:
-            self.userobj.addToGroup(self.admincontext.lookupGroupname(gn))
+            for g in self.userobj.getGroups(): # this seems wasteful to remove the user from all groups then re-add, why not a cross check?
+                self.userobj.removeFromGroup(g)
+            for gn in self.selectedgroups:
+                self.userobj.addToGroup(self.admincontext.lookupGroupname(gn))
 
-        primarygroupname = unicode(self.primarygroupedit.currentText())
-        self.userobj.setPrimaryGroup(self.admincontext.lookupGroupname(primarygroupname))
+            primarygroupname = unicode(self.primarygroupedit.currentText())
+            self.userobj.setPrimaryGroup(self.admincontext.lookupGroupname(primarygroupname))
 
-        # Enable/Disable the account            
-        self.userobj.setLocked(self.enabledradiogroup.id(self.enabledradiogroup.selected())!=0)
-        self.admincontext.save()
+            # Enable/Disable the account            
+            self.userobj.setLocked(self.enabledradiogroup.checkedId() != 0)
+            self.admincontext.save()
 
     ########################################################################
     def showNewUser(self):
@@ -334,8 +351,8 @@ class UserEditDialog(KPageDialog):
         # Rudd-O FIXME: now here we tick the proper groups that should be allowed.  Now it selects what userconfig selected before.  FIXME consider adding a drop down that will select the appropriate profile Limited User, Advanced User or Administrator (and see if there is a config file where these profiles can be read).    We are repopulating because if the user to edit changes, we need to hide the user's secondary group.  FIXME we should repopulate the groups privileges list when the primary group is changed in the other tab -- that is, on the change slot of the primary group drop down.
         self._repopulateGroupsPrivileges()
         for group,checkbox in self.secondarygroupcheckboxes.items():
-            if group in self.selectedgroups: checkbox.setState(QCheckListItem.On)
-            else: checkbox.setState(QCheckListItem.Off)
+            if group in self.selectedgroups: checkbox.setCheckState(Qt.Checked)
+            else: checkbox.setCheckState(Qt.Checked)
         
         self.userobj.setHomeDirectory(homedir)
         self.homediredit.setText(homedir)
@@ -356,7 +373,7 @@ class UserEditDialog(KPageDialog):
         self.uidedit.setReadOnly(False)
         self.updatingGUI = False
         self.homedirectoryislinked = True
-        self.passwordedit.erase()
+        self.passwordedit.clear()
         if self.exec_()==QDialog.Accepted:
             self.__updateObjectFromGUI(self.userobj)
 
@@ -451,15 +468,15 @@ class UserEditDialog(KPageDialog):
     ########################################################################
     def __syncGUI(self):
         if self.userobj.isLocked():
-            self.enabledradiogroup.setButton(1)
+            self.enabledradiogroup.button(1).setChecked(True)
         else:
-            self.enabledradiogroup.setButton(0)
+            self.enabledradiogroup.button(0).setChecked(True)
 
         self.loginnameedit.setText(self.userobj.getUsername())
         self.realnameedit.setText(self.userobj.getRealName())
         self.uidedit.setText(unicode(self.userobj.getUID()))
         self.homediredit.setText(self.userobj.getHomeDirectory())
-        self.shelledit.setCurrentText(self.userobj.getLoginShell())
+        self.shelledit.setEditText(self.userobj.getLoginShell())
 
         # Primary Group
         self.primarygroupedit.clear()
@@ -481,16 +498,16 @@ class UserEditDialog(KPageDialog):
             # Existing user mode
             primarygroupname = self.userobj.getPrimaryGroup().getGroupname()
         for group in allgroups:
-            self.primarygroupedit.insertItem(group)
-        self.primarygroupedit.setCurrentText(primarygroupname)
+            self.primarygroupedit.addItem(group)
+        self.primarygroupedit.setEditText(primarygroupname)
 
         # If ShadowExpire is turn off then we change the radio box.
         if self.userobj.getExpirationDate() is None:
-            self.validradiogroup.setButton(0)
+            self.validradiogroup.button(0).setChecked(True)
             self.expiredate.setDisabled(True)
             self.expiredate.setDate(SptimeToQDate(99999L))
         else:
-            self.validradiogroup.setButton(1)
+            self.validradiogroup.button(1).setChecked(True)
             self.expiredate.setDisabled(False)
             self.expiredate.setDate(SptimeToQDate(self.userobj.getExpirationDate()))
 

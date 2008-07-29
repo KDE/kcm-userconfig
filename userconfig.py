@@ -29,7 +29,7 @@ import sys
 import os.path
 import shutil
 from util import unixauthdb
-from util.groups import *   # TODO: Get rid of * imports
+from util.groups import PrivilegeNames
 from user import UserEditDialog, UserDeleteDialog
 from group import GroupEditDialog
 import locale
@@ -43,17 +43,7 @@ standalone = __name__=='__main__'
 isroot = os.getuid()==0
 #isroot = True
 
-###########################################################################
-def SptimeToQDate(sptime):
-    t = QDateTime()
-    t.setTime_t(0)
-    return t.addDays(sptime).date()
 
-###########################################################################
-def QDateToSptime(qdate):
-    x = QDateTime()
-    x.setTime_t(0)
-    return x.daysTo(QDateTime(qdate))
 
 ###########################################################################
 # Try translating this code to C++. I dare ya!
@@ -135,7 +125,7 @@ class UserConfigApp(programbase):
         self.userlist.setSelectionMode(QAbstractItemView.SingleSelection)
         self.userlist.setSelectionBehavior(QAbstractItemView.SelectRows)
 
-        self.connect(self.userlist, SIGNAL("selectionChanged(QListViewItem *)"), self.slotListClicked)
+        self.connect(self.userlist, SIGNAL("currentItemChanged ( QTreeWidgetItem *, QTreeWidgetItem *)"), self.slotListClicked)
         if isroot:
             self.connect(self.userlist, SIGNAL("doubleClicked(QListViewItem *)"), self.slotModifyClicked)
         self.connect(self.userlist, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), self.slotUserContext)
@@ -161,46 +151,47 @@ class UserConfigApp(programbase):
         hbox.setStretchFactor(self.deletebutton,1)
         self.connect(self.deletebutton,SIGNAL("clicked()"),self.slotDeleteClicked)
 
-        detailsgroupbox = QGroupBox(i18n("Details"),vbox)
-        detailsbox = KVBox( detailsgroupbox )
-        userinfovbox = QWidget(detailsbox)
+        userdetails_groupbox = QGroupBox(i18n("Details"),vbox)
+        #detailsbox = KVBox( detailsgroupbox )
+        #userinfovbox = QWidget(detailsbox)
 
-        infogrid = QGridLayout(userinfovbox)
+        infogrid = QGridLayout()
         infogrid.setSpacing(KDialog.spacingHint())
+        userdetails_groupbox.setLayout(infogrid)
 
-        label = QLabel(i18n("Login Name:"),userinfovbox)
+        label = QLabel(i18n("Login Name:"),userdetails_groupbox)
         infogrid.addWidget(label,0,0)
-        self.loginnamelabel = KLineEdit("",userinfovbox)
+        self.loginnamelabel = KLineEdit("",userdetails_groupbox)
         self.loginnamelabel.setReadOnly(True)
         infogrid.addWidget(self.loginnamelabel,0,1)
 
-        label = QLabel(i18n("Real Name:"),userinfovbox)
+        label = QLabel(i18n("Real Name:"),userdetails_groupbox)
         infogrid.addWidget(label,0,2)
-        self.realnamelabel = KLineEdit("",userinfovbox)
+        self.realnamelabel = KLineEdit("",userdetails_groupbox)
         self.realnamelabel.setReadOnly(True)
         infogrid.addWidget(self.realnamelabel,0,3)
 
-        label = QLabel(i18n("UID:"),userinfovbox)
+        label = QLabel(i18n("UID:"),userdetails_groupbox)
         infogrid.addWidget(label,1,0)
-        self.uidlabel = KLineEdit("",userinfovbox)
+        self.uidlabel = KLineEdit("",userdetails_groupbox)
         self.uidlabel.setReadOnly(True)
         infogrid.addWidget(self.uidlabel,1,1)
 
-        label = QLabel(i18n("Status:"),userinfovbox)
+        label = QLabel(i18n("Status:"),userdetails_groupbox)
         infogrid.addWidget(label,1,2)
-        self.statuslabel = KLineEdit("",userinfovbox)
+        self.statuslabel = KLineEdit("",userdetails_groupbox)
         self.statuslabel.setReadOnly(True)
         infogrid.addWidget(self.statuslabel,1,3)
 
-        label = QLabel(i18n("Primary Group:"),userinfovbox)
+        label = QLabel(i18n("Primary Group:"),userdetails_groupbox)
         infogrid.addWidget(label,2,0)
-        self.primarygrouplabel = KLineEdit("",userinfovbox)
+        self.primarygrouplabel = KLineEdit("",userdetails_groupbox)
         self.primarygrouplabel.setReadOnly(True)
         infogrid.addWidget(self.primarygrouplabel,2,1)
 
-        label = QLabel(i18n("Secondary Groups:"),userinfovbox)
+        label = QLabel(i18n("Secondary Groups:"),userdetails_groupbox)
         infogrid.addWidget(label,2,2)
-        self.secondarygrouplabel = KLineEdit("",userinfovbox)
+        self.secondarygrouplabel = KLineEdit("",userdetails_groupbox)
         self.secondarygrouplabel.setReadOnly(True)
         infogrid.addWidget(self.secondarygrouplabel,2,3)
 
@@ -355,7 +346,7 @@ class UserConfigApp(programbase):
         self.close()
 
     #######################################################################
-    def slotListClicked(self,item):
+    def slotListClicked(self,item, previousitem):
         if self.updatingGUI==False:
             for userid in self.useridsToListItems:
                 if self.useridsToListItems[userid]==item:
@@ -490,12 +481,15 @@ class UserConfigApp(programbase):
         lvi.setText(1,userobj.getRealName())
         lvi.setText(2,unicode(userobj.getUID()))
         if userobj.isLocked():
-            lvi.setPixmap(0,UserIcon("hi16-encrypted"))
+            pass
+            #lvi.setPixmap(0,UserIcon("hi16-encrypted")) # TODO
         else:
-            lvi.setPixmap(0,QPixmap())
+            pass
+            #lvi.setPixmap(0,QPixmap())  # TODO
 
     #######################################################################
     def __selectUser(self,userid):
+        print 'Setting user ID to', userid
         self.selecteduserid = userid
         # Only go on if there are actual users.
         if len(self.useridsToListItems)>0:
@@ -740,6 +734,7 @@ def MakeAboutData():
         KAboutData.License_GPL, ki18n("Copyright (C) 2003-2007 Simon Edwards"))
     aboutdata.addAuthor(ki18n("Simon Edwards"), ki18n("Developer"), "simon@simonzone.com", "http://www.simonzone.com/software/")
     aboutdata.addAuthor(ki18n("Sebastian Kügler"), ki18n("Developer"), "sebas@kde.org", "http://vizZzion.org")
+    aboutdata.addAuthor(ki18n("Yuriy Kozlov"), ki18n("Developer"), "yuriy-kozlov@kubuntu.org", "http://www.yktech.us")
     return aboutdata
 
 if standalone:
