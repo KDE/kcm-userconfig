@@ -72,6 +72,8 @@ class GroupEditDialog(KDialog):
         vbox.setStretchFactor(label,0)
         self.availablelist = KListWidget(vbox)
         vbox.setStretchFactor(self.availablelist,1)
+        self.availablelist.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.availablelist.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         # ->, <- Buttons
         vbox = KVBox(hbox)
@@ -96,6 +98,8 @@ class GroupEditDialog(KDialog):
         vbox.setStretchFactor(label,0)
         self.selectedlist = KListWidget(vbox)
         vbox.setStretchFactor(self.selectedlist,1)
+        self.selectedlist.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.selectedlist.setSelectionBehavior(QAbstractItemView.SelectRows)
 
     #######################################################################
     def showEditGroup(self,groupid):
@@ -171,56 +175,56 @@ class GroupEditDialog(KDialog):
 
     #######################################################################
     def slotAddClicked(self):
-        item = self.availablelist.selectedItem()
+        item = self.availablelist.currentItem()
         if item!=None:
-            self.selectedlist.insertItem(item.text())
-            self.availablelist.removeItem(self.availablelist.index(item))
+            self.selectedlist.addItem(item.text())
+            self.availablelist.takeItem(self.availablelist.row(item))
             self._selectFirstAvailable()
             self._selectFirstSelected()
-            self.addbutton.setDisabled(self.availablelist.selectedItem()==None)
-            self.removebutton.setDisabled(self.selectedlist.selectedItem()==None)
+            self.addbutton.setDisabled(self.availablelist.currentItem()==None)
+            self.removebutton.setDisabled(self.selectedlist.currentItem()==None)
 
     #######################################################################
     def slotRemoveClicked(self):
-        item = self.selectedlist.selectedItem()
+        item = self.selectedlist.currentItem()
         if item!=None:
-            self.availablelist.insertItem(item.text())
-            self.selectedlist.removeItem(self.selectedlist.index(item))
+            self.availablelist.addItem(item.text())
+            self.selectedlist.takeItem(self.selectedlist.row(item))
             self._selectFirstAvailable()
             self._selectFirstSelected()
-            self.addbutton.setDisabled(self.availablelist.selectedItem()==None)
-            self.removebutton.setDisabled(self.selectedlist.selectedItem()==None)
+            self.addbutton.setDisabled(self.availablelist.currentItem()==None)
+            self.removebutton.setDisabled(self.selectedlist.currentItem()==None)
 
     #######################################################################
     def __updateLists(self,grouplist,selectedlist):
         self.selectedlist.clear()
         for item in selectedlist:
-            self.selectedlist.insertItem(item)
-        self.selectedlist.sort()
+            self.selectedlist.addItem(item)
+        self.selectedlist.sortItems()
 
         self.availablelist.clear()
         for item in grouplist:
             if item not in selectedlist:
-                self.availablelist.insertItem(item)
-        self.availablelist.sort()
+                self.availablelist.addItem(item)
+        self.availablelist.sortItems()
 
         self._selectFirstAvailable()
-        self.addbutton.setDisabled(self.availablelist.selectedItem()==None)
+        self.addbutton.setDisabled(self.availablelist.currentItem()==None)
 
         self._selectFirstSelected()
-        self.removebutton.setDisabled(self.selectedlist.selectedItem()==None)
+        self.removebutton.setDisabled(self.selectedlist.currentItem()==None)
 
     #######################################################################
     def _selectFirstAvailable(self):
         if self.availablelist.count()!=0:
-            if self.availablelist.selectedItem()==None:
-                self.availablelist.setSelected(0,True)
+            if self.availablelist.currentItem()==None:
+                self.availablelist.setCurrentRow(0)
 
     #######################################################################
     def _selectFirstSelected(self):
         if self.selectedlist.count()!=0:
-            if self.selectedlist.selectedItem()==None:
-                self.selectedlist.setSelected(0,True)
+            if self.selectedlist.currentItem()==None:
+                self.selectedlist.setCurrentRow(0)
 
     #######################################################################
     def __fudgeNewGroupName(self,basename):

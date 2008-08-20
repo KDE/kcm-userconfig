@@ -463,7 +463,9 @@ class UserConfigApp(programbase):
                 itemstrings.append(unicode(uid))
                 lvi = QTreeWidgetItem(self.userlist,itemstrings)
                 if userobj.isLocked():
-                    lvi.setPixmap(0,UserIcon("hi16-encrypted"))
+                    # TODO
+                    pass
+                    #lvi.setPixmap(0,UserIcon("hi16-encrypted"))
                 self.useridsToListItems[uid] = lvi
                 if self.selecteduserid==uid:
                     firstselecteduserid = uid
