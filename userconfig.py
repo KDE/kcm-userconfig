@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 ###########################################################################
-# userconfig.py - description                                             #
+# userconfig.py - main program for userconfig control module              #
 # ------------------------------                                          #
 # begin     : Wed Apr 30 2003                                             #
 # copyright : (C) 2003-2006 by Simon Edwards, 2008 by Yuriy Kozlov        #

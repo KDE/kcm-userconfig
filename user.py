@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 ###########################################################################
-# userconfig.py - description                                             #
+# user.py - configuration for users for userconfig                        #
 # ------------------------------                                          #
 # begin     : Wed Apr 30 2003                                             #
 # copyright : (C) 2003-2006 by Simon Edwards, 2008 by Yuriy Kozlov        #
