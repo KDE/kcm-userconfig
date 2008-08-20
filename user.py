@@ -16,6 +16,8 @@
 #                                                                         #
 ###########################################################################
 
+import os.path
+
 # Qt imports
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
@@ -491,9 +493,10 @@ class UserEditDialog(KPageDialog):
 
         if self.newusermode:
             # New user mode
-            self.newprimarygroupname = self.__fudgeNewGroupName(unicode(self.userobj.getUsername()))
+            self.newprimarygroupname = \
+                self.__fudgeNewGroupName(unicode(self.userobj.getUsername()))
             primarygroupname = self.newprimarygroupname
-            self.primarygroupedit.insertItem(self.newprimarygroupname)
+            self.primarygroupedit.addItem(self.newprimarygroupname)
         else:
             # Existing user mode
             primarygroupname = self.userobj.getPrimaryGroup().getGroupname()
