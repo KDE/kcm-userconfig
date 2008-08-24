@@ -12,22 +12,6 @@
   <property name="windowTitle" >
    <string>Dialog</string>
   </property>
-  <widget class="QDialogButtonBox" name="buttonBox" >
-   <property name="geometry" >
-    <rect>
-     <x>170</x>
-     <y>360</y>
-     <width>341</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="orientation" >
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons" >
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-   </property>
-  </widget>
   <widget class="QTabWidget" name="tabWidget" >
    <property name="geometry" >
     <rect>
@@ -38,7 +22,7 @@
     </rect>
    </property>
    <property name="currentIndex" >
-    <number>0</number>
+    <number>2</number>
    </property>
    <widget class="QWidget" name="tab" >
     <attribute name="title" >
@@ -46,21 +30,21 @@
     </attribute>
     <layout class="QGridLayout" name="gridLayout" >
      <item row="0" column="0" >
-      <widget class="QLabel" name="label_7" >
+      <widget class="QLabel" name="statusLabel" >
        <property name="text" >
         <string>Status:</string>
        </property>
       </widget>
      </item>
      <item row="0" column="1" >
-      <widget class="QRadioButton" name="radioButton_2" >
+      <widget class="QRadioButton" name="enabledradio" >
        <property name="text" >
         <string>Enabled</string>
        </property>
       </widget>
      </item>
      <item row="1" column="1" >
-      <widget class="QRadioButton" name="radioButton" >
+      <widget class="QRadioButton" name="disabledradio" >
        <property name="text" >
         <string>Disabled</string>
        </property>
@@ -74,7 +58,7 @@
       </widget>
      </item>
      <item row="2" column="1" colspan="2" >
-      <widget class="QLineEdit" name="lineEdit_3" />
+      <widget class="QLineEdit" name="loginnameedit" />
      </item>
      <item row="3" column="0" >
       <widget class="QLabel" name="label_5" >
@@ -84,7 +68,7 @@
       </widget>
      </item>
      <item row="3" column="1" colspan="2" >
-      <widget class="QLineEdit" name="lineEdit_2" />
+      <widget class="QLineEdit" name="realnameedit" />
      </item>
      <item row="4" column="0" >
       <widget class="QLabel" name="label_4" >
@@ -94,7 +78,7 @@
       </widget>
      </item>
      <item row="4" column="1" colspan="2" >
-      <widget class="QLineEdit" name="lineEdit" />
+      <widget class="QLineEdit" name="uidedit" />
      </item>
      <item row="5" column="0" >
       <widget class="QLabel" name="label_3" >
@@ -104,7 +88,7 @@
       </widget>
      </item>
      <item row="5" column="1" colspan="2" >
-      <widget class="QComboBox" name="comboBox" />
+      <widget class="QComboBox" name="primarygroupedit" />
      </item>
      <item row="6" column="0" >
       <widget class="QLabel" name="label_2" >
@@ -113,11 +97,8 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="1" >
-      <widget class="KLineEdit" name="klineedit_2" />
-     </item>
      <item row="6" column="2" >
-      <widget class="QPushButton" name="pushButton" >
+      <widget class="QPushButton" name="homedirbutton" >
        <property name="text" >
         <string>Browse...</string>
        </property>
@@ -130,12 +111,8 @@
        </property>
       </widget>
      </item>
-     <item row="7" column="1" colspan="2" >
-      <widget class="KLineEdit" name="klineedit" >
-       <property name="showClearButton" stdset="0" >
-        <bool>true</bool>
-       </property>
-      </widget>
+     <item row="6" column="1" >
+      <widget class="QLineEdit" name="homediredit" />
      </item>
     </layout>
    </widget>
@@ -143,7 +120,7 @@
     <attribute name="title" >
      <string>Privileges and Groups</string>
     </attribute>
-    <widget class="QListWidget" name="listWidget" >
+    <widget class="QListWidget" name="privilegeslistview" >
      <property name="geometry" >
       <rect>
        <x>10</x>
@@ -153,7 +130,7 @@
       </rect>
      </property>
     </widget>
-    <widget class="QListWidget" name="listWidget_2" >
+    <widget class="QListWidget" name="groupslistview" >
      <property name="geometry" >
       <rect>
        <x>340</x>
@@ -194,29 +171,19 @@
     <attribute name="title" >
      <string>Password/Security</string>
     </attribute>
-    <widget class="KDateWidget" name="kdatewidget" >
-     <property name="geometry" >
-      <rect>
-       <x>129</x>
-       <y>107</y>
-       <width>361</width>
-       <height>32</height>
-      </rect>
-     </property>
-    </widget>
     <widget class="QGroupBox" name="groupBox" >
      <property name="geometry" >
       <rect>
        <x>10</x>
        <y>140</y>
        <width>481</width>
-       <height>161</height>
+       <height>171</height>
       </rect>
      </property>
      <property name="title" >
       <string>Password Aging</string>
      </property>
-     <widget class="QWidget" name="" >
+     <widget class="QWidget" name="layoutWidget" >
       <property name="geometry" >
        <rect>
         <x>20</x>
@@ -227,14 +194,24 @@
       </property>
       <layout class="QGridLayout" name="gridLayout_2" >
        <item row="0" column="0" >
-        <widget class="QCheckBox" name="checkBox" >
+        <widget class="QCheckBox" name="forcepasswordchangecheckbox" >
          <property name="text" >
           <string>Require new password after:</string>
          </property>
         </widget>
        </item>
        <item row="0" column="1" >
-        <widget class="QSpinBox" name="spinBox" />
+        <widget class="QSpinBox" name="maximumpasswordedit" >
+         <property name="suffix" >
+          <string> days</string>
+         </property>
+         <property name="minimum" >
+          <number>1</number>
+         </property>
+         <property name="maximum" >
+          <number>1825</number>
+         </property>
+        </widget>
        </item>
        <item row="1" column="0" >
         <widget class="QLabel" name="label_13" >
@@ -244,27 +221,51 @@
         </widget>
        </item>
        <item row="1" column="1" >
-        <widget class="QSpinBox" name="spinBox_2" />
+        <widget class="QSpinBox" name="warningedit" >
+         <property name="suffix" >
+          <string> days</string>
+         </property>
+         <property name="prefix" >
+          <string>After </string>
+         </property>
+         <property name="maximum" >
+          <number>1825</number>
+         </property>
+        </widget>
        </item>
        <item row="2" column="0" >
         <widget class="QLabel" name="label_14" >
          <property name="text" >
-          <string>Disable account after password expieres:</string>
+          <string>Disable account after password expires:</string>
          </property>
         </widget>
        </item>
        <item row="2" column="1" >
-        <widget class="QSpinBox" name="spinBox_3" />
+        <widget class="QSpinBox" name="disableexpireedit" >
+         <property name="suffix" >
+          <string> days</string>
+         </property>
+         <property name="prefix" >
+          <string>After </string>
+         </property>
+         <property name="maximum" >
+          <number>1825</number>
+         </property>
+        </widget>
        </item>
        <item row="3" column="0" >
-        <widget class="QCheckBox" name="checkBox_2" >
+        <widget class="QCheckBox" name="enforcepasswordminagecheckbox" >
          <property name="text" >
           <string>Enforce minimum password age:</string>
          </property>
         </widget>
        </item>
        <item row="3" column="1" >
-        <widget class="QSpinBox" name="spinBox_4" />
+        <widget class="QSpinBox" name="minimumpasswordedit" >
+         <property name="suffix" >
+          <string> days</string>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -272,24 +273,24 @@
     <widget class="QWidget" name="" >
      <property name="geometry" >
       <rect>
-       <x>11</x>
-       <y>11</y>
-       <width>481</width>
-       <height>128</height>
+       <x>12</x>
+       <y>12</y>
+       <width>471</width>
+       <height>135</height>
       </rect>
      </property>
      <layout class="QGridLayout" name="gridLayout_3" >
       <item row="0" column="0" >
-       <widget class="QLabel" name="label_10" >
+       <widget class="QLabel" name="passwordLabel" >
         <property name="text" >
          <string>Password:</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="1" >
-       <widget class="KLineEdit" name="klineedit_3" >
-        <property name="passwordMode" >
-         <bool>true</bool>
+      <item row="0" column="1" colspan="2" >
+       <widget class="QLineEdit" name="passwordedit" >
+        <property name="echoMode" >
+         <enum>QLineEdit::Password</enum>
         </property>
        </widget>
       </item>
@@ -300,8 +301,8 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="1" >
-       <widget class="QLineEdit" name="lineEdit_4" >
+      <item row="1" column="1" colspan="2" >
+       <widget class="QLineEdit" name="lastchangelabel" >
         <property name="readOnly" >
          <bool>true</bool>
         </property>
@@ -314,15 +315,15 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="1" >
-       <widget class="QRadioButton" name="radioButton_3" >
+      <item row="2" column="1" colspan="2" >
+       <widget class="QRadioButton" name="validalwaysradio" >
         <property name="text" >
          <string>Always</string>
         </property>
        </widget>
       </item>
       <item row="3" column="1" >
-       <widget class="QRadioButton" name="radioButton_4" >
+       <widget class="QRadioButton" name="expireradio" >
         <property name="text" >
          <string/>
         </property>
@@ -332,52 +333,10 @@
     </widget>
    </widget>
   </widget>
+  <zorder>buttonBox</zorder>
+  <zorder>tabWidget</zorder>
+  <zorder>homediredit</zorder>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>KDateWidget</class>
-   <extends>QWidget</extends>
-   <header>kdatewidget.h</header>
-  </customwidget>
-  <customwidget>
-   <class>KLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>klineedit.h</header>
-  </customwidget>
- </customwidgets>
  <resources/>
- <connections>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>accepted()</signal>
-   <receiver>Dialog</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel" >
-     <x>248</x>
-     <y>254</y>
-    </hint>
-    <hint type="destinationlabel" >
-     <x>157</x>
-     <y>274</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonBox</sender>
-   <signal>rejected()</signal>
-   <receiver>Dialog</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel" >
-     <x>316</x>
-     <y>260</y>
-    </hint>
-    <hint type="destinationlabel" >
-     <x>286</x>
-     <y>274</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

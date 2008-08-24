@@ -21,6 +21,7 @@ import os.path
 # Qt imports
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from PyQt4 import uic
 
 # KDE imports
 from PyKDE4.kdecore import *
@@ -49,224 +50,82 @@ class UserEditDialog(KPageDialog):
         #KDialogBase.__init__(self,KJanusWidget.Tabbed,i18n("User Account"),KDialogBase.Ok|KDialogBase.Cancel,
             #KDialogBase.Cancel,parent)
         KPageDialog.__init__( self, parent )
+        if os.path.exists('ui/userproperties.ui'): 
+            self.up = uic.loadUi('ui/userproperties.ui', self)
         self.setFaceType( KPageDialog.Tabbed )
         #self.setObjectName( name )
-        self.setModal( True )
-        self.setCaption( i18n( "User Account" ) )
-        #self.setButtons( KDialog.Ok|KDialog.Cancel) # TODO
+        self.up.setModal( True )
+
 
         self.admincontext = admincontext
         self.updatingGUI = True
 
-        detailshbox = KHBox(self)
-        item = self.addPage( detailshbox, i18n( "Details" ) )
-        item.setHeader( i18n( "Details" ) )
-        detailspace = QWidget(detailshbox)
-
-        infogrid = QGridLayout(detailspace)
-        infogrid.setSpacing(self.spacingHint())
-        #infogrid.setColStretch(0,0)
-        #infogrid.setColStretch(1,1)
 
         self.enabledradiogroup = QButtonGroup()
         #self.enabledradiogroup.setRadioButtonExclusive(True)
-        hb = KHBox(detailspace)
-        hb.setSpacing(self.spacingHint())
-        label = QLabel(hb)
-        label.setPixmap(UserIcon("hi32-identity"))
-        hb.setStretchFactor(label,0)
-        label = QLabel(i18n("Status:"),hb)
-        hb.setStretchFactor(label,1)
-        infogrid.addWidget(hb,0,1,1,1)
+        #self.up.statusLabel.setPixmap(KIcon("user-identity")) #TODO need to learn to do it right!
 
-        self.enabledradio = QRadioButton(i18n("Enabled"),detailspace)
-        infogrid.addWidget(self.enabledradio,0,1)
+        #self.up.statusLabel.setPixmap(KIcon("encrypted")) #TODO need to learn to do it right!
 
-        hbox = KHBox(detailspace)
-        hbox.setSpacing(self.spacingHint())
-        self.disabledradio = QRadioButton(i18n("Disabled"),hbox)
-        hbox.setStretchFactor(self.disabledradio,0)
-        label = QLabel(hbox)
-        label.setPixmap(UserIcon("hi16-encrypted"))
-        hbox.setStretchFactor(label,1)        
-        infogrid.addWidget(hbox,1,1)
+        self.enabledradiogroup.addButton(self.up.enabledradio,0)
+        self.enabledradiogroup.addButton(self.up.disabledradio,1)
 
-        self.enabledradiogroup.addButton(self.enabledradio,0)
-        self.enabledradiogroup.addButton(self.disabledradio,1)
+        self.up.loginnameedit.setValidator(LoginNameValidator(self.up.loginnameedit))
 
-        label = QLabel(i18n("Login Name:"),detailspace)
-        infogrid.addWidget(label,2,0)
-        self.loginnameedit = KLineEdit("",detailspace)
-        self.loginnameedit.setValidator(LoginNameValidator(self.loginnameedit))
+        self.connect(self.up.loginnameedit, SIGNAL("textChanged(const QString &)"), self.slotLoginChanged)
 
-        infogrid.addWidget(self.loginnameedit,2,1)
-        self.connect(self.loginnameedit, SIGNAL("textChanged(const QString &)"), self.slotLoginChanged)
+        self.up.realnameedit.setValidator(RealUserNameValidator(self.up.realnameedit))
 
-        label = QLabel(i18n("Real Name:"),detailspace)
-        infogrid.addWidget(label,3,0)
-        self.realnameedit = KLineEdit("",detailspace)
-        self.realnameedit.setValidator(RealUserNameValidator(self.realnameedit))
+        self.up.uidedit.setValidator(QIntValidator(0,65535,self.up.tab))
 
-        infogrid.addWidget(self.realnameedit,3,1)
 
-        label = QLabel(i18n("User ID:"),detailspace)
-        infogrid.addWidget(label,4,0)
-        self.uidedit = KLineEdit("",detailspace)
-        self.uidedit.setValidator(QIntValidator(0,65535,detailspace))
-        infogrid.addWidget(self.uidedit,4,1)
 
-        label = QLabel(i18n("Primary Group:"),detailspace)
-        infogrid.addWidget(label,5,0)
-        self.primarygroupedit = KComboBox(False,detailspace)
-        infogrid.addWidget(self.primarygroupedit,5,1)
+        self.connect(self.up.homediredit, SIGNAL("textChanged(const QString &)"), self.slotHomeDirChanged)
+        self.connect(self.up.homedirbutton,SIGNAL("clicked()"),self.slotBrowseHomeDirClicked)
 
-        label = QLabel(i18n("Home Directory:"),detailspace)
-        infogrid.addWidget(label,7,0)
-
-        hbox = KHBox(detailspace)
-        hbox.setSpacing(self.spacingHint())
-        self.homediredit = KLineEdit("",hbox)
-        hbox.setStretchFactor(self.homediredit,1)
-        self.connect(self.homediredit, SIGNAL("textChanged(const QString &)"), self.slotHomeDirChanged)
-        self.homedirbutton = KPushButton(i18n("Browse..."),hbox)
-        hbox.setStretchFactor(self.homedirbutton,0)
-        self.connect(self.homedirbutton,SIGNAL("clicked()"),self.slotBrowseHomeDirClicked)
-        infogrid.addWidget(hbox,7,1)
-
-        label = QLabel(i18n("Shell:"),detailspace)
-        infogrid.addWidget(label,8,0)
-
-        self.shelledit = KComboBox(True,detailspace)
+        self.shelledit = KComboBox(True, self.up.tab)
+        self.up.gridLayout.addWidget(self.shelledit, 6, 1, 1, 1)
         for shell in self.admincontext.getUserShells():
-            self.shelledit.addItem(shell)
-        infogrid.addWidget(self.shelledit,8,1)
+            self.up.shelledit.addItem(shell)
 
         # Rudd-O rules.  Not so much, but enough to rule.
         # yeah it's not my finest hour, but it works like a charm over here.  Please feel free to clean up dead code that I commented
         # I extend my deepest thanks to the people that have worked hard to construct this tool in the first place.  I have no idea who the authors and contributors are, but it would make sense to have all the contributors listed on top of the file.
         # Privileges and groups tab
-        groupshbox = KHBox(self)
-        item = self.addPage( groupshbox, i18n( "Privileges and groups" ) )
-        item.setHeader( i18n( "Privileges and groups" ) )
 
-        # Rudd-O now here we create the widget that will hold the group listing, and fill it with the groups.
-        self.privilegeslistview = QListWidget(groupshbox)
-        #self.privilegeslistview.addColumn(i18n("Privilege"),-1)
-        self.groupslistview = QListWidget(groupshbox)
-        #self.groupslistview.addColumn(i18n("Secondary group"),-1)
-        groupshbox.setStretchFactor(self.privilegeslistview,3)
-        groupshbox.setStretchFactor(self.groupslistview,2)
+        #FIXME Need internationalized tab names
+        #item.setHeader( i18n( "Privileges and groups" ) )
     
         # Password and Security Tab.
-        passwordvbox = KVBox(self)
-        item = self.addPage( passwordvbox, i18n( "Password && Security" ))
-        item.setHeader( i18n("Password && Security" ))
+        # item.setHeader( i18n("Password && Security" )) #FIXME Need internationalization!
 
-        passwordspace = QWidget(passwordvbox)
-        passwordgrid = QGridLayout(passwordspace)
-        passwordgrid.setSpacing(self.spacingHint())
-        #passwordgrid.setColStretch(0,0)
-        #passwordgrid.setColStretch(1,0)
-        #passwordgrid.setColStretch(2,1)
-        passwordvbox.setStretchFactor(passwordspace,0)
 
-        hb = KHBox(passwordspace)
-        hb.setSpacing(self.spacingHint())
-        label = QLabel(hb)
-        label.setPixmap(UserIcon("hi32-password"))
-        hb.setStretchFactor(label,0)
-        label = QLabel(i18n("Password:"),hb)
-        hb.setStretchFactor(label,1)
-        passwordgrid.addWidget(hb,0,0)
+        #FIXME Doesn't work
+        #self.up.passwordLabel.setPixmap(UserIcon("hi32-password"))
 
-        self.passwordedit = KLineEdit(passwordspace)
-        self.passwordedit.setPasswordMode(True)
-        passwordgrid.addWidget(self.passwordedit,0,1)
-
-        # Last Change
-        label = QLabel(i18n("Last changed:"),passwordspace)
-        passwordgrid.addWidget(label,1,0)
-        self.lastchangelabel = KLineEdit("",passwordspace)
-        self.lastchangelabel.setReadOnly(True)
-        passwordgrid.addWidget(self.lastchangelabel,1,1)
 
         self.validradiogroup = QButtonGroup()
         #self.validradiogroup.setRadioButtonExclusive(True) # TODO
 
-        # Valid until.
-        label = QLabel(i18n("Valid until:"),passwordspace)
-        passwordgrid.addWidget(label,2,0)
-        self.validalwaysradio = QRadioButton(i18n("Always"),passwordspace)
-        passwordgrid.addWidget(self.validalwaysradio,2,1)
 
-        hbox = KHBox(passwordspace)
-        hbox.setSpacing(self.spacingHint())
-        self.expireradio = QRadioButton(hbox)
-        hbox.setStretchFactor(self.expireradio,0)
+        self.expiredate = KDateWidget(self.widget)
+        self.gridLayout_3.addWidget(self.expiredate, 3, 2, 1, 1)
 
-        self.expiredate = KDateWidget(hbox)
-        hbox.setStretchFactor(self.expiredate,1)
-        passwordgrid.addWidget(hbox,3,1)
-
-        self.validradiogroup.addButton(self.validalwaysradio,0)
-        self.validradiogroup.addButton(self.expireradio,1)
+        self.validradiogroup.addButton(self.up.validalwaysradio,0)
+        self.validradiogroup.addButton(self.up.expireradio,1)
         self.connect(self.validradiogroup,SIGNAL("clicked(int)"),self.slotValidUntilClicked)
 
         # Password Aging & Expiration.
-        passwordaginggroup = QGroupBox(i18n("Password Aging"),passwordvbox)
-        passwordagingbox = KVBox(passwordaginggroup)
-        #passwordagingbox.setInsideSpacing(self.spacingHint())
-        passwordvbox.setStretchFactor(passwordagingbox,0)
-
-        passwordagingwidget = QWidget(passwordagingbox)
-
-        passwordaginggrid = QGridLayout(passwordagingwidget)
-        passwordaginggrid.setSpacing(self.spacingHint())
 
         # [*] Require new password after: [_____5 days]
-        self.forcepasswordchangecheckbox = QCheckBox(passwordagingwidget)
-        self.connect(self.forcepasswordchangecheckbox,SIGNAL("toggled(bool)"),self.slotForcePasswordChangeToggled)
-        passwordaginggrid.addWidget(self.forcepasswordchangecheckbox,0,0)
-        label = QLabel(i18n("Require new password after:"),passwordagingwidget)
-        passwordaginggrid.addWidget(label,0,1) 
-        self.maximumpasswordedit = QSpinBox(passwordagingwidget)
-        self.maximumpasswordedit.setSuffix(i18n(" days"))
-        self.maximumpasswordedit.setMinimum(1)
-        self.maximumpasswordedit.setMaximum(365*5)
-        passwordaginggrid.addWidget(self.maximumpasswordedit,0,2)
+        self.connect(self.up.forcepasswordchangecheckbox,SIGNAL("toggled(bool)"),self.slotForcePasswordChangeToggled)
 
-        label = QLabel(i18n("Warn before password expires:"),passwordagingwidget)
-        passwordaginggrid.addWidget(label,1,1)
-        self.warningedit = QSpinBox(passwordagingwidget)
-        self.warningedit.setPrefix(i18n("After "))
-        self.warningedit.setSuffix(i18n(" days"))
-        self.warningedit.setMinimum(0)
-        self.warningedit.setMaximum(365*5)
-        self.warningedit.setSpecialValueText(i18n("Never"))
-        passwordaginggrid.addWidget(self.warningedit,1,2)
+        self.up.warningedit.setSpecialValueText(i18n("Never"))
 
-        label = QLabel(i18n("Disable account after password expires:"),passwordagingwidget)
-        passwordaginggrid.addWidget(label,2,1)
-        self.disableexpireedit = QSpinBox(passwordagingwidget)
-        self.disableexpireedit.setPrefix(i18n("After "))
-        self.disableexpireedit.setSuffix(i18n(" days"))
-        self.disableexpireedit.setMinimum(0)
-        self.disableexpireedit.setMaximum(365*5)
-        self.disableexpireedit.setSpecialValueText(i18n("Never"))
-        passwordaginggrid.addWidget(self.disableexpireedit,2,2)
+        self.up.disableexpireedit.setSpecialValueText(i18n("Never"))
 
-        self.enforcepasswordminagecheckbox = QCheckBox(passwordagingwidget)
-        self.connect(self.enforcepasswordminagecheckbox,SIGNAL("toggled(bool)"),self.slotEnforePasswordAgeToggled)
-        passwordaginggrid.addWidget(self.enforcepasswordminagecheckbox,3,0)
+        self.connect(self.up.enforcepasswordminagecheckbox,SIGNAL("toggled(bool)"),self.slotEnforePasswordAgeToggled)
 
-        label = QLabel(i18n("Enforce minimum password age:"),passwordagingwidget)
-        passwordaginggrid.addWidget(label,3,1)
-        self.minimumpasswordedit = QSpinBox(passwordagingwidget)
-        self.minimumpasswordedit.setSuffix(i18n(" days"))
-        passwordaginggrid.addWidget(self.minimumpasswordedit,3,2)
-
-        spacer = QWidget(passwordvbox)
-        passwordvbox.setStretchFactor(spacer,1)
 
         self.homedirdialog = KDirSelectDialog(KUrl.fromPath("/"),True,self)
         self.createhomedirectorydialog = OverwriteHomeDirectoryDialog(None)
@@ -470,18 +329,18 @@ class UserEditDialog(KPageDialog):
     ########################################################################
     def __syncGUI(self):
         if self.userobj.isLocked():
-            self.enabledradiogroup.button(1).setChecked(True)
+            self.up.enabledradiogroup.button(1).setChecked(True)
         else:
-            self.enabledradiogroup.button(0).setChecked(True)
+            self.up.enabledradiogroup.button(0).setChecked(True)
 
-        self.loginnameedit.setText(self.userobj.getUsername())
-        self.realnameedit.setText(self.userobj.getRealName())
-        self.uidedit.setText(unicode(self.userobj.getUID()))
-        self.homediredit.setText(self.userobj.getHomeDirectory())
-        self.shelledit.setEditText(self.userobj.getLoginShell())
+        self.up.loginnameedit.setText(self.userobj.getUsername())
+        self.up.realnameedit.setText(self.userobj.getRealName())
+        self.up.uidedit.setText(unicode(self.userobj.getUID()))
+        self.up.homediredit.setText(self.userobj.getHomeDirectory())
+        self.up.shelledit.setEditText(self.userobj.getLoginShell())
 
         # Primary Group
-        self.primarygroupedit.clear()
+        self.up.primarygroupedit.clear()
         allgroups = [g.getGroupname() for g in self.admincontext.getGroups()]
         allgroups.sort()
         self.availablegroups = allgroups[:]
@@ -496,62 +355,62 @@ class UserEditDialog(KPageDialog):
             self.newprimarygroupname = \
                 self.__fudgeNewGroupName(unicode(self.userobj.getUsername()))
             primarygroupname = self.newprimarygroupname
-            self.primarygroupedit.addItem(self.newprimarygroupname)
+            self.up.primarygroupedit.addItem(self.newprimarygroupname)
         else:
             # Existing user mode
             primarygroupname = self.userobj.getPrimaryGroup().getGroupname()
         for group in allgroups:
-            self.primarygroupedit.addItem(group)
-        self.primarygroupedit.setEditText(primarygroupname)
+            self.up.primarygroupedit.addItem(group)
+        self.up.primarygroupedit.setEditText(primarygroupname)
 
         # If ShadowExpire is turn off then we change the radio box.
         if self.userobj.getExpirationDate() is None:
-            self.validradiogroup.button(0).setChecked(True)
-            self.expiredate.setDisabled(True)
-            self.expiredate.setDate(SptimeToQDate(99999L))
+            self.up.validradiogroup.button(0).setChecked(True)
+            self.up.expiredate.setDisabled(True)
+            self.up.expiredate.setDate(SptimeToQDate(99999L))
         else:
-            self.validradiogroup.button(1).setChecked(True)
-            self.expiredate.setDisabled(False)
-            self.expiredate.setDate(SptimeToQDate(self.userobj.getExpirationDate()))
+            self.up.validradiogroup.button(1).setChecked(True)
+            self.up.expiredate.setDisabled(False)
+            self.up.expiredate.setDate(SptimeToQDate(self.userobj.getExpirationDate()))
 
         if self.userobj.getMaximumPasswordAge() is None:
             # Password aging is turn off
-            self.forcepasswordchangecheckbox.setChecked(False)
+            self.up.forcepasswordchangecheckbox.setChecked(False)
             d = True
         else:
             # Password aging is turn on
-            self.forcepasswordchangecheckbox.setChecked(True)
+            self.up.forcepasswordchangecheckbox.setChecked(True)
             d = False
-        self.warningedit.setDisabled(d)
-        self.maximumpasswordedit.setDisabled(d)
-        self.disableexpireedit.setDisabled(d)
+        self.up.warningedit.setDisabled(d)
+        self.up.maximumpasswordedit.setDisabled(d)
+        self.up.disableexpireedit.setDisabled(d)
 
         if self.userobj.getPasswordExpireWarning() is None:
-            self.warningedit.setValue(0)
+            self.up.warningedit.setValue(0)
         else:
-            self.warningedit.setValue(self.userobj.getPasswordExpireWarning())
+            self.up.warningedit.setValue(self.userobj.getPasswordExpireWarning())
 
         if self.userobj.getMaximumPasswordAge() is None:
-            self.maximumpasswordedit.setValue(30)
+            self.up.maximumpasswordedit.setValue(30)
         else:
-            self.maximumpasswordedit.setValue(self.userobj.getMaximumPasswordAge())
+            self.up.maximumpasswordedit.setValue(self.userobj.getMaximumPasswordAge())
 
         if self.userobj.getPasswordDisableAfterExpire() is None:
-            self.disableexpireedit.setValue(0)
+            self.up.disableexpireedit.setValue(0)
         else:
-            self.disableexpireedit.setValue(self.userobj.getPasswordDisableAfterExpire())
+            self.up.disableexpireedit.setValue(self.userobj.getPasswordDisableAfterExpire())
 
         minage = self.userobj.getMinimumPasswordAgeBeforeChange()
-        self.enforcepasswordminagecheckbox.setChecked(minage>0)
-        self.minimumpasswordedit.setDisabled(minage<=0)
+        self.up.enforcepasswordminagecheckbox.setChecked(minage>0)
+        self.up.minimumpasswordedit.setDisabled(minage<=0)
         if minage<=0:
             minage = 1
-        self.minimumpasswordedit.setValue(minage)
+        self.up.minimumpasswordedit.setValue(minage)
 
         if self.userobj.getLastPasswordChange() in (None,0):
-            self.lastchangelabel.setText('-');
+            self.up.lastchangelabel.setText('-');
         else:
-            self.lastchangelabel.setText(KGlobal.locale().formatDate(SptimeToQDate(int(self.userobj.getLastPasswordChange()))))
+            self.up.lastchangelabel.setText(KGlobal.locale().formatDate(SptimeToQDate(int(self.userobj.getLastPasswordChange()))))
 
     ########################################################################
     def __updateObjectFromGUI(self,userobj):
@@ -567,24 +426,24 @@ class UserEditDialog(KPageDialog):
             userobj.setPrimaryGroup(groupobj)
 
         # Password expiration.
-        if self.validradiogroup.id(self.validradiogroup.selected())==0:
+        if self.up.validradiogroup.id(self.up.validradiogroup.selected())==0:
             # Password is always valid.
             userobj.setExpirationDate(None)
         else:
             # Password will expire at...
             userobj.setExpirationDate(QDateToSptime(self.expiredate.date()))
 
-        if self.forcepasswordchangecheckbox.isChecked():
+        if self.up.forcepasswordchangecheckbox.isChecked():
             userobj.setMaximumPasswordAge(self.maximumpasswordedit.value())
         else:
             userobj.setMaximumPasswordAge(None)
 
-        if self.disableexpireedit.value()==0:
+        if self.up.disableexpireedit.value()==0:
             userobj.setPasswordDisableAfterExpire(None)
         else:
             userobj.setPasswordDisableAfterExpire(self.disableexpireedit.value())
 
-        if self.enforcepasswordminagecheckbox.isChecked():
+        if self.up.enforcepasswordminagecheckbox.isChecked():
             userobj.setMinimumPasswordAgeBeforeChange(self.minimumpasswordedit.value())
         else:
             userobj.setMinimumPasswordAgeBeforeChange(0)
