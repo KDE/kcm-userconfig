@@ -52,7 +52,6 @@ class UserEditDialog(KPageDialog):
         KPageDialog.__init__( self, parent )
         if os.path.exists('ui/userproperties.ui'): 
             self.up = uic.loadUi('ui/userproperties.ui', self)
-        self.setFaceType( KPageDialog.Tabbed )
         #self.setObjectName( name )
         self.up.setModal( True )
 
@@ -83,8 +82,8 @@ class UserEditDialog(KPageDialog):
         self.connect(self.up.homediredit, SIGNAL("textChanged(const QString &)"), self.slotHomeDirChanged)
         self.connect(self.up.homedirbutton,SIGNAL("clicked()"),self.slotBrowseHomeDirClicked)
 
-        self.shelledit = KComboBox(True, self.up.tab)
-        self.up.gridLayout.addWidget(self.shelledit, 6, 1, 1, 1)
+        self.shelledit = KComboBox(True, self)
+        self.up.gridLayout.addWidget(self.shelledit, 7, 1, 1, 2)
         for shell in self.admincontext.getUserShells():
             self.up.shelledit.addItem(shell)
 
@@ -452,11 +451,11 @@ class UserEditDialog(KPageDialog):
 
     ########################################################################
     def slotBrowseHomeDirClicked(self):
-        fileurl = KURL()
+        fileurl = KUrl()
         fileurl.setPath(self.homediredit.text())
         self.homedirdialog.setCurrentURL(fileurl)
         if self.homedirdialog.exec_()==QDialog.Accepted:
-            self.homediredit.setText(self.homedirdialog.url().path())
+            self.up.homediredit.setText(self.homedirdialog.url().path())
             self.homedirectoryislinked = False
 
     ########################################################################
@@ -469,13 +468,13 @@ class UserEditDialog(KPageDialog):
     ########################################################################
     def slotForcePasswordChangeToggled(self,on):
         on = not on
-        self.warningedit.setDisabled(on)
-        self.maximumpasswordedit.setDisabled(on)
-        self.disableexpireedit.setDisabled(on)
+        self.up.warningedit.setDisabled(on)
+        self.up.maximumpasswordedit.setDisabled(on)
+        self.up.disableexpireedit.setDisabled(on)
 
     ########################################################################
     def slotEnforePasswordAgeToggled(self,on):
-        self.minimumpasswordedit.setDisabled(not on)
+        self.up.minimumpasswordedit.setDisabled(not on)
 
     #######################################################################
     def __fudgeNewGroupName(self,basename):
