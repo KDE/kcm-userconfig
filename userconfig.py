@@ -19,6 +19,7 @@
 #from qt import *
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
+from PyQt4 import uic
 #from kdeui import *
 #from kdecore import *
 #from kfile import *
@@ -58,15 +59,10 @@ class UserConfigApp(programbase):
         KGlobal.locale().insertCatalog("guidance")
 
         if standalone:
-            #KDialogBase.__init__(self,KJanusWidget.Tabbed,i18n("User Accounts and Groups"),
-                #KDialogBase.User1|KDialogBase.Close, KDialogBase.Close)
-            #self.setButtonText(KDialogBase.User1,i18n("About"))
-            KPageDialog.__init__( self, parent )
-            self.setFaceType( KPageDialog.Tabbed )
-            #self.setObjectName( name )
-            #self.setModal( modal )
-            self.setCaption( i18n( "User Accounts and Groups" ) )
-            #self.setButtons( KDialog.User1|KDialog.Close) #TODO
+            QWidget.__init__(self)
+            if os.path.exists('ui/maindialog.ui'): 
+                self.md = uic.loadUi('ui/maindialog.ui', self)
+        #FIXME SRSLY! Need to know where the ui crap'll be installed and check for it there too.
         else:
             KCModule.__init__(self,parent,name)
             self.setButtons(0)
@@ -91,145 +87,47 @@ class UserConfigApp(programbase):
         self.updatingGUI = True
 
 
+
         #self.aboutus = KAboutApplicationDialog(self) #TODO
 
-        # --- User Tab ---
-        if standalone:
-            usershbox = KHBox(self)
-            item = self.addPage( usershbox, i18n( "Users" ) )
-            item.setHeader( i18n( "Users" ) )
-            vbox = KVBox(usershbox)
-        else:
-            vbox = KVBox(tabcontrol)
-            vbox.setMargin(KDialog.marginHint())
+        #self.md.accountLabel.setPixmap(KIcon('user-identity')) #TODO
 
-        vbox.setSpacing(KDialog.spacingHint())
-
-        hb = KHBox(vbox)
-        hb.setSpacing(KDialog.spacingHint())
-        vbox.setStretchFactor(hb,0)
-
-        label = QLabel(hb)
-        label.setPixmap(UserIcon("hi32-user"))
-        hb.setStretchFactor(label,0)
-
-        label = QLabel(i18n("User Accounts:"),hb)
-        hb.setStretchFactor(label,1)
-
-        self.userlist = QTreeWidget(vbox)
-        #self.userlist.addColumn(i18n("Login Name"))
-        #self.userlist.addColumn(i18n("Real Name"))
-        #self.userlist.addColumn(i18n("UID"))
-        self.userlist.setColumnCount( 3 )
-        self.userlist.setAllColumnsShowFocus(True)
-        self.userlist.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.userlist.setSelectionBehavior(QAbstractItemView.SelectRows)
-
-        self.connect(self.userlist, SIGNAL("currentItemChanged ( QTreeWidgetItem *, QTreeWidgetItem *)"), self.slotListClicked)
+        self.connect(self.md.userlist, SIGNAL("currentItemChanged ( QTreeWidgetItem *, QTreeWidgetItem *)"), self.slotListClicked)
         if isroot:
-            self.connect(self.userlist, SIGNAL("doubleClicked(QListViewItem *)"), self.slotModifyClicked)
-        self.connect(self.userlist, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), self.slotUserContext)
+            self.connect(self.md.userlist, SIGNAL("doubleClicked(QListViewItem *)"), self.slotModifyClicked)
+        self.connect(self.md.userlist, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), self.slotUserContext)
 
-        self.showspecialcheckbox = QCheckBox(i18n("Show system accounts"),vbox)
-        vbox.setStretchFactor(self.showspecialcheckbox,0)
-        self.connect(self.showspecialcheckbox,SIGNAL("toggled(bool)"), self.slotShowSystemToggled)
+        self.connect(self.md.showspecialcheckbox,SIGNAL("toggled(bool)"), self.slotShowSystemToggled)
 
-        hbox = KHBox(vbox)
-        hbox.setSpacing(KDialog.spacingHint())
+        self.connect(self.md.modifybutton,SIGNAL("clicked()"),self.slotModifyClicked)
 
-        vbox.setStretchFactor(hbox,0)
+        self.connect(self.md.newbutton,SIGNAL("clicked()"),self.slotNewClicked)
 
-        self.modifybutton = KPushButton(i18n("Modify..."),hbox)
-        hbox.setStretchFactor(self.modifybutton,1)
-        self.connect(self.modifybutton,SIGNAL("clicked()"),self.slotModifyClicked)
+        self.connect(self.md.deletebutton,SIGNAL("clicked()"),self.slotDeleteClicked)
 
-        self.newbutton = KPushButton(i18n("New..."),hbox)
-        hbox.setStretchFactor(self.newbutton,1)
-        self.connect(self.newbutton,SIGNAL("clicked()"),self.slotNewClicked)
+        userdetails_groupbox = self.md.userdetails_groupbox
 
-        self.deletebutton = KPushButton(i18n("Delete..."),hbox)
-        hbox.setStretchFactor(self.deletebutton,1)
-        self.connect(self.deletebutton,SIGNAL("clicked()"),self.slotDeleteClicked)
+        # FIXME need to implement w/ ui file when we can
+        #if not standalone:
+            #tabcontrol.addTab(vbox,i18n("Users"))
 
-        userdetails_groupbox = QGroupBox(i18n("Details"),vbox)
-        #detailsbox = KVBox( detailsgroupbox )
-        #userinfovbox = QWidget(detailsbox)
+        ##--- Groups Tab ---
+        #if standalone:
+            #groupsvbox = KVBox(self)
+            #item = self.addPage( groupsvbox, i18n( "Groups" ) )
+            #item.setHeader( i18n( "Groups" ) )
+            #hb = KHBox(groupsvbox)
+        #else:
+            #groupsvbox = KVBox(tabcontrol)
+            #groupsvbox.setMargin(KDialog.marginHint())
+            #hb = KHBox(groupsvbox)
 
-        infogrid = QGridLayout()
-        infogrid.setSpacing(KDialog.spacingHint())
-        userdetails_groupbox.setLayout(infogrid)
 
-        label = QLabel(i18n("Login Name:"),userdetails_groupbox)
-        infogrid.addWidget(label,0,0)
-        self.loginnamelabel = KLineEdit("",userdetails_groupbox)
-        self.loginnamelabel.setReadOnly(True)
-        infogrid.addWidget(self.loginnamelabel,0,1)
+        #FIXME: Need to find Oxygen group icon
+        #self.groupLabel.setPixmap(KIcon('user-identity')) #Also need to do this right, lolz
 
-        label = QLabel(i18n("Real Name:"),userdetails_groupbox)
-        infogrid.addWidget(label,0,2)
-        self.realnamelabel = KLineEdit("",userdetails_groupbox)
-        self.realnamelabel.setReadOnly(True)
-        infogrid.addWidget(self.realnamelabel,0,3)
-
-        label = QLabel(i18n("UID:"),userdetails_groupbox)
-        infogrid.addWidget(label,1,0)
-        self.uidlabel = KLineEdit("",userdetails_groupbox)
-        self.uidlabel.setReadOnly(True)
-        infogrid.addWidget(self.uidlabel,1,1)
-
-        label = QLabel(i18n("Status:"),userdetails_groupbox)
-        infogrid.addWidget(label,1,2)
-        self.statuslabel = KLineEdit("",userdetails_groupbox)
-        self.statuslabel.setReadOnly(True)
-        infogrid.addWidget(self.statuslabel,1,3)
-
-        label = QLabel(i18n("Primary Group:"),userdetails_groupbox)
-        infogrid.addWidget(label,2,0)
-        self.primarygrouplabel = KLineEdit("",userdetails_groupbox)
-        self.primarygrouplabel.setReadOnly(True)
-        infogrid.addWidget(self.primarygrouplabel,2,1)
-
-        label = QLabel(i18n("Secondary Groups:"),userdetails_groupbox)
-        infogrid.addWidget(label,2,2)
-        self.secondarygrouplabel = KLineEdit("",userdetails_groupbox)
-        self.secondarygrouplabel.setReadOnly(True)
-        infogrid.addWidget(self.secondarygrouplabel,2,3)
-
-        if not standalone:
-            tabcontrol.addTab(vbox,i18n("Users"))
-
-        #--- Groups Tab ---
-        if standalone:
-            groupsvbox = KVBox(self)
-            item = self.addPage( groupsvbox, i18n( "Groups" ) )
-            item.setHeader( i18n( "Groups" ) )
-            hb = KHBox(groupsvbox)
-        else:
-            groupsvbox = KVBox(tabcontrol)
-            groupsvbox.setMargin(KDialog.marginHint())
-            hb = KHBox(groupsvbox)
-
-        topframe = QFrame(groupsvbox)
-        groupsvbox.setSpacing(KDialog.spacingHint())
-        hb.setSpacing(KDialog.spacingHint())
-        groupsvbox.setStretchFactor(hb,0)
-
-        label = QLabel(hb)
-        label.setPixmap(UserIcon("hi32-group"))
-        hb.setStretchFactor(label,0)
-
-        label = QLabel(i18n("Groups:"),hb)
-        hb.setStretchFactor(label,1)
-
-        groupsplitter = QSplitter(Qt.Vertical,groupsvbox)
         
-        self.grouplist = QTreeWidget(groupsplitter)
-        #self.grouplist.addColumn(i18n("Group Name"))
-        #self.grouplist.addColumn(i18n("GID"))
-        self.userlist.setColumnCount( 2 )
-        self.grouplist.setAllColumnsShowFocus(True)
-        self.grouplist.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.grouplist.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.grouplist = self.md.grouplist
         self.connect(self.grouplist, SIGNAL("selectionChanged(QListViewItem *)"), self.slotGroupListClicked)
 
         if isroot:
@@ -237,57 +135,30 @@ class UserConfigApp(programbase):
         self.connect(self.grouplist, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), 
                 self.slotGroupContext)
 
-        groupbottomvbox = KVBox(groupsplitter)
-        groupbottomvbox.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
+        self.connect(self.md.showspecialgroupscheckbox,SIGNAL("toggled(bool)"), self.slotShowSystemGroupsToggled)
 
-        self.showspecialgroupscheckbox = QCheckBox(i18n("Show system groups"),groupbottomvbox)
-        vbox.setStretchFactor(self.showspecialgroupscheckbox,0)
-        self.connect(self.showspecialgroupscheckbox,SIGNAL("toggled(bool)"), self.slotShowSystemGroupsToggled)
+        self.connect(self.md.modifygroupbutton,SIGNAL("clicked()"),self.slotModifyGroupClicked)
 
-        hbox = KHBox(groupbottomvbox)
-        hbox.setSpacing(KDialog.spacingHint())
+        self.connect(self.md.newgroupbutton,SIGNAL("clicked()"),self.slotNewGroupClicked)
 
-        groupsvbox.setStretchFactor(hbox,0)
-
-        self.modifygroupbutton = KPushButton(i18n("Modify..."),hbox)
-        hbox.setStretchFactor(self.modifygroupbutton,1)
-        self.connect(self.modifygroupbutton,SIGNAL("clicked()"),self.slotModifyGroupClicked)
-
-        self.newgroupbutton = KPushButton(i18n("New..."),hbox)
-        hbox.setStretchFactor(self.newgroupbutton,1)
-        self.connect(self.newgroupbutton,SIGNAL("clicked()"),self.slotNewGroupClicked)
-
-        self.deletegroupbutton = KPushButton(i18n("Delete..."),hbox)
-        hbox.setStretchFactor(self.deletegroupbutton,1)
-        self.connect(self.deletegroupbutton,SIGNAL("clicked()"),self.slotDeleteGroupClicked)
+        self.connect(self.md.deletegroupbutton,SIGNAL("clicked()"),self.slotDeleteGroupClicked)
 
         if not isroot:
-            disablebuttons = (  self.modifybutton, self.modifygroupbutton, self.deletebutton, self.deletegroupbutton,
-                                self.newbutton, self.newgroupbutton)
+            disablebuttons = (  self.md.modifybutton, self.md.modifygroupbutton, self.md.deletebutton, self.md.deletegroupbutton,
+                                self.md.newbutton, self.md.newgroupbutton)
             for widget in disablebuttons:
                 widget.setDisabled(True)
 
-        label = QLabel(i18n("Group Members:"),groupbottomvbox)
-        groupsvbox.setStretchFactor(label,0)
-
-        self.groupmemberlist = QTreeWidget(groupbottomvbox)
-        #self.groupmemberlist.addColumn(i18n("Login Name"))
-        #self.groupmemberlist.addColumn(i18n("Real Name"))
-        #self.groupmemberlist.addColumn(i18n("UID"))
-        self.groupmemberlist.setColumnCount( 3 )
-        self.groupmemberlist.setAllColumnsShowFocus(True)
-        self.groupmemberlist.setSelectionMode(QAbstractItemView.SingleSelection)
-        self.groupmemberlist.setSelectionBehavior(QAbstractItemView.SelectRows)
-
-        if not standalone:
-            tabcontrol.addTab(groupsvbox,i18n("Groups"))
+        #FIXME Need to handle non-standalone when it can be non-standalone
+        #if not standalone:
+            #tabcontrol.addTab(groupsvbox,i18n("Groups"))
 
         self.admincontext = unixauthdb.getContext(isroot)
 
         self.updatingGUI = True
 
-        self.showspecialcheckbox.setChecked(self.showsystemaccounts)
-        self.showspecialgroupscheckbox.setChecked(self.showsystemgroups)
+        self.md.showspecialcheckbox.setChecked(self.showsystemaccounts)
+        self.md.showspecialgroupscheckbox.setChecked(self.showsystemgroups)
 
         self.__updateUserList()
         self.__updateGroupList()
@@ -448,7 +319,7 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def __updateUserList(self):
-        self.userlist.clear()
+        self.md.userlist.clear()
         self.useridsToListItems = {}
         firstselecteduserid = None
 
@@ -461,7 +332,7 @@ class UserConfigApp(programbase):
                 itemstrings.append(userobj.getUsername())
                 itemstrings.append(userobj.getRealName())
                 itemstrings.append(unicode(uid))
-                lvi = QTreeWidgetItem(self.userlist,itemstrings)
+                lvi = QTreeWidgetItem(self.md.userlist,itemstrings)
                 if userobj.isLocked():
                     # TODO
                     pass
@@ -497,30 +368,30 @@ class UserConfigApp(programbase):
         if len(self.useridsToListItems)>0:
             lvi = self.useridsToListItems[userid]
             #self.userlist.setSelected(lvi,True)
-            self.userlist.setCurrentItem(lvi)
+            self.md.userlist.setCurrentItem(lvi)
 
             userobj = self.admincontext.lookupUID(userid)
 
             username = userobj.getUsername()
-            self.loginnamelabel.setText(username)
-            self.realnamelabel.setText(userobj.getRealName())
-            self.uidlabel.setText(unicode(userid))
+            self.md.loginnamelabel.setText(username)
+            self.md.realnamelabel.setText(userobj.getRealName())
+            self.md.uidlabel.setText(unicode(userid))
             if userobj.isLocked():
-                self.statuslabel.setText(i18n("Disabled"))
+                self.md.statuslabel.setText(i18n("Disabled"))
             else:
-                self.statuslabel.setText(i18n("Enabled"))
+                self.md.statuslabel.setText(i18n("Enabled"))
 
             # Primary Group
             primarygroupobj = userobj.getPrimaryGroup()
             primarygroupname = primarygroupobj.getGroupname()
-            self.primarygrouplabel.setText(primarygroupname)
+            self.md.primarygrouplabel.setText(primarygroupname)
 
             # Secondary Groups
             secondarygroups = [g.getGroupname() for g in userobj.getGroups() if g is not userobj.getPrimaryGroup()]
-            self.secondarygrouplabel.setText(unicode(i18n(", ")).join(secondarygroups))
+            self.md.secondarygrouplabel.setText(unicode(i18n(", ")).join(secondarygroups))
 
             if isroot:
-                self.deletebutton.setDisabled(userobj.getUID()==0)
+                self.md.deletebutton.setDisabled(userobj.getUID()==0)
 
     #######################################################################
     def __updateGroupList(self):
@@ -555,16 +426,16 @@ class UserConfigApp(programbase):
 
             groupobj = self.admincontext.lookupGID(groupid)
             members = groupobj.getUsers()
-            self.groupmemberlist.clear()
+            self.md.groupmemberlist.clear()
             for userobj in members:
                 if userobj!=None:
                     itemstrings = QStringList()
                     itemstrings.append(userobj.getUsername())
                     itemstrings.append(userobj.getRealName())
                     itemstrings.append(unicode(userobj.getUID()))
-                    lvi = QTreeWidgetItem(self.groupmemberlist,itemstrings)
+                    lvi = QTreeWidgetItem(self.md.groupmemberlist,itemstrings)
             if isroot:
-                self.deletegroupbutton.setDisabled(groupobj.getGID()==0)
+                self.md.deletegroupbutton.setDisabled(groupobj.getGID()==0)
 
     #######################################################################
     def __loadOptions(self):
@@ -575,9 +446,9 @@ class UserConfigApp(programbase):
             #self.resize(size)  # TODO
         #self.config.setGroup("Options")
         self.showsystemaccounts = self.config.group("Options").readEntry("ShowSystemAccounts")
-        self.showspecialcheckbox.setChecked(bool(self.showsystemaccounts))
+        self.md.showspecialcheckbox.setChecked(bool(self.showsystemaccounts))
         self.showsystemgroups = self.config.group("Options").readEntry("ShowSystemGroups")
-        self.showspecialgroupscheckbox.setChecked(bool(self.showsystemgroups))
+        self.md.showspecialgroupscheckbox.setChecked(bool(self.showsystemgroups))
 
     #######################################################################
     def __saveOptions(self):
