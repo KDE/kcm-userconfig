@@ -87,9 +87,6 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="1" colspan="2" >
-      <widget class="QComboBox" name="primarygroupedit" />
-     </item>
      <item row="6" column="0" >
       <widget class="QLabel" name="label_2" >
        <property name="text" >

@@ -77,6 +77,8 @@ class UserEditDialog(KPageDialog):
 
         self.up.uidedit.setValidator(QIntValidator(0,65535,self.up.tab))
 
+        self.primarygroupedit = KComboBox(self.tab)
+        self.gridLayout.addWidget(self.primarygroupedit, 5, 1, 1, 2)
 
 
         self.connect(self.up.homediredit, SIGNAL("textChanged(const QString &)"), self.slotHomeDirChanged)
@@ -134,8 +136,8 @@ class UserEditDialog(KPageDialog):
         # needs listviews to be constructed.  Expects a list of PwdGroups to be excluded
         
         # rehash everything
-        self.privilegeslistview.clear()
-        self.groupslistview.clear()
+        self.up.privilegeslistview.clear()
+        self.up.groupslistview.clear()
         self.secondarygroupcheckboxes = {}
         pn = PrivilegeNames()
         
@@ -145,10 +147,10 @@ class UserEditDialog(KPageDialog):
             if group in excludegroups: continue
             if group in pn:
                 name = i18n(unicode(pn[group]).encode(locale.getpreferredencoding()))
-                wid = self.privilegeslistview
+                wid = self.up.privilegeslistview
             else:
                 name = unicode(group).encode(locale.getpreferredencoding())
-                wid = self.groupslistview
+                wid = self.up.groupslistview
             self.secondarygroupcheckboxes[group] = QListWidgetItem(name, wid)
 
     ########################################################################
@@ -157,7 +159,7 @@ class UserEditDialog(KPageDialog):
         self.newusermode = False
         self.userobj = self.admincontext.lookupUID(userid)
         self.userid = userid
-        self.passwordedit.clear()
+        self.up.passwordedit.clear()
         self.selectedgroups = [g.getGroupname() for g in self.userobj.getGroups()
             if g is not self.userobj.getPrimaryGroup()]
         
@@ -176,8 +178,8 @@ class UserEditDialog(KPageDialog):
         if self.exec_()==QDialog.Accepted:
             self.__updateObjectFromGUI(self.userobj)
             # Set the password.
-            if self.passwordedit.password()!="":
-                self.userobj.setPassword(self.passwordedit.password())
+            if self.up.passwordedit.text()!="":
+                self.userobj.setPassword(str(self.up.passwordedit.text()))
             # Update the groups for this user object. Rudd-O here's when you go in, stud.
             # we collect the selected groups
             self.selectedgroups = [ group for group,checkbox in self.secondarygroupcheckboxes.items() if checkbox.checkState() == Qt.Checked ]
@@ -187,7 +189,7 @@ class UserEditDialog(KPageDialog):
             for gn in self.selectedgroups:
                 self.userobj.addToGroup(self.admincontext.lookupGroupname(gn))
 
-            primarygroupname = unicode(self.primarygroupedit.currentText())
+            primarygroupname = unicode(self.up.primarygroupedit.currentText())
             self.userobj.setPrimaryGroup(self.admincontext.lookupGroupname(primarygroupname))
 
             # Enable/Disable the account            
@@ -287,7 +289,7 @@ class UserEditDialog(KPageDialog):
         ok = True
         # Sanity check all values.
         if self.newusermode:
-            newusername = unicode(self.realnameedit.text())
+            newusername = unicode(self.up.realnameedit.text())
             if self.admincontext.lookupUsername(newusername)!=None:
                 KMessageBox.sorry(self,i18n("Sorry, you must choose a different user name.\n'%1' is already being used.").arg(newusername))
                 ok = False
@@ -314,10 +316,10 @@ class UserEditDialog(KPageDialog):
             if self.newusermode:
                 self.newprimarygroupname = self.__fudgeNewGroupName(newtext)
                 self.updatingGUI = True
-                self.primarygroupedit.changeItem(self.newprimarygroupname,0)
+                #self.up.primarygroupedit.setItemText(self.newprimarygroupname,0) FIXME! Doesn't work...
                 if self.homedirectoryislinked:
                     homedir = self.__fudgeNewHomeDirectory(newtext)
-                    self.homediredit.setText(homedir)
+                    self.up.homediredit.setText(homedir)
                 self.updatingGUI = False
 
     ########################################################################
@@ -413,19 +415,19 @@ class UserEditDialog(KPageDialog):
 
     ########################################################################
     def __updateObjectFromGUI(self,userobj):
-        username = unicode(self.loginnameedit.text())
+        username = unicode(self.up.loginnameedit.text())
         userobj.setUsername(username)
-        userobj.setRealName(unicode(self.realnameedit.text()))
+        userobj.setRealName(unicode(self.up.realnameedit.text()))
 
-        userobj.setHomeDirectory(unicode(self.homediredit.text()))
-        userobj.setLoginShell(unicode(self.shelledit.currentText()))
-        self.primarygroupname = unicode(self.primarygroupedit.currentText())
+        userobj.setHomeDirectory(unicode(self.up.homediredit.text()))
+        userobj.setLoginShell(unicode(self.up.shelledit.currentText()))
+        self.primarygroupname = unicode(self.up.primarygroupedit.currentText())
         groupobj =  self.admincontext.lookupGroupname(self.primarygroupname)
         if groupobj is not None:
             userobj.setPrimaryGroup(groupobj)
 
         # Password expiration.
-        if self.up.validradiogroup.id(self.up.validradiogroup.selected())==0:
+        if self.validradiogroup.id(self.validradiogroup.checkedButton())==0:
             # Password is always valid.
             userobj.setExpirationDate(None)
         else:
