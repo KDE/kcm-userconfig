@@ -1,0 +1,383 @@
+<ui version="4.0" >
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>517</width>
+    <height>401</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>Dialog</string>
+  </property>
+  <widget class="QDialogButtonBox" name="buttonBox" >
+   <property name="geometry" >
+    <rect>
+     <x>170</x>
+     <y>360</y>
+     <width>341</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="orientation" >
+    <enum>Qt::Horizontal</enum>
+   </property>
+   <property name="standardButtons" >
+    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+   </property>
+  </widget>
+  <widget class="QTabWidget" name="tabWidget" >
+   <property name="geometry" >
+    <rect>
+     <x>10</x>
+     <y>0</y>
+     <width>501</width>
+     <height>351</height>
+    </rect>
+   </property>
+   <property name="currentIndex" >
+    <number>0</number>
+   </property>
+   <widget class="QWidget" name="tab" >
+    <attribute name="title" >
+     <string>Details</string>
+    </attribute>
+    <layout class="QGridLayout" name="gridLayout" >
+     <item row="0" column="0" >
+      <widget class="QLabel" name="label_7" >
+       <property name="text" >
+        <string>Status:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1" >
+      <widget class="QRadioButton" name="radioButton_2" >
+       <property name="text" >
+        <string>Enabled</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1" >
+      <widget class="QRadioButton" name="radioButton" >
+       <property name="text" >
+        <string>Disabled</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0" >
+      <widget class="QLabel" name="label_6" >
+       <property name="text" >
+        <string>Login Name:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1" colspan="2" >
+      <widget class="QLineEdit" name="lineEdit_3" />
+     </item>
+     <item row="3" column="0" >
+      <widget class="QLabel" name="label_5" >
+       <property name="text" >
+        <string>Real Name:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1" colspan="2" >
+      <widget class="QLineEdit" name="lineEdit_2" />
+     </item>
+     <item row="4" column="0" >
+      <widget class="QLabel" name="label_4" >
+       <property name="text" >
+        <string>User ID:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1" colspan="2" >
+      <widget class="QLineEdit" name="lineEdit" />
+     </item>
+     <item row="5" column="0" >
+      <widget class="QLabel" name="label_3" >
+       <property name="text" >
+        <string>Primary Group:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1" colspan="2" >
+      <widget class="QComboBox" name="comboBox" />
+     </item>
+     <item row="6" column="0" >
+      <widget class="QLabel" name="label_2" >
+       <property name="text" >
+        <string>Home Directory:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1" >
+      <widget class="KLineEdit" name="klineedit_2" />
+     </item>
+     <item row="6" column="2" >
+      <widget class="QPushButton" name="pushButton" >
+       <property name="text" >
+        <string>Browse...</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0" >
+      <widget class="QLabel" name="label" >
+       <property name="text" >
+        <string>Shell:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1" colspan="2" >
+      <widget class="KLineEdit" name="klineedit" >
+       <property name="showClearButton" stdset="0" >
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="tab_2" >
+    <attribute name="title" >
+     <string>Privileges and Groups</string>
+    </attribute>
+    <widget class="QListWidget" name="listWidget" >
+     <property name="geometry" >
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>321</width>
+       <height>271</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QListWidget" name="listWidget_2" >
+     <property name="geometry" >
+      <rect>
+       <x>340</x>
+       <y>31</y>
+       <width>151</width>
+       <height>271</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_8" >
+     <property name="geometry" >
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>71</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text" >
+      <string>Privileges:</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_9" >
+     <property name="geometry" >
+      <rect>
+       <x>340</x>
+       <y>10</y>
+       <width>63</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text" >
+      <string>Groups:</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_3" >
+    <attribute name="title" >
+     <string>Password/Security</string>
+    </attribute>
+    <widget class="KDateWidget" name="kdatewidget" >
+     <property name="geometry" >
+      <rect>
+       <x>129</x>
+       <y>107</y>
+       <width>361</width>
+       <height>32</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QGroupBox" name="groupBox" >
+     <property name="geometry" >
+      <rect>
+       <x>10</x>
+       <y>140</y>
+       <width>481</width>
+       <height>161</height>
+      </rect>
+     </property>
+     <property name="title" >
+      <string>Password Aging</string>
+     </property>
+     <widget class="QWidget" name="" >
+      <property name="geometry" >
+       <rect>
+        <x>20</x>
+        <y>30</y>
+        <width>451</width>
+        <height>138</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2" >
+       <item row="0" column="0" >
+        <widget class="QCheckBox" name="checkBox" >
+         <property name="text" >
+          <string>Require new password after:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1" >
+        <widget class="QSpinBox" name="spinBox" />
+       </item>
+       <item row="1" column="0" >
+        <widget class="QLabel" name="label_13" >
+         <property name="text" >
+          <string>Warn before password expires:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1" >
+        <widget class="QSpinBox" name="spinBox_2" />
+       </item>
+       <item row="2" column="0" >
+        <widget class="QLabel" name="label_14" >
+         <property name="text" >
+          <string>Disable account after password expieres:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1" >
+        <widget class="QSpinBox" name="spinBox_3" />
+       </item>
+       <item row="3" column="0" >
+        <widget class="QCheckBox" name="checkBox_2" >
+         <property name="text" >
+          <string>Enforce minimum password age:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1" >
+        <widget class="QSpinBox" name="spinBox_4" />
+       </item>
+      </layout>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="" >
+     <property name="geometry" >
+      <rect>
+       <x>11</x>
+       <y>11</y>
+       <width>481</width>
+       <height>128</height>
+      </rect>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_3" >
+      <item row="0" column="0" >
+       <widget class="QLabel" name="label_10" >
+        <property name="text" >
+         <string>Password:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1" >
+       <widget class="KLineEdit" name="klineedit_3" >
+        <property name="passwordMode" >
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" >
+       <widget class="QLabel" name="label_11" >
+        <property name="text" >
+         <string>Last changed:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1" >
+       <widget class="QLineEdit" name="lineEdit_4" >
+        <property name="readOnly" >
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0" >
+       <widget class="QLabel" name="label_12" >
+        <property name="text" >
+         <string>Valid Until:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1" >
+       <widget class="QRadioButton" name="radioButton_3" >
+        <property name="text" >
+         <string>Always</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1" >
+       <widget class="QRadioButton" name="radioButton_4" >
+        <property name="text" >
+         <string/>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>KDateWidget</class>
+   <extends>QWidget</extends>
+   <header>kdatewidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>KLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>klineedit.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>Dialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>Dialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
