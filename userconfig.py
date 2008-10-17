@@ -128,7 +128,7 @@ class UserConfigApp(programbase):
 
         
         self.grouplist = self.md.grouplist
-        self.connect(self.grouplist, SIGNAL("selectionChanged(QListViewItem *)"), self.slotGroupListClicked)
+        self.connect(self.grouplist, SIGNAL("currentItemChanged( QTreeWidgetItem *, QTreeWidgetItem *)"), self.slotGroupListClicked)
 
         if isroot:
             self.connect(self.grouplist, SIGNAL("doubleClicked(QListViewItem *)"), self.slotModifyGroupClicked)
