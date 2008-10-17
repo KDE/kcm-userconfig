@@ -262,16 +262,19 @@ class UserEditDialog(KPageDialog):
 
             # Update the groups for this user object. Rudd-O here's when you go in, stud.
             # we collect the selected groups
-            self.selectedgroups = [ group for group,checkbox in self.secondarygroupcheckboxes.items() if checkbox.isOn() ]
+            # TODO not sure how to fix next line
+            # self.selectedgroups = [ group for group.checkbox in self.secondarygroupcheckboxes.items() if checkbox.isOn() ]
             for gn in self.selectedgroups:
                 self.userobj.addToGroup(self.admincontext.lookupGroupname(gn))
 
             # Set the password.
-            if self.passwordedit.password()!="":
-                self.userobj.setPassword(self.passwordedit.password())
+            # if self.passwordedit.password()!="":
+            if self.passwordedit.text()!="":
+                 self.userobj.setPassword(str(self.passwordedit.text()))
 
             # Enable/Disable the account            
-            self.userobj.setLocked(self.enabledradiogroup.id(self.enabledradiogroup.selected())!=0)
+            #self.userobj.setLocked(self.enabledradiogroup.id(self.enabledradiogroup.selected())!=0)
+            self.userobj.setLocked(self.enabledradiogroup.id(self.enabledradiogroup.checkedButton())!=0)
             self.admincontext.save()
 
             if deleteoldhomedir:
