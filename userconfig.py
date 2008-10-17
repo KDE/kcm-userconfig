@@ -418,6 +418,7 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def __selectGroup(self,groupid):
+        print 'Setting group ID to', groupid
         if groupid:
             self.selectedgroupid = groupid
             lvi = self.groupidsToListItems[groupid]
@@ -445,9 +446,9 @@ class UserConfigApp(programbase):
         #if size.isEmpty()==False:
             #self.resize(size)  # TODO
         #self.config.setGroup("Options")
-        self.showsystemaccounts = self.config.group("Options").readEntry("ShowSystemAccounts")
+        self.showsystemaccounts = bool(int(self.config.group("Options").readEntry("ShowSystemAccounts")))
         self.md.showspecialcheckbox.setChecked(bool(self.showsystemaccounts))
-        self.showsystemgroups = self.config.group("Options").readEntry("ShowSystemGroups")
+        self.showsystemgroups = bool(int(self.config.group("Options").readEntry("ShowSystemGroups")))
         self.md.showspecialgroupscheckbox.setChecked(bool(self.showsystemgroups))
 
     #######################################################################
