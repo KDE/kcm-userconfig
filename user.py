@@ -455,7 +455,7 @@ class UserEditDialog(KPageDialog):
     def slotBrowseHomeDirClicked(self):
         fileurl = KUrl()
         fileurl.setPath(self.homediredit.text())
-        self.homedirdialog.setCurrentURL(fileurl)
+        self.homedirdialog.setCurrentUrl(fileurl)
         if self.homedirdialog.exec_()==QDialog.Accepted:
             self.up.homediredit.setText(self.homedirdialog.url().path())
             self.homedirectoryislinked = False
