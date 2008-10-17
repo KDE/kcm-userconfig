@@ -446,9 +446,17 @@ class UserConfigApp(programbase):
         #if size.isEmpty()==False:
             #self.resize(size)  # TODO
         #self.config.setGroup("Options")
-        self.showsystemaccounts = bool(int(self.config.group("Options").readEntry("ShowSystemAccounts")))
+        self.showsystemaccounts = self.config.group("Options").readEntry("ShowSystemAccounts")
+        if self.showsystemaccounts == '':
+            self.showsystemaccounts == 0
+        else:
+            self.showsystemaccounts = int(self.showsystemaccounts)
         self.md.showspecialcheckbox.setChecked(bool(self.showsystemaccounts))
-        self.showsystemgroups = bool(int(self.config.group("Options").readEntry("ShowSystemGroups")))
+        self.showsystemgroups = self.config.group("Options").readEntry("ShowSystemGroups")
+        if self.showsystemgroups == '':
+            self.showsystemgroups == 0
+        else:
+            self.showsystemgroups = int(self.showsystemgroups)
         self.md.showspecialgroupscheckbox.setChecked(bool(self.showsystemgroups))
 
     #######################################################################
