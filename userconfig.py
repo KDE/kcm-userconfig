@@ -62,7 +62,7 @@ class UserConfigApp(programbase):
             QWidget.__init__(self)
             if os.path.exists('ui/maindialog.ui'): 
                 self.md = uic.loadUi('ui/maindialog.ui', self)
-        #FIXME SRSLY! Need to know where the ui crap'll be installed and check for it there too.
+        #FIXME: SRSLY! Need to know where the ui crap'll be installed and check for it there too.
         else:
             KCModule.__init__(self,parent,name)
             self.setButtons(0)
@@ -249,6 +249,7 @@ class UserConfigApp(programbase):
             self.updatingGUI = True
             self.__updateUserList()
             self.__selectUser(newuid)
+            self.__updateGroupList()
             self.updatingGUI = False
 
     #######################################################################
@@ -257,6 +258,7 @@ class UserConfigApp(programbase):
             self.updatingGUI = True
             self.selecteduserid = None
             self.__updateUserList()
+            self.__updateGroupList()
             self.updatingGUI = False
 
     #######################################################################

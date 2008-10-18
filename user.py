@@ -670,62 +670,66 @@ class OverwriteHomeDirectoryDialog(KDialog):
 
 ###########################################################################
 
-class UserDeleteDialog(KDialog):
+class UserDeleteDialog(KPageDialog):
     def __init__(self,parent,admincontext):
-        KDialog.__init__(self,parent)
-        self.setModal(True)#,Qt.WType_Dialog)
+        KPageDialog.__init__(self,parent)
+        if os.path.exists('ui/deleteuserdialog.ui'): 
+            self.up = uic.loadUi('ui/deleteuserdialog.ui', self)
+
+        self.setModal(True) #,Qt.WType_Dialog)
         self.setCaption(i18n("Delete User Account"))
         self.admincontext = admincontext
         self.updatingGUI = True
 
-        toplayout = QVBoxLayout(self)
-        toplayout.setSpacing(self.spacingHint())
-        toplayout.setMargin(self.marginHint())
+        #toplayout = QVBoxLayout(self)
+        #toplayout = QGridLayout(self)
+        #toplayout.setSpacing(self.spacingHint())
+        #toplayout.setMargin(self.marginHint())
 
-        contentbox = KHBox(self)
-        contentbox.setSpacing(self.spacingHint())
-        toplayout.addWidget(contentbox)
-        toplayout.setStretchFactor(contentbox,1)
+        #contentbox = KHBox(self)
+        #contentbox.setSpacing(self.spacingHint())
+        #toplayout.addWidget(contentbox)
+        #toplayout.setStretchFactor(contentbox,1)
 
-        label = QLabel(contentbox)
+        #label = QLabel(contentbox)
         #label.setPixmap(KGlobal.iconLoader().loadIcon("messagebox_warning", KIcon.NoGroup, KIcon.SizeMedium,
-            #KIcon.DefaultState, None, True)) # TODO
-        contentbox.setStretchFactor(label,0)
+            #KIcon.DefaultState, None, True)) # TODO:
+        #contentbox.setStretchFactor(label,0)
 
-        textbox = KVBox(contentbox)
+        #textbox = KVBox(contentbox)
 
-        textbox.setSpacing(self.spacingHint())
-        textbox.setMargin(self.marginHint())
+        #textbox.setSpacing(self.spacingHint())
+        #textbox.setMargin(self.marginHint())
 
-        self.usernamelabel = QLabel("",textbox)
-        textbox.setStretchFactor(self.usernamelabel,0)
+        #self.usernamelabel = QLabel("",textbox)
+        #textbox.setStretchFactor(self.usernamelabel,0)
 
         # Remove directory checkbox.
-        self.deletedirectorycheckbox = QCheckBox(i18n("Delete home directory ()"),textbox)
-        textbox.setStretchFactor(self.deletedirectorycheckbox,0)
+        #self.deletedirectorycheckbox = QCheckBox(i18n("Delete home directory ()"),textbox)
+        #textbox.setStretchFactor(self.deletedirectorycheckbox,0)
 
         # Delete the User's private group.
-        self.deletegroupcheckbox = QCheckBox(i18n("Delete group ()"),textbox)
-        textbox.setStretchFactor(self.deletegroupcheckbox ,0)
+        #self.deletegroupcheckbox = QCheckBox(i18n("Delete group ()"),textbox)
+        #textbox.setStretchFactor(self.deletegroupcheckbox ,0)
 
         # Buttons
-        buttonbox = KHBox(self)
-        toplayout.addWidget(buttonbox)
+        #buttonbox = KHBox(self)
+        #toplayout.addWidget(buttonbox)
 
-        buttonbox.setSpacing(self.spacingHint())
-        toplayout.setStretchFactor(buttonbox,0)
+        #buttonbox.setSpacing(self.spacingHint())
+        #toplayout.setStretchFactor(buttonbox,0)
 
-        spacer = QWidget(buttonbox)
-        buttonbox.setStretchFactor(spacer,1)
+        #spacer = QWidget(buttonbox)
+        #buttonbox.setStretchFactor(spacer,1)
 
-        okbutton = QPushButton(i18n("OK"),buttonbox)
-        buttonbox.setStretchFactor(okbutton,0)
-        self.connect(okbutton,SIGNAL("clicked()"),self.slotOkClicked)
+        #okbutton = QPushButton(i18n("OK"),buttonbox)
+        #buttonbox.setStretchFactor(okbutton,0)
+        #self.connect(okbutton,SIGNAL("clicked()"),self.slotOkClicked)
 
-        cancelbutton = QPushButton(i18n("Cancel"),buttonbox)
-        cancelbutton.setDefault(True)
-        buttonbox.setStretchFactor(cancelbutton,0)
-        self.connect(cancelbutton,SIGNAL("clicked()"),self.slotCancelClicked)
+        #cancelbutton = QPushButton(i18n("Cancel"),buttonbox)
+        #cancelbutton.setDefault(True)
+        #buttonbox.setStretchFactor(cancelbutton,0)
+        #self.connect(cancelbutton,SIGNAL("clicked()"),self.slotCancelClicked)
 
     def deleteUser(self,userid):
         # Setup the 
