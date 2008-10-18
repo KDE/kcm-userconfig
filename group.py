@@ -139,6 +139,7 @@ class GroupEditDialog(KDialog):
         self.newgroupmode = True
 
         groupname = self.__fudgeNewGroupName(i18n("<Base string for creating new group names>","new_group"))
+        groupname = self.__fudgeNewGroupName(i18n("new_group","new_group"))
 
         self.groupobj = self.admincontext.newGroup(True)
         self.groupobj.setGroupname(groupname)
