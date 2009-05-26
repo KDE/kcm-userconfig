@@ -1,11 +1,13 @@
 #!/usr/bin/python
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 ###########################################################################
 # userconfig.py - main program for userconfig control module              #
 # ------------------------------                                          #
 # begin     : Wed Apr 30 2003                                             #
-# copyright : (C) 2003-2006 by Simon Edwards, 2008 by Yuriy Kozlov        #
-# email     : simon@simonzone.com                                         #
+# copyright : (C) 2003-2006 by Simon Edwards,                             #
+#                 2008-2009 by Yuriy Kozlov, Jonathan Thomas, Ralph Janke #
+# email     : simon@simonzone.com,                                        #
+#             yuriy-kozlov@kubuntu.org                                    #
 #                                                                         #
 ###########################################################################
 #                                                                         #
@@ -16,13 +18,9 @@
 #                                                                         #
 ###########################################################################
 
-#from qt import *
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from PyQt4 import uic
-#from kdeui import *
-#from kdecore import *
-#from kfile import *
 from PyKDE4.kdecore import *
 from PyKDE4.kdeui import *
 from PyKDE4.kio import *
@@ -36,7 +34,7 @@ from group import GroupEditDialog
 import locale
 
 programname = "userconfig"
-version = "0.8.0"
+version = "0.9.0"
 # Are we running as a separate standalone application or in KControl?
 standalone = __name__=='__main__'
 
