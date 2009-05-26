@@ -57,19 +57,24 @@ class UserConfigApp(programbase):
         KGlobal.locale().insertCatalog("guidance")
 
         if standalone:
-            QWidget.__init__(self)
-            if os.path.exists('ui/maindialog.ui'): 
-                self.md = uic.loadUi('ui/maindialog.ui', self)
+            KPageDialog.__init__(self)
+            self.setFaceType(KPageDialog.Tabbed)
+            #if os.path.exists('ui/maindialog.ui'):
+            self.userstab = uic.loadUi('ui/users.ui')
+            self.addPage(self.userstab, i18n("Users") )
+            self.groupstab = uic.loadUi('ui/groups.ui')
+            self.addPage(self.groupstab, i18n("Groups") )
         #FIXME: SRSLY! Need to know where the ui crap'll be installed and check for it there too.
         else:
             KCModule.__init__(self,parent,name)
             self.setButtons(0)
             self.aboutdata = MakeAboutData()
-
-            toplayout = KVBoxLayout( self, 0, KDialog.spacingHint() )
-            tabcontrol = QTabWidget(self)
-            toplayout.addWidget(tabcontrol)
-            toplayout.setStretchFactor(tabcontrol,1)
+            
+            # TODO!
+            #toplayout = KVBoxLayout( self, 0, KDialog.spacingHint() )
+            #tabcontrol = QTabWidget(self)
+            #toplayout.addWidget(tabcontrol)
+            #toplayout.setStretchFactor(tabcontrol,1)
 
         # Create a configuration object.
         self.config = KConfig("userconfigrc")
@@ -83,27 +88,25 @@ class UserConfigApp(programbase):
         self.showsystemgroups = False
 
         self.updatingGUI = True
-
-
-
+        
         #self.aboutus = KAboutApplicationDialog(self) #TODO
 
-        #self.md.accountLabel.setPixmap(KIcon('user-identity')) #TODO
+        #self.userstab.accountLabel.setPixmap(KIcon('user-identity')) #TODO
 
-        self.connect(self.md.userlist, SIGNAL("currentItemChanged ( QTreeWidgetItem *, QTreeWidgetItem *)"), self.slotListClicked)
+        self.connect(self.userstab.userlist, SIGNAL("currentItemChanged ( QTreeWidgetItem *, QTreeWidgetItem *)"), self.slotListClicked)
         if isroot:
-            self.connect(self.md.userlist, SIGNAL("doubleClicked(QListViewItem *)"), self.slotModifyClicked)
-        self.connect(self.md.userlist, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), self.slotUserContext)
+            self.connect(self.userstab.userlist, SIGNAL("doubleClicked(QListViewItem *)"), self.slotModifyClicked)
+        self.connect(self.userstab.userlist, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), self.slotUserContext)
 
-        self.connect(self.md.showspecialcheckbox,SIGNAL("toggled(bool)"), self.slotShowSystemToggled)
+        self.connect(self.userstab.show_sysaccts_checkbox,SIGNAL("toggled(bool)"), self.slotShowSystemToggled)
 
-        self.connect(self.md.modifybutton,SIGNAL("clicked()"),self.slotModifyClicked)
+        self.connect(self.userstab.modifybutton,SIGNAL("clicked()"),self.slotModifyClicked)
 
-        self.connect(self.md.newbutton,SIGNAL("clicked()"),self.slotNewClicked)
+        self.connect(self.userstab.newbutton,SIGNAL("clicked()"),self.slotNewClicked)
 
-        self.connect(self.md.deletebutton,SIGNAL("clicked()"),self.slotDeleteClicked)
+        self.connect(self.userstab.deletebutton,SIGNAL("clicked()"),self.slotDeleteClicked)
 
-        userdetails_groupbox = self.md.userdetails_groupbox
+        userdetails_groupbox = self.userstab.userdetails_groupbox
 
         # FIXME need to implement w/ ui file when we can
         #if not standalone:
@@ -125,7 +128,7 @@ class UserConfigApp(programbase):
         #self.groupLabel.setPixmap(KIcon('user-identity')) #Also need to do this right, lolz
 
         
-        self.grouplist = self.md.grouplist
+        self.grouplist = self.groupstab.grouplist
         self.connect(self.grouplist, SIGNAL("currentItemChanged( QTreeWidgetItem *, QTreeWidgetItem *)"), self.slotGroupListClicked)
 
         if isroot:
@@ -133,17 +136,17 @@ class UserConfigApp(programbase):
         self.connect(self.grouplist, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), 
                 self.slotGroupContext)
 
-        self.connect(self.md.showspecialgroupscheckbox,SIGNAL("toggled(bool)"), self.slotShowSystemGroupsToggled)
+        self.connect(self.groupstab.show_sysgroups_checkbox,SIGNAL("toggled(bool)"), self.slotShowSystemGroupsToggled)
 
-        self.connect(self.md.modifygroupbutton,SIGNAL("clicked()"),self.slotModifyGroupClicked)
+        self.connect(self.groupstab.modifygroupbutton,SIGNAL("clicked()"),self.slotModifyGroupClicked)
 
-        self.connect(self.md.newgroupbutton,SIGNAL("clicked()"),self.slotNewGroupClicked)
+        self.connect(self.groupstab.newgroupbutton,SIGNAL("clicked()"),self.slotNewGroupClicked)
 
-        self.connect(self.md.deletegroupbutton,SIGNAL("clicked()"),self.slotDeleteGroupClicked)
+        self.connect(self.groupstab.deletegroupbutton,SIGNAL("clicked()"),self.slotDeleteGroupClicked)
 
         if not isroot:
-            disablebuttons = (  self.md.modifybutton, self.md.modifygroupbutton, self.md.deletebutton, self.md.deletegroupbutton,
-                                self.md.newbutton, self.md.newgroupbutton)
+            disablebuttons = (  self.userstab.modifybutton, self.groupstab.modifygroupbutton, self.userstab.deletebutton, self.groupstab.deletegroupbutton,
+                                self.userstab.newbutton, self.groupstab.newgroupbutton)
             for widget in disablebuttons:
                 widget.setDisabled(True)
 
@@ -155,8 +158,8 @@ class UserConfigApp(programbase):
 
         self.updatingGUI = True
 
-        self.md.showspecialcheckbox.setChecked(self.showsystemaccounts)
-        self.md.showspecialgroupscheckbox.setChecked(self.showsystemgroups)
+        self.userstab.show_sysaccts_checkbox.setChecked(self.showsystemaccounts)
+        self.groupstab.show_sysgroups_checkbox.setChecked(self.showsystemgroups)
 
         self.__updateUserList()
         self.__updateGroupList()
@@ -319,7 +322,7 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def __updateUserList(self):
-        self.md.userlist.clear()
+        self.userstab.userlist.clear()
         self.useridsToListItems = {}
         firstselecteduserid = None
 
@@ -332,7 +335,7 @@ class UserConfigApp(programbase):
                 itemstrings.append(userobj.getUsername())
                 itemstrings.append(userobj.getRealName())
                 itemstrings.append(unicode(uid))
-                lvi = QTreeWidgetItem(self.md.userlist,itemstrings)
+                lvi = QTreeWidgetItem(self.userstab.userlist,itemstrings)
                 if userobj.isLocked():
                     # TODO
                     pass
@@ -368,30 +371,30 @@ class UserConfigApp(programbase):
         if len(self.useridsToListItems)>0:
             lvi = self.useridsToListItems[userid]
             #self.userlist.setSelected(lvi,True)
-            self.md.userlist.setCurrentItem(lvi)
+            self.userstab.userlist.setCurrentItem(lvi)
 
             userobj = self.admincontext.lookupUID(userid)
 
             username = userobj.getUsername()
-            self.md.loginnamelabel.setText(username)
-            self.md.realnamelabel.setText(userobj.getRealName())
-            self.md.uidlabel.setText(unicode(userid))
+            self.userstab.loginname.setText(username)
+            self.userstab.realname.setText(userobj.getRealName())
+            self.userstab.uid.setText(unicode(userid))
             if userobj.isLocked():
-                self.md.statuslabel.setText(i18n("Disabled"))
+                self.userstab.status.setText(i18n("Disabled"))
             else:
-                self.md.statuslabel.setText(i18n("Enabled"))
+                self.userstab.status.setText(i18n("Enabled"))
 
             # Primary Group
             primarygroupobj = userobj.getPrimaryGroup()
             primarygroupname = primarygroupobj.getGroupname()
-            self.md.primarygrouplabel.setText(primarygroupname)
+            self.userstab.primarygroup.setText(primarygroupname)
 
             # Secondary Groups
             secondarygroups = [g.getGroupname() for g in userobj.getGroups() if g is not userobj.getPrimaryGroup()]
-            self.md.secondarygrouplabel.setText(unicode(i18n(", ")).join(secondarygroups))
+            self.userstab.secondarygroup.setText(unicode(i18n(", ")).join(secondarygroups))
 
             if isroot:
-                self.md.deletebutton.setDisabled(userobj.getUID()==0)
+                self.userstab.deletebutton.setDisabled(userobj.getUID()==0)
 
     #######################################################################
     def __updateGroupList(self):
@@ -427,16 +430,16 @@ class UserConfigApp(programbase):
 
             groupobj = self.admincontext.lookupGID(groupid)
             members = groupobj.getUsers()
-            self.md.groupmemberlist.clear()
+            self.groupstab.groupmemberlist.clear()
             for userobj in members:
                 if userobj!=None:
                     itemstrings = QStringList()
                     itemstrings.append(userobj.getUsername())
                     itemstrings.append(userobj.getRealName())
                     itemstrings.append(unicode(userobj.getUID()))
-                    lvi = QTreeWidgetItem(self.md.groupmemberlist,itemstrings)
+                    lvi = QTreeWidgetItem(self.groupstab.groupmemberlist,itemstrings)
             if isroot:
-                self.md.deletegroupbutton.setDisabled(groupobj.getGID()==0)
+                self.groupstab.deletegroupbutton.setDisabled(groupobj.getGID()==0)
 
     #######################################################################
     def __loadOptions(self):
@@ -451,13 +454,13 @@ class UserConfigApp(programbase):
             self.showsystemaccounts == 0
         else:
             self.showsystemaccounts = int(self.showsystemaccounts)
-        self.md.showspecialcheckbox.setChecked(bool(self.showsystemaccounts))
+        self.userstab.show_sysaccts_checkbox.setChecked(bool(self.showsystemaccounts))
         self.showsystemgroups = self.config.group("Options").readEntry("ShowSystemGroups")
         if self.showsystemgroups == '':
             self.showsystemgroups == 0
         else:
             self.showsystemgroups = int(self.showsystemgroups)
-        self.md.showspecialgroupscheckbox.setChecked(bool(self.showsystemgroups))
+        self.groupstab.show_sysgroups_checkbox.setChecked(bool(self.showsystemgroups))
 
     #######################################################################
     def __saveOptions(self):

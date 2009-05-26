@@ -1,7 +1,8 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>Form</class>
- <widget class="QWidget" name="Form" >
-  <property name="geometry" >
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
@@ -9,11 +10,11 @@
     <height>451</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>User Accounts and Groups</string>
   </property>
-  <widget class="QWidget" name="layoutWidget" >
-   <property name="geometry" >
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
@@ -21,18 +22,18 @@
      <height>411</height>
     </rect>
    </property>
-   <layout class="QVBoxLayout" name="verticalLayout" >
+   <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="QTabWidget" name="tabWidget" >
-      <property name="currentIndex" >
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
        <number>0</number>
       </property>
-      <widget class="QWidget" name="tab" >
-       <attribute name="title" >
+      <widget class="QWidget" name="tab">
+       <attribute name="title">
         <string>Users</string>
        </attribute>
-       <widget class="QGroupBox" name="userdetails_groupbox" >
-        <property name="geometry" >
+       <widget class="QGroupBox" name="userdetails_groupbox">
+        <property name="geometry">
          <rect>
           <x>10</x>
           <y>220</y>
@@ -40,17 +41,17 @@
           <height>151</height>
          </rect>
         </property>
-        <property name="sizePolicy" >
-         <sizepolicy vsizetype="Preferred" hsizetype="Expanding" >
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <property name="title" >
+        <property name="title">
          <string>Details</string>
         </property>
-        <widget class="QWidget" name="layoutWidget_2" >
-         <property name="geometry" >
+        <widget class="QWidget" name="layoutWidget_2">
+         <property name="geometry">
           <rect>
            <x>10</x>
            <y>30</y>
@@ -58,105 +59,105 @@
            <height>106</height>
           </rect>
          </property>
-         <layout class="QGridLayout" name="gridLayout" >
-          <item row="0" column="0" >
-           <widget class="QLabel" name="label_13" >
-            <property name="text" >
+         <layout class="QGridLayout" name="gridLayout">
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_13">
+            <property name="text">
              <string>Login Name:</string>
             </property>
-            <property name="buddy" >
+            <property name="buddy">
              <cstring>loginnamelabel</cstring>
             </property>
            </widget>
           </item>
-          <item row="0" column="1" >
-           <widget class="QLineEdit" name="loginnamelabel" >
-            <property name="readOnly" >
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="loginnamelabel">
+            <property name="readOnly">
              <bool>true</bool>
             </property>
            </widget>
           </item>
-          <item row="0" column="2" >
-           <widget class="QLabel" name="label_14" >
-            <property name="text" >
+          <item row="0" column="2">
+           <widget class="QLabel" name="label_14">
+            <property name="text">
              <string>Real Name:</string>
             </property>
-            <property name="buddy" >
+            <property name="buddy">
              <cstring>realnamelabel</cstring>
             </property>
            </widget>
           </item>
-          <item row="0" column="3" >
-           <widget class="QLineEdit" name="realnamelabel" >
-            <property name="readOnly" >
+          <item row="0" column="3">
+           <widget class="QLineEdit" name="realnamelabel">
+            <property name="readOnly">
              <bool>true</bool>
             </property>
            </widget>
           </item>
-          <item row="1" column="0" >
-           <widget class="QLabel" name="label_15" >
-            <property name="text" >
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_15">
+            <property name="text">
              <string>UID:</string>
             </property>
-            <property name="buddy" >
+            <property name="buddy">
              <cstring>uidlabel</cstring>
             </property>
            </widget>
           </item>
-          <item row="1" column="1" >
-           <widget class="QLineEdit" name="uidlabel" >
-            <property name="readOnly" >
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="uidlabel">
+            <property name="readOnly">
              <bool>true</bool>
             </property>
            </widget>
           </item>
-          <item row="1" column="2" >
-           <widget class="QLabel" name="label_16" >
-            <property name="text" >
+          <item row="1" column="2">
+           <widget class="QLabel" name="label_16">
+            <property name="text">
              <string>Status:</string>
             </property>
-            <property name="buddy" >
+            <property name="buddy">
              <cstring>statuslabel</cstring>
             </property>
            </widget>
           </item>
-          <item row="1" column="3" >
-           <widget class="QLineEdit" name="statuslabel" >
-            <property name="readOnly" >
+          <item row="1" column="3">
+           <widget class="QLineEdit" name="statuslabel">
+            <property name="readOnly">
              <bool>true</bool>
             </property>
            </widget>
           </item>
-          <item row="2" column="0" >
-           <widget class="QLabel" name="label_17" >
-            <property name="text" >
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_17">
+            <property name="text">
              <string>Primary Group:</string>
             </property>
-            <property name="buddy" >
+            <property name="buddy">
              <cstring>primarygrouplabel</cstring>
             </property>
            </widget>
           </item>
-          <item row="2" column="1" >
-           <widget class="QLineEdit" name="primarygrouplabel" >
-            <property name="readOnly" >
+          <item row="2" column="1">
+           <widget class="QLineEdit" name="primarygrouplabel">
+            <property name="readOnly">
              <bool>true</bool>
             </property>
            </widget>
           </item>
-          <item row="2" column="2" >
-           <widget class="QLabel" name="label_18" >
-            <property name="text" >
+          <item row="2" column="2">
+           <widget class="QLabel" name="label_18">
+            <property name="text">
              <string>Secondary Groups:</string>
             </property>
-            <property name="buddy" >
+            <property name="buddy">
              <cstring>secondarygrouplabel</cstring>
             </property>
            </widget>
           </item>
-          <item row="2" column="3" >
-           <widget class="QLineEdit" name="secondarygrouplabel" >
-            <property name="readOnly" >
+          <item row="2" column="3">
+           <widget class="QLineEdit" name="secondarygrouplabel">
+            <property name="readOnly">
              <bool>true</bool>
             </property>
            </widget>
@@ -164,8 +165,8 @@
          </layout>
         </widget>
        </widget>
-       <widget class="QTreeWidget" name="userlist" >
-        <property name="geometry" >
+       <widget class="QTreeWidget" name="userlist">
+        <property name="geometry">
          <rect>
           <x>10</x>
           <y>30</y>
@@ -173,22 +174,22 @@
           <height>121</height>
          </rect>
         </property>
-        <property name="columnCount" >
+        <property name="columnCount">
          <number>2</number>
         </property>
         <column>
-         <property name="text" >
+         <property name="text">
           <string>Login Name</string>
          </property>
         </column>
         <column>
-         <property name="text" >
+         <property name="text">
           <string>Real Name</string>
          </property>
         </column>
        </widget>
-       <widget class="QCheckBox" name="showspecialcheckbox" >
-        <property name="geometry" >
+       <widget class="QCheckBox" name="showspecialcheckbox">
+        <property name="geometry">
          <rect>
           <x>10</x>
           <y>150</y>
@@ -196,12 +197,12 @@
           <height>23</height>
          </rect>
         </property>
-        <property name="text" >
+        <property name="text">
          <string>Show System Accounts</string>
         </property>
        </widget>
-       <widget class="QWidget" name="layoutWidget_4" >
-        <property name="geometry" >
+       <widget class="QWidget" name="layoutWidget_4">
+        <property name="geometry">
          <rect>
           <x>10</x>
           <y>162</y>
@@ -209,32 +210,32 @@
           <height>61</height>
          </rect>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_3" >
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
-          <widget class="QPushButton" name="modifybutton" >
-           <property name="text" >
+          <widget class="QPushButton" name="modifybutton">
+           <property name="text">
             <string>Modify...</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="newbutton" >
-           <property name="text" >
+          <widget class="QPushButton" name="newbutton">
+           <property name="text">
             <string>New...</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="deletebutton" >
-           <property name="text" >
+          <widget class="QPushButton" name="deletebutton">
+           <property name="text">
             <string>Delete...</string>
            </property>
           </widget>
          </item>
         </layout>
        </widget>
-       <widget class="QLabel" name="accountLabel" >
-        <property name="geometry" >
+       <widget class="QLabel" name="accountLabel">
+        <property name="geometry">
          <rect>
           <x>10</x>
           <y>10</y>
@@ -242,17 +243,17 @@
           <height>20</height>
          </rect>
         </property>
-        <property name="text" >
+        <property name="text">
          <string>User Accounts:</string>
         </property>
        </widget>
       </widget>
-      <widget class="QWidget" name="tab_2" >
-       <attribute name="title" >
+      <widget class="QWidget" name="tab_2">
+       <attribute name="title">
         <string>Groups</string>
        </attribute>
-       <widget class="QCheckBox" name="showspecialgroupscheckbox" >
-        <property name="geometry" >
+       <widget class="QCheckBox" name="showspecialgroupscheckbox">
+        <property name="geometry">
          <rect>
           <x>10</x>
           <y>150</y>
@@ -260,12 +261,12 @@
           <height>23</height>
          </rect>
         </property>
-        <property name="text" >
+        <property name="text">
          <string>Show System Groups</string>
         </property>
        </widget>
-       <widget class="QTreeWidget" name="grouplist" >
-        <property name="geometry" >
+       <widget class="QTreeWidget" name="grouplist">
+        <property name="geometry">
          <rect>
           <x>10</x>
           <y>30</y>
@@ -273,22 +274,22 @@
           <height>121</height>
          </rect>
         </property>
-        <property name="columnCount" >
+        <property name="columnCount">
          <number>2</number>
         </property>
         <column>
-         <property name="text" >
+         <property name="text">
           <string>Group Name</string>
          </property>
         </column>
         <column>
-         <property name="text" >
+         <property name="text">
           <string>GID</string>
          </property>
         </column>
        </widget>
-       <widget class="QLabel" name="groupLabel" >
-        <property name="geometry" >
+       <widget class="QLabel" name="groupLabel">
+        <property name="geometry">
          <rect>
           <x>10</x>
           <y>10</y>
@@ -296,12 +297,12 @@
           <height>20</height>
          </rect>
         </property>
-        <property name="text" >
+        <property name="text">
          <string>Groups:</string>
         </property>
        </widget>
-       <widget class="QTreeWidget" name="groupmemberlist" >
-        <property name="geometry" >
+       <widget class="QTreeWidget" name="groupmemberlist">
+        <property name="geometry">
          <rect>
           <x>10</x>
           <y>240</y>
@@ -309,27 +310,27 @@
           <height>131</height>
          </rect>
         </property>
-        <property name="columnCount" >
+        <property name="columnCount">
          <number>3</number>
         </property>
         <column>
-         <property name="text" >
+         <property name="text">
           <string>Login Name</string>
          </property>
         </column>
         <column>
-         <property name="text" >
+         <property name="text">
           <string>Real Name</string>
          </property>
         </column>
         <column>
-         <property name="text" >
+         <property name="text">
           <string>UID</string>
          </property>
         </column>
        </widget>
-       <widget class="QLabel" name="label_21" >
-        <property name="geometry" >
+       <widget class="QLabel" name="label_21">
+        <property name="geometry">
          <rect>
           <x>10</x>
           <y>220</y>
@@ -337,12 +338,12 @@
           <height>20</height>
          </rect>
         </property>
-        <property name="text" >
+        <property name="text">
          <string>Group Members:</string>
         </property>
        </widget>
-       <widget class="QWidget" name="layoutWidget_3" >
-        <property name="geometry" >
+       <widget class="QWidget" name="layoutWidget_3">
+        <property name="geometry">
          <rect>
           <x>10</x>
           <y>162</y>
@@ -350,24 +351,24 @@
           <height>61</height>
          </rect>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout" >
+        <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
-          <widget class="QPushButton" name="modifygroupbutton" >
-           <property name="text" >
+          <widget class="QPushButton" name="modifygroupbutton">
+           <property name="text">
             <string>Modify...</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="newgroupbutton" >
-           <property name="text" >
+          <widget class="QPushButton" name="newgroupbutton">
+           <property name="text">
             <string>New...</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="deletegroupbutton" >
-           <property name="text" >
+          <widget class="QPushButton" name="deletegroupbutton">
+           <property name="text">
             <string>Delete...</string>
            </property>
           </widget>
