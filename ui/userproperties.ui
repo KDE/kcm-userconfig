@@ -1,7 +1,8 @@
-<ui version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>Dialog</class>
- <widget class="QDialog" name="Dialog" >
-  <property name="geometry" >
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
@@ -9,11 +10,11 @@
     <height>401</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QTabWidget" name="tabWidget" >
-   <property name="geometry" >
+  <widget class="QTabWidget" name="tabWidget">
+   <property name="geometry">
     <rect>
      <x>10</x>
      <y>0</y>
@@ -21,104 +22,116 @@
      <height>351</height>
     </rect>
    </property>
-   <property name="currentIndex" >
-    <number>0</number>
+   <property name="currentIndex">
+    <number>2</number>
    </property>
-   <widget class="QWidget" name="tab" >
-    <attribute name="title" >
+   <widget class="QWidget" name="tab">
+    <attribute name="title">
      <string>Details</string>
     </attribute>
-    <layout class="QGridLayout" name="gridLayout" >
-     <item row="0" column="0" >
-      <widget class="QLabel" name="statusLabel" >
-       <property name="text" >
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="statusLabel">
+       <property name="text">
         <string>Status:</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1" >
-      <widget class="QRadioButton" name="enabledradio" >
-       <property name="text" >
+     <item row="0" column="1">
+      <widget class="QRadioButton" name="enabledradio">
+       <property name="text">
         <string>Enabled</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1" >
-      <widget class="QRadioButton" name="disabledradio" >
-       <property name="text" >
+     <item row="1" column="1">
+      <widget class="QRadioButton" name="disabledradio">
+       <property name="text">
         <string>Disabled</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="0" >
-      <widget class="QLabel" name="label_6" >
-       <property name="text" >
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
         <string>Login Name:</string>
        </property>
+       <property name="buddy">
+        <cstring>loginnameedit</cstring>
+       </property>
       </widget>
      </item>
-     <item row="2" column="1" colspan="2" >
-      <widget class="QLineEdit" name="loginnameedit" />
+     <item row="2" column="1" colspan="2">
+      <widget class="QLineEdit" name="loginnameedit"/>
      </item>
-     <item row="3" column="0" >
-      <widget class="QLabel" name="label_5" >
-       <property name="text" >
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
         <string>Real Name:</string>
        </property>
-      </widget>
-     </item>
-     <item row="3" column="1" colspan="2" >
-      <widget class="QLineEdit" name="realnameedit" />
-     </item>
-     <item row="4" column="0" >
-      <widget class="QLabel" name="label_4" >
-       <property name="text" >
-        <string>User ID:</string>
+       <property name="buddy">
+        <cstring>realnameedit</cstring>
        </property>
       </widget>
      </item>
-     <item row="4" column="1" colspan="2" >
-      <widget class="QLineEdit" name="uidedit" />
+     <item row="3" column="1" colspan="2">
+      <widget class="QLineEdit" name="realnameedit"/>
      </item>
-     <item row="5" column="0" >
-      <widget class="QLabel" name="label_3" >
-       <property name="text" >
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>User ID:</string>
+       </property>
+       <property name="buddy">
+        <cstring>uidedit</cstring>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1" colspan="2">
+      <widget class="QLineEdit" name="uidedit"/>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
         <string>Primary Group:</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="0" >
-      <widget class="QLabel" name="label_2" >
-       <property name="text" >
+     <item row="6" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
         <string>Home Directory:</string>
+       </property>
+       <property name="buddy">
+        <cstring>homediredit</cstring>
        </property>
       </widget>
      </item>
-     <item row="6" column="2" >
-      <widget class="QPushButton" name="homedirbutton" >
-       <property name="text" >
+     <item row="6" column="2">
+      <widget class="QPushButton" name="homedirbutton">
+       <property name="text">
         <string>Browse...</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="0" >
-      <widget class="QLabel" name="label" >
-       <property name="text" >
+     <item row="7" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
         <string>Shell:</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1" >
-      <widget class="QLineEdit" name="homediredit" />
+     <item row="6" column="1">
+      <widget class="QLineEdit" name="homediredit"/>
      </item>
     </layout>
    </widget>
-   <widget class="QWidget" name="tab_2" >
-    <attribute name="title" >
+   <widget class="QWidget" name="tab_2">
+    <attribute name="title">
      <string>Privileges and Groups</string>
     </attribute>
-    <widget class="QListWidget" name="privilegeslistview" >
-     <property name="geometry" >
+    <widget class="QListWidget" name="privilegeslistview">
+     <property name="geometry">
       <rect>
        <x>10</x>
        <y>30</y>
@@ -127,8 +140,8 @@
       </rect>
      </property>
     </widget>
-    <widget class="QListWidget" name="groupslistview" >
-     <property name="geometry" >
+    <widget class="QListWidget" name="groupslistview">
+     <property name="geometry">
       <rect>
        <x>340</x>
        <y>31</y>
@@ -137,8 +150,8 @@
       </rect>
      </property>
     </widget>
-    <widget class="QLabel" name="label_8" >
-     <property name="geometry" >
+    <widget class="QLabel" name="label_8">
+     <property name="geometry">
       <rect>
        <x>10</x>
        <y>10</y>
@@ -146,12 +159,12 @@
        <height>20</height>
       </rect>
      </property>
-     <property name="text" >
+     <property name="text">
       <string>Privileges:</string>
      </property>
     </widget>
-    <widget class="QLabel" name="label_9" >
-     <property name="geometry" >
+    <widget class="QLabel" name="label_9">
+     <property name="geometry">
       <rect>
        <x>340</x>
        <y>10</y>
@@ -159,17 +172,17 @@
        <height>20</height>
       </rect>
      </property>
-     <property name="text" >
+     <property name="text">
       <string>Groups:</string>
      </property>
     </widget>
    </widget>
-   <widget class="QWidget" name="tab_3" >
-    <attribute name="title" >
+   <widget class="QWidget" name="tab_3">
+    <attribute name="title">
      <string>Password/Security</string>
     </attribute>
-    <widget class="QGroupBox" name="groupBox" >
-     <property name="geometry" >
+    <widget class="QGroupBox" name="groupBox">
+     <property name="geometry">
       <rect>
        <x>10</x>
        <y>140</y>
@@ -177,11 +190,11 @@
        <height>171</height>
       </rect>
      </property>
-     <property name="title" >
+     <property name="title">
       <string>Password Aging</string>
      </property>
-     <widget class="QWidget" name="layoutWidget" >
-      <property name="geometry" >
+     <widget class="QWidget" name="layoutWidget">
+      <property name="geometry">
        <rect>
         <x>20</x>
         <y>30</y>
@@ -189,77 +202,83 @@
         <height>138</height>
        </rect>
       </property>
-      <layout class="QGridLayout" name="gridLayout_2" >
-       <item row="0" column="0" >
-        <widget class="QCheckBox" name="forcepasswordchangecheckbox" >
-         <property name="text" >
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="forcepasswordchangecheckbox">
+         <property name="text">
           <string>Require new password after:</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="1" >
-        <widget class="QSpinBox" name="maximumpasswordedit" >
-         <property name="suffix" >
+       <item row="0" column="1">
+        <widget class="QSpinBox" name="maximumpasswordedit">
+         <property name="suffix">
           <string> days</string>
          </property>
-         <property name="minimum" >
+         <property name="minimum">
           <number>1</number>
          </property>
-         <property name="maximum" >
+         <property name="maximum">
           <number>1825</number>
          </property>
         </widget>
        </item>
-       <item row="1" column="0" >
-        <widget class="QLabel" name="label_13" >
-         <property name="text" >
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_13">
+         <property name="text">
           <string>Warn before password expires:</string>
          </property>
+         <property name="buddy">
+          <cstring>warningedit</cstring>
+         </property>
         </widget>
        </item>
-       <item row="1" column="1" >
-        <widget class="QSpinBox" name="warningedit" >
-         <property name="suffix" >
+       <item row="1" column="1">
+        <widget class="QSpinBox" name="warningedit">
+         <property name="suffix">
           <string> days</string>
          </property>
-         <property name="prefix" >
+         <property name="prefix">
           <string>After </string>
          </property>
-         <property name="maximum" >
+         <property name="maximum">
           <number>1825</number>
          </property>
         </widget>
        </item>
-       <item row="2" column="0" >
-        <widget class="QLabel" name="label_14" >
-         <property name="text" >
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_14">
+         <property name="text">
           <string>Disable account after password expires:</string>
          </property>
+         <property name="buddy">
+          <cstring>disableexpireedit</cstring>
+         </property>
         </widget>
        </item>
-       <item row="2" column="1" >
-        <widget class="QSpinBox" name="disableexpireedit" >
-         <property name="suffix" >
+       <item row="2" column="1">
+        <widget class="QSpinBox" name="disableexpireedit">
+         <property name="suffix">
           <string> days</string>
          </property>
-         <property name="prefix" >
+         <property name="prefix">
           <string>After </string>
          </property>
-         <property name="maximum" >
+         <property name="maximum">
           <number>1825</number>
          </property>
         </widget>
        </item>
-       <item row="3" column="0" >
-        <widget class="QCheckBox" name="enforcepasswordminagecheckbox" >
-         <property name="text" >
+       <item row="3" column="0">
+        <widget class="QCheckBox" name="enforcepasswordminagecheckbox">
+         <property name="text">
           <string>Enforce minimum password age:</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="1" >
-        <widget class="QSpinBox" name="minimumpasswordedit" >
-         <property name="suffix" >
+       <item row="3" column="1">
+        <widget class="QSpinBox" name="minimumpasswordedit">
+         <property name="suffix">
           <string> days</string>
          </property>
         </widget>
@@ -267,8 +286,8 @@
       </layout>
      </widget>
     </widget>
-    <widget class="QWidget" name="" >
-     <property name="geometry" >
+    <widget class="QWidget" name="layoutWidget">
+     <property name="geometry">
       <rect>
        <x>12</x>
        <y>12</y>
@@ -276,52 +295,58 @@
        <height>135</height>
       </rect>
      </property>
-     <layout class="QGridLayout" name="gridLayout_3" >
-      <item row="0" column="0" >
-       <widget class="QLabel" name="passwordLabel" >
-        <property name="text" >
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="0" column="0">
+       <widget class="QLabel" name="passwordLabel">
+        <property name="text">
          <string>Password:</string>
+        </property>
+        <property name="buddy">
+         <cstring>passwordedit</cstring>
         </property>
        </widget>
       </item>
-      <item row="0" column="1" colspan="2" >
-       <widget class="QLineEdit" name="passwordedit" >
-        <property name="echoMode" >
+      <item row="0" column="1" colspan="2">
+       <widget class="QLineEdit" name="passwordedit">
+        <property name="echoMode">
          <enum>QLineEdit::Password</enum>
         </property>
        </widget>
       </item>
-      <item row="1" column="0" >
-       <widget class="QLabel" name="label_11" >
-        <property name="text" >
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_11">
+        <property name="text">
          <string>Last changed:</string>
+        </property>
+        <property name="buddy">
+         <cstring>lastchangelabel</cstring>
         </property>
        </widget>
       </item>
-      <item row="1" column="1" colspan="2" >
-       <widget class="QLineEdit" name="lastchangelabel" >
-        <property name="readOnly" >
+      <item row="1" column="1" colspan="2">
+       <widget class="QLineEdit" name="lastchangelabel">
+        <property name="readOnly">
          <bool>true</bool>
         </property>
        </widget>
       </item>
-      <item row="2" column="0" >
-       <widget class="QLabel" name="label_12" >
-        <property name="text" >
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_12">
+        <property name="text">
          <string>Valid Until:</string>
         </property>
        </widget>
       </item>
-      <item row="2" column="1" colspan="2" >
-       <widget class="QRadioButton" name="validalwaysradio" >
-        <property name="text" >
+      <item row="2" column="1" colspan="2">
+       <widget class="QRadioButton" name="validalwaysradio">
+        <property name="text">
          <string>Always</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="1" >
-       <widget class="QRadioButton" name="expireradio" >
-        <property name="text" >
+      <item row="3" column="1">
+       <widget class="QRadioButton" name="expireradio">
+        <property name="text">
          <string/>
         </property>
        </widget>
@@ -330,9 +355,6 @@
     </widget>
    </widget>
   </widget>
-  <zorder>buttonBox</zorder>
-  <zorder>tabWidget</zorder>
-  <zorder>homediredit</zorder>
  </widget>
  <resources/>
  <connections/>
