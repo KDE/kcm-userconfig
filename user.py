@@ -38,6 +38,7 @@ class UserModel(QAbstractItemModel):
     def __init__(self, parent, admincontext):
         QAbstractItemModel.__init__(self, parent)
         self.users = admincontext.getUsers()
+        self.showsystemaccounts = True
         #print self.setHeaderData(0, Qt.Horizontal, QVariant(i18n("Real Name")), Qt.DisplayRole )
         #self.setHeaderData(1, Qt.Horizontal, QVariant(i18n("Username")) )
 
@@ -48,7 +49,10 @@ class UserModel(QAbstractItemModel):
         return QModelIndex()
     
     def rowCount(self, parent):
-        return len(self.users)
+        if self.showsystemaccounts:
+            return len(self.users)
+        else:
+            return len([user for user in self.users if not user.isSystemUser()])
     
     def columnCount(self, parent):
         return 2
@@ -56,16 +60,25 @@ class UserModel(QAbstractItemModel):
     def data(self, idx, role):
         if not idx.isValid():
             return QVariant()
+        
+        row = idx.row()
             
+        userobj = self.users[row]
+        while not self.showsystemaccounts and userobj.isSystemUser():
+            row += 1
+            try:
+                userobj = self.users[row]
+            except IndexError:
+                return QVariant()
+        
         if role == Qt.DisplayRole:
-            userobj = self.users[idx.row()]
+            
             col = idx.column()
             if col == 0:
                 return QVariant(userobj.getRealName())
             elif col == 1:
                 return QVariant(userobj.getUsername())
         elif role == Qt.EditRole:
-            userobj = self.users[idx.row()]
             return QVariant(userobj.getUID())
         else:
             return QVariant()
@@ -86,6 +99,9 @@ class UserModel(QAbstractItemModel):
         else:
             return True
 
+    def slotShowSystemAccounts(self, on):
+        self.showsystemaccounts = on
+        self.emit(SIGNAL("modelReset()"))
 
 ###########################################################################
 def SptimeToQDate(sptime):

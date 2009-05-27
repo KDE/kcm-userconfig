@@ -93,7 +93,10 @@ class UserConfigApp(programbase):
         
         #self.aboutus = KAboutApplicationDialog(self) #TODO
 
-        #self.userstab.accountLabel.setPixmap(KIcon('user-identity')) #TODO
+        # Set up the users tab
+
+        self.userstab.accountIconLabel.setPixmap(
+            KIconLoader.global_().loadIcon('user-identity', KIconLoader.Small))
 
         self.userlistmodel = UserModel(None, self.admincontext)
         self.userstab.userlistview.setModel(self.userlistmodel)
@@ -101,21 +104,33 @@ class UserConfigApp(programbase):
         # Last column is really big without this
         self.userstab.userlistview.resizeColumnToContents(1)
         
-        self.connect( self.userstab.userlistview.selectionModel(),
-                      SIGNAL("currentChanged(const QModelIndex&,const QModelIndex&)"),
+        self.connect( self.userstab.userlistview,
+                      SIGNAL("clicked(const QModelIndex&)"),
                       self.slotUserSelected )
         
         if isroot:
-            self.connect(self.userstab.userlistview, SIGNAL("doubleClicked(QListViewItem *)"), self.slotModifyClicked)
-        self.connect(self.userstab.userlistview, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), self.slotUserContext)
+            self.connect( self.userstab.userlistview,
+                          SIGNAL("doubleClicked(const QModelIndex&)"), self.slotModifyClicked )
+        
+        # TODO: context menu
+        #self.connect(self.userstab.userlistview, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), self.slotUserContext)
 
-        self.connect(self.userstab.show_sysaccts_checkbox,SIGNAL("toggled(bool)"), self.slotShowSystemToggled)
+        self.connect( self.userstab.show_sysaccts_checkbox,
+                      SIGNAL("toggled(bool)"),
+                      self.userlistmodel.slotShowSystemAccounts )
 
-        self.connect(self.userstab.modifybutton,SIGNAL("clicked()"),self.slotModifyClicked)
+        # Buttons
+        self.connect( self.userstab.modifybutton,
+                      SIGNAL("clicked()"),
+                      self.slotModifyClicked )
 
-        self.connect(self.userstab.newbutton,SIGNAL("clicked()"),self.slotNewClicked)
+        self.connect( self.userstab.newbutton,
+                      SIGNAL("clicked()"),
+                      self.slotNewClicked )
 
-        self.connect(self.userstab.deletebutton,SIGNAL("clicked()"),self.slotDeleteClicked)
+        self.connect( self.userstab.deletebutton,
+                      SIGNAL("clicked()"),
+                      self.slotDeleteClicked)
 
         userdetails_groupbox = self.userstab.userdetails_groupbox
 
@@ -229,7 +244,7 @@ class UserConfigApp(programbase):
         self.close()
 
     #######################################################################
-    def slotUserSelected(self, current, previous):
+    def slotUserSelected(self, current):
         userid = current.data(Qt.EditRole).toInt()[0]
         self.updatingGUI = True
         self.__selectUser(userid)
@@ -244,14 +259,6 @@ class UserConfigApp(programbase):
                     self.__selectUser(userid)
                     self.updatingGUI = False
                     return
-
-    #######################################################################
-    def slotShowSystemToggled(self,on):
-        self.showsystemaccounts = on
-        if self.updatingGUI==False:
-            self.updatingGUI = True
-            #self.__updateUserList()
-            self.updatingGUI = False
 
     #######################################################################
     def slotModifyClicked(self):
