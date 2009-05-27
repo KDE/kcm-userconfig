@@ -29,7 +29,7 @@ import os.path
 import shutil
 from util import unixauthdb
 from util.groups import PrivilegeNames
-from user import UserEditDialog, UserDeleteDialog
+from user import UserEditDialog, UserDeleteDialog, UserModel
 from group import GroupEditDialog
 import locale
 
@@ -80,8 +80,10 @@ class UserConfigApp(programbase):
         self.config = KConfig("userconfigrc")
 
         KIconLoader.global_().addAppDir("guidance")
+        
+        self.admincontext = unixauthdb.getContext(isroot)
 
-        self.usersToListItems = None
+        #self.usersToListItems = None
         self.selecteduserid = None
         self.selectedgroupid = None
         self.showsystemaccounts = False
@@ -93,10 +95,16 @@ class UserConfigApp(programbase):
 
         #self.userstab.accountLabel.setPixmap(KIcon('user-identity')) #TODO
 
-        self.connect(self.userstab.userlist, SIGNAL("currentItemChanged ( QTreeWidgetItem *, QTreeWidgetItem *)"), self.slotListClicked)
+        #self.__updateUserList()
+        self.userlistmodel = UserModel(None, self.admincontext)
+        self.userstab.userlistview.setModel(self.userlistmodel)
+        self.userstab.userlistview.resizeColumnToContents(1)
+        
+        self.connect(self.userstab.userlistview, SIGNAL("currentItemChanged ( QTreeWidgetItem *, QTreeWidgetItem *)"), self.slotListClicked)
+        
         if isroot:
-            self.connect(self.userstab.userlist, SIGNAL("doubleClicked(QListViewItem *)"), self.slotModifyClicked)
-        self.connect(self.userstab.userlist, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), self.slotUserContext)
+            self.connect(self.userstab.userlistview, SIGNAL("doubleClicked(QListViewItem *)"), self.slotModifyClicked)
+        self.connect(self.userstab.userlistview, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), self.slotUserContext)
 
         self.connect(self.userstab.show_sysaccts_checkbox,SIGNAL("toggled(bool)"), self.slotShowSystemToggled)
 
@@ -154,14 +162,14 @@ class UserConfigApp(programbase):
         #if not standalone:
             #tabcontrol.addTab(groupsvbox,i18n("Groups"))
 
-        self.admincontext = unixauthdb.getContext(isroot)
+        
 
         self.updatingGUI = True
 
         self.userstab.show_sysaccts_checkbox.setChecked(self.showsystemaccounts)
         self.groupstab.show_sysgroups_checkbox.setChecked(self.showsystemgroups)
 
-        self.__updateUserList()
+        #self.__updateUserList()
         self.__updateGroupList()
         self.updatingGUI = False
 
@@ -174,7 +182,7 @@ class UserConfigApp(programbase):
         global programbase
         self.__loadOptions()
         self.updatingGUI = True
-        self.__updateUserList()
+        #self.__updateUserList()
         self.__updateGroupList()
         self.updatingGUI = False
         programbase.exec_(self)
@@ -232,7 +240,7 @@ class UserConfigApp(programbase):
         self.showsystemaccounts = on
         if self.updatingGUI==False:
             self.updatingGUI = True
-            self.__updateUserList()
+            #self.__updateUserList()
             self.updatingGUI = False
 
     #######################################################################
@@ -322,31 +330,53 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def __updateUserList(self):
-        self.userstab.userlist.clear()
-        self.useridsToListItems = {}
-        firstselecteduserid = None
-
+        self.userlistmodel = QStandardItemModel()
+        parentItem = self.userlistmodel.invisibleRootItem()
+        
         users = self.admincontext.getUsers()
-
+        
         for userobj in users:
             uid = userobj.getUID()
-            if self.showsystemaccounts or not userobj.isSystemUser():
-                itemstrings = QStringList()
-                itemstrings.append(userobj.getUsername())
-                itemstrings.append(userobj.getRealName())
-                itemstrings.append(unicode(uid))
-                lvi = QTreeWidgetItem(self.userstab.userlist,itemstrings)
-                if userobj.isLocked():
-                    # TODO
-                    pass
-                    #lvi.setPixmap(0,UserIcon("hi16-encrypted"))
-                self.useridsToListItems[uid] = lvi
-                if self.selecteduserid==uid:
-                    firstselecteduserid = uid
-                elif firstselecteduserid==None:
-                    firstselecteduserid = uid
-        self.selecteduserid = firstselecteduserid
-        self.__selectUser(self.selecteduserid)
+            #itemstrings = QStringList()
+            #itemstrings.append(userobj.getUsername())
+            #itemstrings.append(userobj.getRealName())
+            #itemstrings.append(unicode(uid))
+            
+            item = QStandardItem(userobj.getUsername())
+            item.appendColumn(QStandardItem(userobj.getRealName()))
+            item.appendColumn(QStandardItem(unicode(uid)))
+            parentItem.appendRow(item)
+            parentItem = item
+            
+            #if userobj.isLocked():
+                    ## TODO
+                    #pass
+                    ##lvi.setPixmap(0,UserIcon("hi16-encrypted"))
+        #self.userstab.userlist.clear()
+        #self.useridsToListItems = {}
+        #firstselecteduserid = None
+
+        #users = self.admincontext.getUsers()
+
+        #for userobj in users:
+            #uid = userobj.getUID()
+            #if self.showsystemaccounts or not userobj.isSystemUser():
+                #itemstrings = QStringList()
+                #itemstrings.append(userobj.getUsername())
+                #itemstrings.append(userobj.getRealName())
+                #itemstrings.append(unicode(uid))
+                #lvi = QTreeWidgetItem(self.userstab.userlistview,itemstrings)
+                #if userobj.isLocked():
+                    ## TODO
+                    #pass
+                    ##lvi.setPixmap(0,UserIcon("hi16-encrypted"))
+                #self.useridsToListItems[uid] = lvi
+                #if self.selecteduserid==uid:
+                    #firstselecteduserid = uid
+                #elif firstselecteduserid==None:
+                    #firstselecteduserid = uid
+        #self.selecteduserid = firstselecteduserid
+        #self.__selectUser(self.selecteduserid)
         #self.userlist.ensureItemVisible(self.userlist.currentItem())
 
     #######################################################################

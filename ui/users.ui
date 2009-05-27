@@ -22,26 +22,31 @@
     </widget>
    </item>
    <item>
-    <widget class="QTreeWidget" name="userlist">
+    <widget class="QTreeView" name="userlistview">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>1</verstretch>
+      </sizepolicy>
+     </property>
      <property name="minimumSize">
       <size>
        <width>0</width>
        <height>106</height>
       </size>
      </property>
-     <property name="columnCount">
-      <number>2</number>
+     <property name="rootIsDecorated">
+      <bool>false</bool>
      </property>
-     <column>
-      <property name="text">
-       <string>Login Name</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Real Name</string>
-      </property>
-     </column>
+     <property name="uniformRowHeights">
+      <bool>true</bool>
+     </property>
+     <attribute name="headerStretchLastSection">
+      <bool>false</bool>
+     </attribute>
+     <attribute name="headerStretchLastSection">
+      <bool>false</bool>
+     </attribute>
     </widget>
    </item>
    <item>

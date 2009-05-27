@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 ###########################################################################
 # user.py - configuration for users for userconfig                        #
 # ------------------------------                                          #
@@ -32,6 +32,57 @@ import locale
 
 # userconfig imports
 from util.groups import PrivilegeNames
+
+
+class UserModel(QAbstractItemModel):
+    def __init__(self, parent, admincontext):
+        QAbstractItemModel.__init__(self, parent)
+        self.users = admincontext.getUsers()
+        #print self.setHeaderData(0, Qt.Horizontal, QVariant(i18n("Real Name")), Qt.DisplayRole )
+        #self.setHeaderData(1, Qt.Horizontal, QVariant(i18n("Username")) )
+
+    def index(self, row, column, parent):
+        return self.createIndex(row, column)
+    
+    def parent(self, index):
+        return QModelIndex()
+    
+    def rowCount(self, parent):
+        return len(self.users)
+    
+    def columnCount(self, parent):
+        return 2
+    
+    def data(self, idx, role):
+        if not idx.isValid():
+            return QVariant()
+            
+        if role == Qt.DisplayRole:
+            userobj = self.users[idx.row()]
+            col = idx.column()
+            if col == 0:
+                return QVariant(userobj.getRealName())
+            elif col == 1:
+                return QVariant(userobj.getUsername())
+        else:
+            return QVariant()
+            
+    def headerData(self, section, orientation, role):
+        #col = section
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            if section == 0:
+                return QVariant(i18n("Real Name"))
+            elif section == 1:
+                return QVariant(i18n("Username"))
+        
+        return QVariant()
+    
+    def hasChildren(self, parent):
+        if parent.row() >= 0:
+            return False
+        else:
+            return True
+
 
 ###########################################################################
 def SptimeToQDate(sptime):
