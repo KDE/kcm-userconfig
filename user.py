@@ -64,6 +64,9 @@ class UserModel(QAbstractItemModel):
                 return QVariant(userobj.getRealName())
             elif col == 1:
                 return QVariant(userobj.getUsername())
+        elif role == Qt.EditRole:
+            userobj = self.users[idx.row()]
+            return QVariant(userobj.getUID())
         else:
             return QVariant()
             

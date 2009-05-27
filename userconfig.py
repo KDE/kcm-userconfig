@@ -95,12 +95,15 @@ class UserConfigApp(programbase):
 
         #self.userstab.accountLabel.setPixmap(KIcon('user-identity')) #TODO
 
-        #self.__updateUserList()
         self.userlistmodel = UserModel(None, self.admincontext)
         self.userstab.userlistview.setModel(self.userlistmodel)
+        
+        # Last column is really big without this
         self.userstab.userlistview.resizeColumnToContents(1)
         
-        self.connect(self.userstab.userlistview, SIGNAL("currentItemChanged ( QTreeWidgetItem *, QTreeWidgetItem *)"), self.slotListClicked)
+        self.connect( self.userstab.userlistview.selectionModel(),
+                      SIGNAL("currentChanged(const QModelIndex&,const QModelIndex&)"),
+                      self.slotUserSelected )
         
         if isroot:
             self.connect(self.userstab.userlistview, SIGNAL("doubleClicked(QListViewItem *)"), self.slotModifyClicked)
@@ -225,6 +228,13 @@ class UserConfigApp(programbase):
     def slotCloseButton(self):
         self.close()
 
+    #######################################################################
+    def slotUserSelected(self, current, previous):
+        userid = current.data(Qt.EditRole).toInt()[0]
+        self.updatingGUI = True
+        self.__selectUser(userid)
+        self.updatingGUI = False
+    
     #######################################################################
     def slotListClicked(self,item, previousitem):
         if self.updatingGUI==False:
@@ -397,34 +407,35 @@ class UserConfigApp(programbase):
     def __selectUser(self,userid):
         print 'Setting user ID to', userid
         self.selecteduserid = userid
+        
         # Only go on if there are actual users.
-        if len(self.useridsToListItems)>0:
-            lvi = self.useridsToListItems[userid]
+        #if len(self.useridsToListItems)>0:
+            #lvi = self.useridsToListItems[userid]
             #self.userlist.setSelected(lvi,True)
-            self.userstab.userlist.setCurrentItem(lvi)
+            #self.userstab.userlist.setCurrentItem(lvi)
 
-            userobj = self.admincontext.lookupUID(userid)
+        userobj = self.admincontext.lookupUID(userid)
 
-            username = userobj.getUsername()
-            self.userstab.loginname.setText(username)
-            self.userstab.realname.setText(userobj.getRealName())
-            self.userstab.uid.setText(unicode(userid))
-            if userobj.isLocked():
-                self.userstab.status.setText(i18n("Disabled"))
-            else:
-                self.userstab.status.setText(i18n("Enabled"))
+        username = userobj.getUsername()
+        self.userstab.loginname.setText(username)
+        self.userstab.realname.setText(userobj.getRealName())
+        self.userstab.uid.setText(unicode(userid))
+        if userobj.isLocked():
+            self.userstab.status.setText(i18n("Disabled"))
+        else:
+            self.userstab.status.setText(i18n("Enabled"))
 
-            # Primary Group
-            primarygroupobj = userobj.getPrimaryGroup()
-            primarygroupname = primarygroupobj.getGroupname()
-            self.userstab.primarygroup.setText(primarygroupname)
+        # Primary Group
+        primarygroupobj = userobj.getPrimaryGroup()
+        primarygroupname = primarygroupobj.getGroupname()
+        self.userstab.primarygroup.setText(primarygroupname)
 
-            # Secondary Groups
-            secondarygroups = [g.getGroupname() for g in userobj.getGroups() if g is not userobj.getPrimaryGroup()]
-            self.userstab.secondarygroup.setText(unicode(i18n(", ")).join(secondarygroups))
+        # Secondary Groups
+        secondarygroups = [g.getGroupname() for g in userobj.getGroups() if g is not userobj.getPrimaryGroup()]
+        self.userstab.secondarygroup.setText(unicode(i18n(", ")).join(secondarygroups))
 
-            if isroot:
-                self.userstab.deletebutton.setDisabled(userobj.getUID()==0)
+        if isroot:
+            self.userstab.deletebutton.setDisabled(userobj.getUID()==0)
 
     #######################################################################
     def __updateGroupList(self):
