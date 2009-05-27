@@ -101,25 +101,13 @@
     </widget>
    </item>
    <item>
-    <widget class="QTreeWidget" name="groupmemberlist">
-     <property name="columnCount">
-      <number>3</number>
+    <widget class="QTreeView" name="groupmemberlistview">
+     <property name="rootIsDecorated">
+      <bool>false</bool>
      </property>
-     <column>
-      <property name="text">
-       <string>Login Name</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>Real Name</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>UID</string>
-      </property>
-     </column>
+     <property name="uniformRowHeights">
+      <bool>true</bool>
+     </property>
     </widget>
    </item>
   </layout>

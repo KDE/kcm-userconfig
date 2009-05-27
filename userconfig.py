@@ -99,7 +99,7 @@ class UserConfigApp(programbase):
         self.userstab.accountIconLabel.setPixmap(
             KIconLoader.global_().loadIcon('user-identity', KIconLoader.Small))
 
-        self.userlistmodel = UserModel(None, self.admincontext)
+        self.userlistmodel = UserModel(None, self.admincontext.getUsers() )
         self.userstab.userlistview.setModel(self.userlistmodel)
         
         # Last column is really big without this
@@ -127,14 +127,17 @@ class UserConfigApp(programbase):
         self.connect( self.userstab.modifybutton,
                       SIGNAL("clicked()"),
                       self.slotModifyClicked )
+        self.userstab.modifybutton.setIcon( SmallIconSet('user-properties') )
 
         self.connect( self.userstab.newbutton,
                       SIGNAL("clicked()"),
                       self.slotNewClicked )
+        self.userstab.newbutton.setIcon( SmallIconSet('list-add-user') )
 
         self.connect( self.userstab.deletebutton,
                       SIGNAL("clicked()"),
                       self.slotDeleteClicked)
+        self.userstab.deletebutton.setIcon( SmallIconSet('list-remove-user') )
 
         userdetails_groupbox = self.userstab.userdetails_groupbox
 
@@ -160,12 +163,14 @@ class UserConfigApp(programbase):
         self.groupstab.groupIconLabel.setPixmap(
             KIconLoader.global_().loadIcon('user-identity', KIconLoader.Small))
 
-        self.grouplistmodel = GroupModel(None, self.admincontext)
+        self.grouplistmodel = GroupModel(None, self.admincontext.getGroups() )
         self.groupstab.grouplistview.setModel(self.grouplistmodel)
         
         # Last column is really big without this
         self.groupstab.grouplistview.resizeColumnToContents(1)
         
+        self.groupstab.groupmemberlistview.setModel( UserModel(None, []) )
+            
         self.connect( self.groupstab.grouplistview,
                       SIGNAL("clicked(const QModelIndex&)"),
                       self.slotGroupSelected )
@@ -183,17 +188,23 @@ class UserConfigApp(programbase):
                       SIGNAL("toggled(bool)"),
                       self.grouplistmodel.slotShowSystemAccounts )
 
+        # Buttons
         self.connect( self.groupstab.modifygroupbutton,
                       SIGNAL("clicked()"),
                       self.slotModifyGroupClicked )
+        self.groupstab.modifygroupbutton.setIcon(
+                                        SmallIconSet('user-group-properties') )
 
         self.connect( self.groupstab.newgroupbutton,
                       SIGNAL("clicked()"),
                       self.slotNewGroupClicked )
+        self.groupstab.newgroupbutton.setIcon( SmallIconSet('user-group-new') )
 
         self.connect( self.groupstab.deletegroupbutton,
                       SIGNAL("clicked()"),
                       self.slotDeleteGroupClicked )
+        self.groupstab.deletegroupbutton.setIcon(
+                                        SmallIconSet('user-group-delete') )
 
         if not isroot:
             disablebuttons = (  self.userstab.modifybutton, self.groupstab.modifygroupbutton, self.userstab.deletebutton, self.groupstab.deletegroupbutton,
@@ -209,7 +220,7 @@ class UserConfigApp(programbase):
 
         self.updatingGUI = True
 
-        self.groupstab.show_sysgroups_checkbox.setChecked(self.showsystemgroups)\
+        self.groupstab.show_sysgroups_checkbox.setChecked(self.showsystemgroups)
         
         self.updatingGUI = False
 
@@ -485,14 +496,10 @@ class UserConfigApp(programbase):
 
             groupobj = self.admincontext.lookupGID(groupid)
             members = groupobj.getUsers()
-            self.groupstab.groupmemberlist.clear()
-            for userobj in members:
-                if userobj!=None:
-                    itemstrings = QStringList()
-                    itemstrings.append(userobj.getUsername())
-                    itemstrings.append(userobj.getRealName())
-                    itemstrings.append(unicode(userobj.getUID()))
-                    #lvi = QTreeWidgetItem(self.groupstab.groupmemberlist,itemstrings)
+            membersmodel = UserModel(None, members)
+            self.groupstab.groupmemberlistview.setModel( membersmodel )
+            self.groupstab.groupmemberlistview.repaint()
+            
             if isroot:
                 self.groupstab.deletegroupbutton.setDisabled(groupobj.getGID()==0)
 

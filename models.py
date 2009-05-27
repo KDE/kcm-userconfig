@@ -26,8 +26,9 @@ from PyKDE4.kdecore import *
 import locale
 
 class UCAbstractItemModel(QAbstractItemModel):
-    def __init__(self, parent):
+    def __init__(self, parent, items):
         QAbstractItemModel.__init__(self, parent)
+        self.items = items
         self.showsystemaccounts = True
 
     def index(self, row, column, parent=QModelIndex()):
@@ -37,7 +38,7 @@ class UCAbstractItemModel(QAbstractItemModel):
         return QModelIndex()
     
     def hasChildren(self, parent):
-        if parent.row() >= 0:
+        if parent.row() > 0:
             return False
         else:
             return True
@@ -48,18 +49,15 @@ class UCAbstractItemModel(QAbstractItemModel):
 
 
 class UserModel(UCAbstractItemModel):
-    def __init__(self, parent, admincontext):
-        UCAbstractItemModel.__init__(self, parent)
-        self.items = admincontext.getUsers()
-    
     def indexFromUID(self, uid):
         for i, userobj in enumerate(self.items):
             if userobj.getUID() == uid:
                 return self.index(i, 0)
         return QModelIndex()
     
-    def rowCount(self, parent):
+    def rowCount(self, parent = QModelIndex()):
         if self.showsystemaccounts:
+            #print len(self.items)
             return len(self.items)
         else:
             return len([user for user in self.items if not user.isSystemUser()])
@@ -72,8 +70,13 @@ class UserModel(UCAbstractItemModel):
             return QVariant()
         
         row = idx.row()
+        if row >= self.rowCount():
+            return QVariant()
             
-        userobj = self.items[row]
+        try:
+            userobj = self.items[row]
+        except Exception, e:
+            print e, row
         while (not self.showsystemaccounts) and userobj.isSystemUser():
             row += 1
             try:
@@ -104,10 +107,6 @@ class UserModel(UCAbstractItemModel):
 
 
 class GroupModel(UCAbstractItemModel):
-    def __init__(self, parent, admincontext):
-        UCAbstractItemModel.__init__(self, parent)
-        self.items = admincontext.getGroups()
-    
     def indexFromUID(self, uid):
         for i, userobj in enumerate(self.items):
             if userobj.getUID() == uid:
