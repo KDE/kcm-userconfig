@@ -15,27 +15,50 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QLabel" name="grouplabel">
-     <property name="text">
-      <string>Groups:</string>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QLabel" name="groupIconLabel">
+       <property name="text">
+        <string>TextLabel</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="groupLabel">
+       <property name="text">
+        <string>Groups:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
    </item>
    <item>
-    <widget class="QTreeWidget" name="grouplist">
-     <property name="columnCount">
-      <number>2</number>
+    <widget class="QTreeView" name="grouplistview">
+     <property name="rootIsDecorated">
+      <bool>false</bool>
      </property>
-     <column>
-      <property name="text">
-       <string>Group Name</string>
-      </property>
-     </column>
-     <column>
-      <property name="text">
-       <string>GID</string>
-      </property>
-     </column>
+     <property name="uniformRowHeights">
+      <bool>true</bool>
+     </property>
+     <attribute name="headerStretchLastSection">
+      <bool>false</bool>
+     </attribute>
+     <attribute name="headerStretchLastSection">
+      <bool>false</bool>
+     </attribute>
     </widget>
    </item>
    <item>

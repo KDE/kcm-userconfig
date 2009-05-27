@@ -24,7 +24,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="accountLabel">
+      <widget class="QLabel" name="accountlabel">
        <property name="text">
         <string>User Accounts:</string>
        </property>
@@ -65,9 +65,6 @@
      <property name="uniformRowHeights">
       <bool>true</bool>
      </property>
-     <attribute name="headerStretchLastSection">
-      <bool>false</bool>
-     </attribute>
      <attribute name="headerStretchLastSection">
       <bool>false</bool>
      </attribute>

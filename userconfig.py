@@ -29,7 +29,8 @@ import os.path
 import shutil
 from util import unixauthdb
 from util.groups import PrivilegeNames
-from user import UserEditDialog, UserDeleteDialog, UserModel
+from user import UserEditDialog, UserDeleteDialog
+from models import UserModel, GroupModel
 from group import GroupEditDialog
 import locale
 
@@ -83,16 +84,16 @@ class UserConfigApp(programbase):
         
         self.admincontext = unixauthdb.getContext(isroot)
 
-        #self.usersToListItems = None
         self.selecteduserid = None
         self.selectedgroupid = None
-        self.showsystemaccounts = False
-        self.showsystemgroups = False
+        self.showsystemaccounts = True
+        self.showsystemgroups = True
 
         self.updatingGUI = True
         
         #self.aboutus = KAboutApplicationDialog(self) #TODO
 
+        #######################################################################
         # Set up the users tab
 
         self.userstab.accountIconLabel.setPixmap(
@@ -110,7 +111,8 @@ class UserConfigApp(programbase):
         
         if isroot:
             self.connect( self.userstab.userlistview,
-                          SIGNAL("doubleClicked(const QModelIndex&)"), self.slotModifyClicked )
+                          SIGNAL("doubleClicked(const QModelIndex&)"),
+                          self.slotModifyClicked )
         
         # TODO: context menu
         #self.connect(self.userstab.userlistview, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), self.slotUserContext)
@@ -118,7 +120,9 @@ class UserConfigApp(programbase):
         self.connect( self.userstab.show_sysaccts_checkbox,
                       SIGNAL("toggled(bool)"),
                       self.userlistmodel.slotShowSystemAccounts )
-
+        qDebug( "connected" + str(self.showsystemaccounts))
+        self.userstab.show_sysaccts_checkbox.setChecked(self.showsystemaccounts)
+        
         # Buttons
         self.connect( self.userstab.modifybutton,
                       SIGNAL("clicked()"),
@@ -149,26 +153,47 @@ class UserConfigApp(programbase):
             #groupsvbox.setMargin(KDialog.marginHint())
             #hb = KHBox(groupsvbox)
 
+        #######################################################################
+        # Set up the groups tab
 
         #FIXME: Need to find Oxygen group icon
-        #self.groupLabel.setPixmap(KIcon('user-identity')) #Also need to do this right, lolz
+        self.groupstab.groupIconLabel.setPixmap(
+            KIconLoader.global_().loadIcon('user-identity', KIconLoader.Small))
 
+        self.grouplistmodel = GroupModel(None, self.admincontext)
+        self.groupstab.grouplistview.setModel(self.grouplistmodel)
         
-        self.grouplist = self.groupstab.grouplist
-        self.connect(self.grouplist, SIGNAL("currentItemChanged( QTreeWidgetItem *, QTreeWidgetItem *)"), self.slotGroupListClicked)
-
+        # Last column is really big without this
+        self.groupstab.grouplistview.resizeColumnToContents(1)
+        
+        self.connect( self.groupstab.grouplistview,
+                      SIGNAL("clicked(const QModelIndex&)"),
+                      self.slotGroupSelected )
+        
         if isroot:
-            self.connect(self.grouplist, SIGNAL("doubleClicked(QListViewItem *)"), self.slotModifyGroupClicked)
-        self.connect(self.grouplist, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), 
-                self.slotGroupContext)
+            self.connect( self.groupstab.grouplistview,
+                          SIGNAL("doubleClicked(const QModelIndex&)"),
+                          self.slotModifyGroupClicked )
 
-        self.connect(self.groupstab.show_sysgroups_checkbox,SIGNAL("toggled(bool)"), self.slotShowSystemGroupsToggled)
+        # TODO: group context menu
+        #self.connect(self.grouplist, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), 
+                #self.slotGroupContext)
 
-        self.connect(self.groupstab.modifygroupbutton,SIGNAL("clicked()"),self.slotModifyGroupClicked)
+        self.connect( self.groupstab.show_sysgroups_checkbox,
+                      SIGNAL("toggled(bool)"),
+                      self.grouplistmodel.slotShowSystemAccounts )
 
-        self.connect(self.groupstab.newgroupbutton,SIGNAL("clicked()"),self.slotNewGroupClicked)
+        self.connect( self.groupstab.modifygroupbutton,
+                      SIGNAL("clicked()"),
+                      self.slotModifyGroupClicked )
 
-        self.connect(self.groupstab.deletegroupbutton,SIGNAL("clicked()"),self.slotDeleteGroupClicked)
+        self.connect( self.groupstab.newgroupbutton,
+                      SIGNAL("clicked()"),
+                      self.slotNewGroupClicked )
+
+        self.connect( self.groupstab.deletegroupbutton,
+                      SIGNAL("clicked()"),
+                      self.slotDeleteGroupClicked )
 
         if not isroot:
             disablebuttons = (  self.userstab.modifybutton, self.groupstab.modifygroupbutton, self.userstab.deletebutton, self.groupstab.deletegroupbutton,
@@ -184,11 +209,8 @@ class UserConfigApp(programbase):
 
         self.updatingGUI = True
 
-        self.userstab.show_sysaccts_checkbox.setChecked(self.showsystemaccounts)
-        self.groupstab.show_sysgroups_checkbox.setChecked(self.showsystemgroups)
-
-        #self.__updateUserList()
-        self.__updateGroupList()
+        self.groupstab.show_sysgroups_checkbox.setChecked(self.showsystemgroups)\
+        
         self.updatingGUI = False
 
         self.usereditdialog = UserEditDialog(None,self.admincontext)
@@ -198,13 +220,13 @@ class UserConfigApp(programbase):
     #######################################################################
     def exec_(self):
         global programbase
-        self.__loadOptions()
+        #self.__loadOptions()
         self.updatingGUI = True
         #self.__updateUserList()
-        self.__updateGroupList()
+        #self.__updateGroupList()
         self.updatingGUI = False
         programbase.exec_(self)
-        self.__saveOptions()
+        #self.__saveOptions()
 
     #######################################################################
     def slotUser1(self):
@@ -249,16 +271,6 @@ class UserConfigApp(programbase):
         self.updatingGUI = True
         self.__selectUser(userid)
         self.updatingGUI = False
-    
-    #######################################################################
-    def slotListClicked(self,item, previousitem):
-        if self.updatingGUI==False:
-            for userid in self.useridsToListItems:
-                if self.useridsToListItems[userid]==item:
-                    self.updatingGUI = True
-                    self.__selectUser(userid)
-                    self.updatingGUI = False
-                    return
 
     #######################################################################
     def slotModifyClicked(self):
@@ -275,7 +287,7 @@ class UserConfigApp(programbase):
             self.updatingGUI = True
             self.__updateUserList()
             self.__selectUser(newuid)
-            self.__updateGroupList()
+            #self.__updateGroupList()
             self.updatingGUI = False
 
     #######################################################################
@@ -283,26 +295,23 @@ class UserConfigApp(programbase):
         if self.userdeletedialog.deleteUser(self.selecteduserid):
             self.updatingGUI = True
             self.selecteduserid = None
-            self.__updateUserList()
-            self.__updateGroupList()
+            #self.__updateUserList()
+            #self.__updateGroupList()
             self.updatingGUI = False
 
     #######################################################################
-    def slotGroupListClicked(self,item):
-        if self.updatingGUI==False:
-            for groupid in self.groupidsToListItems:
-                if groupid and self.groupidsToListItems[groupid]==item:
-                    self.updatingGUI = True
-                    self.__selectGroup(groupid)
-                    self.updatingGUI = False
-                    return
+    def slotGroupSelected(self, current):
+        groupid = current.data(Qt.EditRole).toInt()[0]
+        self.updatingGUI = True
+        self.__selectGroup(groupid)
+        self.updatingGUI = False
 
     #######################################################################
     def slotShowSystemGroupsToggled(self,on):
         self.showsystemgroups = on
         if self.updatingGUI==False:
             self.updatingGUI = True
-            self.__updateGroupList()
+            #self.__updateGroupList()
             self.updatingGUI = False
 
     #######################################################################
@@ -312,7 +321,7 @@ class UserConfigApp(programbase):
                 self.__selectGroup(self.selectedgroupid)
                 self.updatingGUI = True
                 self.__updateUser(self.selecteduserid)
-                self.__selectUser(self.selecteduserid)
+                #self.__selectUser(self.selecteduserid)
                 self.updatingGUI = False
 
     #######################################################################
@@ -320,8 +329,8 @@ class UserConfigApp(programbase):
         newgroupid = self.groupeditdialog.showNewGroup()
         if newgroupid!=None:
             self.updatingGUI = True
-            self.__updateGroupList()
-            self.__updateGroupList()
+            #self.__updateGroupList()
+            #self.__updateGroupList()
             self.__selectGroup(newgroupid)
             self.__updateUser(self.selecteduserid)
             self.__selectUser(self.selecteduserid)
@@ -340,7 +349,7 @@ class UserConfigApp(programbase):
                 self.admincontext.removeGroup(groupobj)
                 self.admincontext.save()
                 self.updatingGUI = True
-                self.__updateGroupList()
+                #self.__updateGroupList()
                 self.__updateUser(self.selecteduserid)
                 self.__selectUser(self.selecteduserid)
                 self.updatingGUI = False
@@ -398,17 +407,15 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def __updateUser(self,userid):
-        lvi = self.useridsToListItems[userid]
-        userobj = self.admincontext.lookupUID(userid)
-        lvi.setText(0,userobj.getUsername())
-        lvi.setText(1,userobj.getRealName())
-        lvi.setText(2,unicode(userobj.getUID()))
-        if userobj.isLocked():
-            pass
-            #lvi.setPixmap(0,UserIcon("hi16-encrypted")) # TODO
-        else:
-            pass
-            #lvi.setPixmap(0,QPixmap())  # TODO
+        idx = self.userlistmodel.indexFromUID(userid)
+        self.userlistmodel.emit(SIGNAL("dataChanged"), idx)
+        #userobj = self.admincontext.lookupUID(userid)
+        #if userobj.isLocked():
+            #pass
+            ##lvi.setPixmap(0,UserIcon("hi16-encrypted")) # TODO
+        #else:
+            #pass
+            ##lvi.setPixmap(0,QPixmap())  # TODO
 
     #######################################################################
     def __selectUser(self,userid):
@@ -472,9 +479,9 @@ class UserConfigApp(programbase):
         print 'Setting group ID to', groupid
         if groupid:
             self.selectedgroupid = groupid
-            lvi = self.groupidsToListItems[groupid]
+            #lvi = self.groupidsToListItems[groupid]
             #self.grouplist.setSelected(lvi,True)
-            self.grouplist.setCurrentItem(lvi)
+            #self.grouplist.setCurrentItem(lvi)
 
             groupobj = self.admincontext.lookupGID(groupid)
             members = groupobj.getUsers()
@@ -485,7 +492,7 @@ class UserConfigApp(programbase):
                     itemstrings.append(userobj.getUsername())
                     itemstrings.append(userobj.getRealName())
                     itemstrings.append(unicode(userobj.getUID()))
-                    lvi = QTreeWidgetItem(self.groupstab.groupmemberlist,itemstrings)
+                    #lvi = QTreeWidgetItem(self.groupstab.groupmemberlist,itemstrings)
             if isroot:
                 self.groupstab.deletegroupbutton.setDisabled(groupobj.getGID()==0)
 
@@ -499,7 +506,7 @@ class UserConfigApp(programbase):
         #self.config.setGroup("Options")
         self.showsystemaccounts = self.config.group("Options").readEntry("ShowSystemAccounts")
         if self.showsystemaccounts == '':
-            self.showsystemaccounts == 0
+            self.showsystemaccounts = False
         else:
             self.showsystemaccounts = int(self.showsystemaccounts)
         self.userstab.show_sysaccts_checkbox.setChecked(bool(self.showsystemaccounts))

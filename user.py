@@ -33,76 +33,6 @@ import locale
 # userconfig imports
 from util.groups import PrivilegeNames
 
-
-class UserModel(QAbstractItemModel):
-    def __init__(self, parent, admincontext):
-        QAbstractItemModel.__init__(self, parent)
-        self.users = admincontext.getUsers()
-        self.showsystemaccounts = True
-        #print self.setHeaderData(0, Qt.Horizontal, QVariant(i18n("Real Name")), Qt.DisplayRole )
-        #self.setHeaderData(1, Qt.Horizontal, QVariant(i18n("Username")) )
-
-    def index(self, row, column, parent):
-        return self.createIndex(row, column)
-    
-    def parent(self, index):
-        return QModelIndex()
-    
-    def rowCount(self, parent):
-        if self.showsystemaccounts:
-            return len(self.users)
-        else:
-            return len([user for user in self.users if not user.isSystemUser()])
-    
-    def columnCount(self, parent):
-        return 2
-    
-    def data(self, idx, role):
-        if not idx.isValid():
-            return QVariant()
-        
-        row = idx.row()
-            
-        userobj = self.users[row]
-        while not self.showsystemaccounts and userobj.isSystemUser():
-            row += 1
-            try:
-                userobj = self.users[row]
-            except IndexError:
-                return QVariant()
-        
-        if role == Qt.DisplayRole:
-            
-            col = idx.column()
-            if col == 0:
-                return QVariant(userobj.getRealName())
-            elif col == 1:
-                return QVariant(userobj.getUsername())
-        elif role == Qt.EditRole:
-            return QVariant(userobj.getUID())
-        else:
-            return QVariant()
-            
-    def headerData(self, section, orientation, role):
-        #col = section
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            if section == 0:
-                return QVariant(i18n("Real Name"))
-            elif section == 1:
-                return QVariant(i18n("Username"))
-        
-        return QVariant()
-    
-    def hasChildren(self, parent):
-        if parent.row() >= 0:
-            return False
-        else:
-            return True
-
-    def slotShowSystemAccounts(self, on):
-        self.showsystemaccounts = on
-        self.emit(SIGNAL("modelReset()"))
-
 ###########################################################################
 def SptimeToQDate(sptime):
     t = QDateTime()
@@ -115,7 +45,7 @@ def QDateToSptime(qdate):
     x.setTime_t(0)
     return x.daysTo(QDateTime(qdate))
 
-class UserEditDialog(KPageDialog):
+class UserEditDialog(KDialog):
     def __init__(self,parent,admincontext):
         #KDialogBase.__init__(self,KJanusWidget.Tabbed,i18n("User Account"),KDialogBase.Ok|KDialogBase.Cancel,
             #KDialogBase.Cancel,parent)
@@ -179,7 +109,7 @@ class UserEditDialog(KPageDialog):
         #self.validradiogroup.setRadioButtonExclusive(True) # TODO
 
 
-        self.expiredate = KDateWidget(self.widget)
+        self.expiredate = KDateWidget(self.up)
         self.gridLayout_3.addWidget(self.expiredate, 3, 2, 1, 1)
 
         self.validradiogroup.addButton(self.up.validalwaysradio,0)
