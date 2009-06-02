@@ -103,7 +103,8 @@ class UserConfigApp(programbase):
         self.userstab.userlistview.setModel(self.userlistmodel)
         
         # Last column is really big without this
-        self.userstab.userlistview.resizeColumnToContents(1)
+        #fix_treeview(self.userstab.userlistview)
+        self.userstab.userlistview.setColumnWidth(2, 20)
         
         self.connect( self.userstab.userlistview.selectionModel(),
                       SIGNAL("currentChanged(const QModelIndex&,const QModelIndex&)"),
@@ -168,13 +169,13 @@ class UserConfigApp(programbase):
         self.groupstab.grouplistview.setModel(self.grouplistmodel)
         
         # Last column is really big without this
-        self.groupstab.grouplistview.resizeColumnToContents(1)
+        fix_treeview(self.groupstab.grouplistview)
         
         self.groupmemberslistmodel = UserModel(None, [])
         self.groupstab.groupmemberlistview.setModel(
                                                 self.groupmemberslistmodel )
         # Last column is really big without this
-        self.groupstab.groupmemberlistview.resizeColumnToContents(1)
+        fix_treeview(self.groupstab.groupmemberlistview)
             
         self.connect( self.groupstab.grouplistview.selectionModel(),
                       SIGNAL("currentChanged(const QModelIndex&,const QModelIndex&)"),
@@ -431,7 +432,7 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def __updateUser(self,userid):
-        idx = self.userlistmodel.indexFromUID(userid)
+        idx = self.userlistmodel.indexFromID(userid)
         self.userlistmodel.emit(SIGNAL("dataChanged"), idx)
         #userobj = self.admincontext.lookupUID(userid)
         #if userobj.isLocked():
@@ -683,6 +684,10 @@ class UserConfigApp(programbase):
 ###########################################################################
 
 
+def fix_treeview(view):
+    """ Resizes all columns to contents """
+    for col in range(view.model().columnCount()):
+        view.resizeColumnToContents(col)
 
 
 ############################################################################

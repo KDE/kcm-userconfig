@@ -3,7 +3,7 @@
 ###########################################################################
 # models.py - Qt models for views in userconfig                           #
 # ------------------------------                                          #
-# begin     : Wed Apr 30 2003                                             #
+# begin     : Tue May 26 2009                                             #
 # copyright : (C) 2009 by Yuriy Kozlov                                    #
 # email     : yuriy-kozlov@kubuntu.org                                    #
 #                                                                         #
@@ -22,6 +22,7 @@ from PyQt4.QtCore import *
 
 # KDE imports
 from PyKDE4.kdecore import *
+from PyKDE4.kdeui import KIconLoader
 
 import locale
 
@@ -30,14 +31,14 @@ class UCAbstractItemModel(QAbstractItemModel):
         users and groups.
     """
     column_data = []
-    
-    def columnCount(self, parent):
-        return len(self.column_data)
 
     def __init__(self, parent, items):
         QAbstractItemModel.__init__(self, parent)
         self.items = items
         self.showsystemaccounts = True
+    
+    def columnCount(self, parent=None):
+        return len(self.column_data)
 
     def rowCount(self, parent = QModelIndex()):
         if self.showsystemaccounts:
@@ -75,14 +76,25 @@ class UCAbstractItemModel(QAbstractItemModel):
         
         if role == Qt.DisplayRole:
             col = idx.column()
-            data_func = getattr(obj,
-                                self.column_data[col]["data_method_name"])
-            return QVariant(data_func())
+            return self._data(obj, col)
         elif role == Qt.EditRole:
             return QVariant(obj.getID())
+        elif role == Qt.DecorationRole:
+            col = idx.column()
+            return self._icon_data(obj, col)
         else:
             return QVariant()
 
+    def _data(self, obj, col):
+        if self.column_data[col]["data_method_name"]:
+            data_func = getattr(obj, self.column_data[col]["data_method_name"])
+            return QVariant(data_func())
+        else:
+            return QVariant()
+        
+    def _icon_data(self, obj, col):
+        return QVariant()
+        
     def headerData(self, section, orientation, role):
         col = section
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
@@ -112,7 +124,18 @@ class UserModel(UCAbstractItemModel):
                      "header" : i18n("Real Name") },
                     {"data_method_name" : "getSystemName",
                      "header" : i18n("Username") },
+                    {"data_method_name" : "",
+                     "header" : "" },
                     ]
+    
+    def _icon_data(self, obj, col):
+        if col == 2 and obj.isLocked():
+                #print "object locked"
+                #return QVariant("blah")
+            return QVariant(KIconLoader.global_()
+                            .loadIcon('object-locked', KIconLoader.Small))
+        else:
+            return QVariant()
 
 
 class GroupModel(UCAbstractItemModel):
