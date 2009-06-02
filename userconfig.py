@@ -211,11 +211,18 @@ class UserConfigApp(programbase):
         self.groupstab.deletegroupbutton.setIcon(
                                         SmallIconSet('user-group-delete') )
 
+        # Disable some buttons.  Disable all if not root.
+        disablebuttons = [ self.userstab.modifybutton,
+                           self.groupstab.modifygroupbutton,
+                           self.userstab.deletebutton,
+                           self.groupstab.deletegroupbutton,
+                           ]
         if not isroot:
-            disablebuttons = (  self.userstab.modifybutton, self.groupstab.modifygroupbutton, self.userstab.deletebutton, self.groupstab.deletegroupbutton,
-                                self.userstab.newbutton, self.groupstab.newgroupbutton)
-            for widget in disablebuttons:
-                widget.setDisabled(True)
+            disablebuttons += ( self.userstab.newbutton,
+                                self.groupstab.newgroupbutton )
+        for widget in disablebuttons:
+            widget.setDisabled(True)
+
 
         #FIXME Need to handle non-standalone when it can be non-standalone
         #if not standalone:
@@ -283,6 +290,7 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def slotUserSelected(self, current):
+        """ Qt SLOT used when a user is clicked on in the list """
         userid = current.data(Qt.EditRole).toInt()[0]
         self.updatingGUI = True
         self.__selectUser(userid)
@@ -371,55 +379,55 @@ class UserConfigApp(programbase):
                 self.updatingGUI = False
 
     #######################################################################
-    def __updateUserList(self):
-        self.userlistmodel = QStandardItemModel()
-        parentItem = self.userlistmodel.invisibleRootItem()
+    #def __updateUserList(self):
+        #self.userlistmodel = QStandardItemModel()
+        #parentItem = self.userlistmodel.invisibleRootItem()
         
-        users = self.admincontext.getUsers()
-        
-        for userobj in users:
-            uid = userobj.getUID()
-            #itemstrings = QStringList()
-            #itemstrings.append(userobj.getUsername())
-            #itemstrings.append(userobj.getRealName())
-            #itemstrings.append(unicode(uid))
-            
-            item = QStandardItem(userobj.getUsername())
-            item.appendColumn(QStandardItem(userobj.getRealName()))
-            item.appendColumn(QStandardItem(unicode(uid)))
-            parentItem.appendRow(item)
-            parentItem = item
-            
-            #if userobj.isLocked():
-                    ## TODO
-                    #pass
-                    ##lvi.setPixmap(0,UserIcon("hi16-encrypted"))
-        #self.userstab.userlist.clear()
-        #self.useridsToListItems = {}
-        #firstselecteduserid = None
-
         #users = self.admincontext.getUsers()
-
+        
         #for userobj in users:
             #uid = userobj.getUID()
-            #if self.showsystemaccounts or not userobj.isSystemUser():
-                #itemstrings = QStringList()
-                #itemstrings.append(userobj.getUsername())
-                #itemstrings.append(userobj.getRealName())
-                #itemstrings.append(unicode(uid))
-                #lvi = QTreeWidgetItem(self.userstab.userlistview,itemstrings)
-                #if userobj.isLocked():
-                    ## TODO
-                    #pass
-                    ##lvi.setPixmap(0,UserIcon("hi16-encrypted"))
-                #self.useridsToListItems[uid] = lvi
-                #if self.selecteduserid==uid:
-                    #firstselecteduserid = uid
-                #elif firstselecteduserid==None:
-                    #firstselecteduserid = uid
-        #self.selecteduserid = firstselecteduserid
-        #self.__selectUser(self.selecteduserid)
-        #self.userlist.ensureItemVisible(self.userlist.currentItem())
+            ##itemstrings = QStringList()
+            ##itemstrings.append(userobj.getUsername())
+            ##itemstrings.append(userobj.getRealName())
+            ##itemstrings.append(unicode(uid))
+            
+            #item = QStandardItem(userobj.getUsername())
+            #item.appendColumn(QStandardItem(userobj.getRealName()))
+            #item.appendColumn(QStandardItem(unicode(uid)))
+            #parentItem.appendRow(item)
+            #parentItem = item
+            
+            ##if userobj.isLocked():
+                    ### TODO
+                    ##pass
+                    ###lvi.setPixmap(0,UserIcon("hi16-encrypted"))
+        ##self.userstab.userlist.clear()
+        ##self.useridsToListItems = {}
+        ##firstselecteduserid = None
+
+        ##users = self.admincontext.getUsers()
+
+        ##for userobj in users:
+            ##uid = userobj.getUID()
+            ##if self.showsystemaccounts or not userobj.isSystemUser():
+                ##itemstrings = QStringList()
+                ##itemstrings.append(userobj.getUsername())
+                ##itemstrings.append(userobj.getRealName())
+                ##itemstrings.append(unicode(uid))
+                ##lvi = QTreeWidgetItem(self.userstab.userlistview,itemstrings)
+                ##if userobj.isLocked():
+                    ### TODO
+                    ##pass
+                    ###lvi.setPixmap(0,UserIcon("hi16-encrypted"))
+                ##self.useridsToListItems[uid] = lvi
+                ##if self.selecteduserid==uid:
+                    ##firstselecteduserid = uid
+                ##elif firstselecteduserid==None:
+                    ##firstselecteduserid = uid
+        ##self.selecteduserid = firstselecteduserid
+        ##self.__selectUser(self.selecteduserid)
+        ##self.userlist.ensureItemVisible(self.userlist.currentItem())
 
     #######################################################################
     def __updateUser(self,userid):
@@ -435,19 +443,16 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def __selectUser(self,userid):
-        print 'Setting user ID to', userid
+        """ Selects a user in the list and updates the GUI to reflect
+            information about that user.  Enables/disables buttons as needed.
+            
+            Updates self.selecteduserid
+        """
         self.selecteduserid = userid
-        
-        # Only go on if there are actual users.
-        #if len(self.useridsToListItems)>0:
-            #lvi = self.useridsToListItems[userid]
-            #self.userlist.setSelected(lvi,True)
-            #self.userstab.userlist.setCurrentItem(lvi)
 
         userobj = self.admincontext.lookupUID(userid)
 
-        username = userobj.getUsername()
-        self.userstab.loginname.setText(username)
+        self.userstab.loginname.setText(userobj.getUsername())
         self.userstab.realname.setText(userobj.getRealName())
         self.userstab.uid.setText(unicode(userid))
         if userobj.isLocked():
@@ -461,10 +466,15 @@ class UserConfigApp(programbase):
         self.userstab.primarygroup.setText(primarygroupname)
 
         # Secondary Groups
-        secondarygroups = [g.getGroupname() for g in userobj.getGroups() if g is not userobj.getPrimaryGroup()]
-        self.userstab.secondarygroup.setText(unicode(i18n(", ")).join(secondarygroups))
+        secondarygroups = [g.getGroupname() for g in userobj.getGroups()
+                                        if g is not userobj.getPrimaryGroup()]
+        self.userstab.secondarygroup.setText(
+                                     unicode(i18n(", ")).join(secondarygroups))
 
         if isroot:
+            # Enable/disable buttons
+            self.userstab.modifybutton.setEnabled( True )
+            # Don't allow deletion the root account
             self.userstab.deletebutton.setDisabled(userobj.getUID()==0)
 
     #######################################################################
@@ -492,24 +502,22 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def __selectGroup(self,groupid):
-        print 'Setting group ID to', groupid
-        #pdb.set_trace()
-        if groupid:
-            self.selectedgroupid = groupid
-            #lvi = self.groupidsToListItems[groupid]
-            #self.grouplist.setSelected(lvi,True)
-            #self.grouplist.setCurrentItem(lvi)
-
-            groupobj = self.admincontext.lookupGID(groupid)
-            members = groupobj.getUsers()
-            #membersmodel = UserModel(None, members)
-            self.groupmemberslistmodel.setItems( members )
-            #self.groupstab.groupmemberlistview.setModel( membersmodel )
-            #membersmodel.emit(SIGNAL("modelReset()"))
-            #self.groupstab.groupmemberlistview.repaint()
+        """ Selects a user in the list and updates the GUI to reflect
+            information about that user.  Enables/disables buttons as needed.
             
-            if isroot:
-                self.groupstab.deletegroupbutton.setDisabled(groupobj.getGID()==0)
+            Updates self.selectedgroupid
+        """
+        self.selectedgroupid = groupid
+
+        groupobj = self.admincontext.lookupGID(groupid)
+        members = groupobj.getUsers()
+        self.groupmemberslistmodel.setItems( members )
+        
+        if isroot:
+            # Enable/disable buttons
+            self.groupstab.modifygroupbutton.setEnabled( True )
+            # Don't allow deletion of the root group
+            self.groupstab.deletegroupbutton.setDisabled(groupobj.getGID()==0)
 
     #######################################################################
     def __loadOptions(self):
