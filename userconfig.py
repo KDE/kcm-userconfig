@@ -105,8 +105,8 @@ class UserConfigApp(programbase):
         # Last column is really big without this
         self.userstab.userlistview.resizeColumnToContents(1)
         
-        self.connect( self.userstab.userlistview,
-                      SIGNAL("clicked(const QModelIndex&)"),
+        self.connect( self.userstab.userlistview.selectionModel(),
+                      SIGNAL("currentChanged(const QModelIndex&,const QModelIndex&)"),
                       self.slotUserSelected )
         
         if isroot:
@@ -120,7 +120,7 @@ class UserConfigApp(programbase):
         self.connect( self.userstab.show_sysaccts_checkbox,
                       SIGNAL("toggled(bool)"),
                       self.userlistmodel.slotShowSystemAccounts )
-        qDebug( "connected" + str(self.showsystemaccounts))
+        #qDebug( "connected" + str(self.showsystemaccounts))
         self.userstab.show_sysaccts_checkbox.setChecked(self.showsystemaccounts)
         
         # Buttons
@@ -161,7 +161,8 @@ class UserConfigApp(programbase):
 
         #FIXME: Need to find Oxygen group icon
         self.groupstab.groupIconLabel.setPixmap(
-            KIconLoader.global_().loadIcon('user-identity', KIconLoader.Small))
+            KIconLoader.global_()\
+                .loadIcon('user-group-properties', KIconLoader.Small))
 
         self.grouplistmodel = GroupModel(None, self.admincontext.getGroups() )
         self.groupstab.grouplistview.setModel(self.grouplistmodel)
@@ -169,10 +170,14 @@ class UserConfigApp(programbase):
         # Last column is really big without this
         self.groupstab.grouplistview.resizeColumnToContents(1)
         
-        self.groupstab.groupmemberlistview.setModel( UserModel(None, []) )
+        self.groupmemberslistmodel = UserModel(None, [])
+        self.groupstab.groupmemberlistview.setModel(
+                                                self.groupmemberslistmodel )
+        # Last column is really big without this
+        self.groupstab.groupmemberlistview.resizeColumnToContents(1)
             
-        self.connect( self.groupstab.grouplistview,
-                      SIGNAL("clicked(const QModelIndex&)"),
+        self.connect( self.groupstab.grouplistview.selectionModel(),
+                      SIGNAL("currentChanged(const QModelIndex&,const QModelIndex&)"),
                       self.slotGroupSelected )
         
         if isroot:
@@ -269,7 +274,7 @@ class UserConfigApp(programbase):
         global programbase
         size_hint = programbase.sizeHint(self)
         # Just make the dialog a little shorter by default.
-        size_hint.setHeight(size_hint.height()-200) 
+        size_hint.setHeight(size_hint.height()-150) 
         return size_hint
 
     #######################################################################
@@ -329,7 +334,7 @@ class UserConfigApp(programbase):
     def slotModifyGroupClicked(self):
         if self.selectedgroupid!=None:
             if self.groupeditdialog.showEditGroup(self.selectedgroupid):
-                self.__selectGroup(self.selectedgroupid)
+                #self.__selectGroup(self.selectedgroupid)
                 self.updatingGUI = True
                 self.__updateUser(self.selecteduserid)
                 #self.__selectUser(self.selecteduserid)
@@ -344,7 +349,7 @@ class UserConfigApp(programbase):
             #self.__updateGroupList()
             self.__selectGroup(newgroupid)
             self.__updateUser(self.selecteduserid)
-            self.__selectUser(self.selecteduserid)
+            #self.__selectUser(self.selecteduserid)
             self.updatingGUI = False
 
     #######################################################################
@@ -463,31 +468,32 @@ class UserConfigApp(programbase):
             self.userstab.deletebutton.setDisabled(userobj.getUID()==0)
 
     #######################################################################
-    def __updateGroupList(self):
-        self.grouplist.clear()
-        self.groupidsToListItems = {}
-        firstselectedgroupid = None
+    #def __updateGroupList(self):
+        #self.grouplist.clear()
+        #self.groupidsToListItems = {}
+        #firstselectedgroupid = None
 
-        groups = self.admincontext.getGroups()
-        for groupobj in groups:
-            gid = groupobj.getGID()
-            if self.showsystemgroups or not groupobj.isSystemGroup():
-                itemstrings = QStringList()
-                itemstrings.append(groupobj.getGroupname())
-                itemstrings.append(unicode(gid))
-                lvi = QTreeWidgetItem(self.grouplist,itemstrings)
-                self.groupidsToListItems[gid] = lvi
-                if self.selectedgroupid==gid:
-                    firstselectedgroupid = gid
-                elif firstselectedgroupid==None:
-                    firstselectedgroupid = gid
-        self.selectedgroupid = firstselectedgroupid
-        self.__selectGroup(self.selectedgroupid)
+        #groups = self.admincontext.getGroups()
+        #for groupobj in groups:
+            #gid = groupobj.getGID()
+            #if self.showsystemgroups or not groupobj.isSystemGroup():
+                #itemstrings = QStringList()
+                #itemstrings.append(groupobj.getGroupname())
+                #itemstrings.append(unicode(gid))
+                #lvi = QTreeWidgetItem(self.grouplist,itemstrings)
+                #self.groupidsToListItems[gid] = lvi
+                #if self.selectedgroupid==gid:
+                    #firstselectedgroupid = gid
+                #elif firstselectedgroupid==None:
+                    #firstselectedgroupid = gid
+        #self.selectedgroupid = firstselectedgroupid
+        #self.__selectGroup(self.selectedgroupid)
         #self.grouplist.ensureItemVisible(self.grouplist.currentItem())
 
     #######################################################################
     def __selectGroup(self,groupid):
         print 'Setting group ID to', groupid
+        #pdb.set_trace()
         if groupid:
             self.selectedgroupid = groupid
             #lvi = self.groupidsToListItems[groupid]
@@ -496,9 +502,11 @@ class UserConfigApp(programbase):
 
             groupobj = self.admincontext.lookupGID(groupid)
             members = groupobj.getUsers()
-            membersmodel = UserModel(None, members)
-            self.groupstab.groupmemberlistview.setModel( membersmodel )
-            self.groupstab.groupmemberlistview.repaint()
+            #membersmodel = UserModel(None, members)
+            self.groupmemberslistmodel.setItems( members )
+            #self.groupstab.groupmemberlistview.setModel( membersmodel )
+            #membersmodel.emit(SIGNAL("modelReset()"))
+            #self.groupstab.groupmemberlistview.repaint()
             
             if isroot:
                 self.groupstab.deletegroupbutton.setDisabled(groupobj.getGID()==0)

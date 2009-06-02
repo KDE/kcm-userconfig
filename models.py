@@ -46,6 +46,10 @@ class UCAbstractItemModel(QAbstractItemModel):
     def slotShowSystemAccounts(self, on):
         self.showsystemaccounts = on
         self.emit(SIGNAL("modelReset()"))
+        
+    def setItems(self, items):
+        self.items = items
+        self.emit(SIGNAL("modelReset()"))
 
 
 class UserModel(UCAbstractItemModel):

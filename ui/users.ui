@@ -24,7 +24,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="accountlabel">
+      <widget class="QLabel" name="accountLabel">
        <property name="text">
         <string>User Accounts:</string>
        </property>
@@ -113,7 +113,7 @@
      <property name="minimumSize">
       <size>
        <width>469</width>
-       <height>144</height>
+       <height>131</height>
       </size>
      </property>
      <property name="title">
