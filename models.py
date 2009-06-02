@@ -26,11 +26,25 @@ from PyKDE4.kdecore import *
 import locale
 
 class UCAbstractItemModel(QAbstractItemModel):
+    """ Item model for tree views in userconfig.  Common elements for
+        users and groups.
+    """
+    column_data = []
+    
+    def columnCount(self, parent):
+        return len(self.column_data)
+
     def __init__(self, parent, items):
         QAbstractItemModel.__init__(self, parent)
         self.items = items
         self.showsystemaccounts = True
 
+    def rowCount(self, parent = QModelIndex()):
+        if self.showsystemaccounts:
+            return len(self.items)
+        else:
+            return len([obj for obj in self.items if not obj.isSystemAccount()])
+    
     def index(self, row, column, parent=QModelIndex()):
         return self.createIndex(row, column)
     
@@ -43,32 +57,6 @@ class UCAbstractItemModel(QAbstractItemModel):
         else:
             return True
 
-    def slotShowSystemAccounts(self, on):
-        self.showsystemaccounts = on
-        self.emit(SIGNAL("modelReset()"))
-        
-    def setItems(self, items):
-        self.items = items
-        self.emit(SIGNAL("modelReset()"))
-
-
-class UserModel(UCAbstractItemModel):
-    def indexFromUID(self, uid):
-        for i, userobj in enumerate(self.items):
-            if userobj.getUID() == uid:
-                return self.index(i, 0)
-        return QModelIndex()
-    
-    def rowCount(self, parent = QModelIndex()):
-        if self.showsystemaccounts:
-            #print len(self.items)
-            return len(self.items)
-        else:
-            return len([user for user in self.items if not user.isSystemUser()])
-    
-    def columnCount(self, parent):
-        return 2
-    
     def data(self, idx, role):
         if not idx.isValid():
             return QVariant()
@@ -76,87 +64,62 @@ class UserModel(UCAbstractItemModel):
         row = idx.row()
         if row >= self.rowCount():
             return QVariant()
-            
-        try:
-            userobj = self.items[row]
-        except Exception, e:
-            print e, row
-        while (not self.showsystemaccounts) and userobj.isSystemUser():
+        
+        obj = self.items[row]
+        while (not self.showsystemaccounts) and obj.isSystemAccount():
             row += 1
             try:
-                userobj = self.items[row]
+                obj = self.items[row]
             except IndexError:
                 return QVariant()
         
         if role == Qt.DisplayRole:
             col = idx.column()
-            if col == 0:
-                return QVariant(userobj.getRealName())
-            elif col == 1:
-                return QVariant(userobj.getUsername())
+            data_func = getattr(obj,
+                                self.column_data[col]["data_method_name"])
+            return QVariant(data_func())
         elif role == Qt.EditRole:
-            return QVariant(userobj.getUID())
+            return QVariant(obj.getID())
         else:
             return QVariant()
-            
+
     def headerData(self, section, orientation, role):
         col = section
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            if col == 0:
-                return QVariant(i18n("Real Name"))
-            elif col == 1:
-                return QVariant(i18n("Username"))
+            return QVariant(self.column_data[col]["header"])
         
         return QVariant()
+
+    def slotShowSystemAccounts(self, on):
+        self.showsystemaccounts = on
+        self.emit(SIGNAL("modelReset()"))
+        
+    def setItems(self, items):
+        self.items = items
+        self.emit(SIGNAL("modelReset()"))
+        
+    def indexFromID(self, ID):
+        for i, userobj in enumerate(self.items):
+            if userobj.getID() == ID:
+                return self.index(i, 0)
+        return QModelIndex()
+
+
+class UserModel(UCAbstractItemModel):
+    """ Item model for tree views in userconfig.  Elements specific to users.
+    """
+    column_data = [ {"data_method_name" : "getRealName",
+                     "header" : i18n("Real Name") },
+                    {"data_method_name" : "getSystemName",
+                     "header" : i18n("Username") },
+                    ]
 
 
 class GroupModel(UCAbstractItemModel):
-    def indexFromUID(self, uid):
-        for i, userobj in enumerate(self.items):
-            if userobj.getUID() == uid:
-                return self.index(i, 0)
-        return QModelIndex()
-    
-    def rowCount(self, parent):
-        if self.showsystemaccounts:
-            return len(self.items)
-        else:
-            return len([group for group in self.items if not group.isSystemGroup()])
-    
-    def columnCount(self, parent):
-        return 2
-    
-    def data(self, idx, role):
-        if not idx.isValid():
-            return QVariant()
-        
-        row = idx.row()
-            
-        groupobj = self.items[row]
-        while (not self.showsystemaccounts) and groupobj.isSystemGroup():
-            row += 1
-            try:
-                groupobj = self.items[row]
-            except IndexError:
-                return QVariant()
-        
-        if role == Qt.DisplayRole:
-            col = idx.column()
-            if col == 0:
-                return QVariant(groupobj.getGroupname())
-            elif col == 1:
-                return QVariant(unicode(groupobj.getGID()))
-        elif role == Qt.EditRole:
-            return QVariant(groupobj.getGID())
-        else:
-            return QVariant()
-            
-    def headerData(self, section, orientation, role):
-        col = section
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            if col == 0:
-                return QVariant(i18n("Group Name"))
-            elif col == 1:
-                return QVariant(i18n("GID"))
-        
-        return QVariant()
+    """ Item model for tree views in userconfig.  Elements specific to groups.
+    """
+    column_data = [ {"data_method_name" : "getSystemName",
+                     "header" : i18n("Group Name") },
+                    {"data_method_name" : "getID",
+                     "header" : i18n("GID") },
+                    ]

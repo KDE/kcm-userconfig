@@ -1,7 +1,8 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 ###########################################################################
-#    Copyright (C) 2004-2006 by Simon Edwards                                      
-#    <simon@simonzone.com>                                                             
+#    Copyright (C) 2004-2006 by Simon Edwards
+#    <simon@simonzone.com>
 #
 # Copyright: See COPYING file that comes with this distribution
 #
@@ -460,8 +461,29 @@ class Context(object):
             # Will be set in showNewUser()
             self.dshell = None
 
+
 ###########################################################################
-class UnixUser(object):
+class UnixAccount(object):
+    """ Common interface for users and groups """
+    def getID(self):
+        """ Returns the numerical ID of the object ( e.g. UID, GID) """
+        pass
+    
+    def getSystemName(self):
+        """ Returns the name of the object as referred to in the system
+            ( e.g. username, group name )
+        """
+        pass
+    
+    def isSystemAccount(self):
+        """ See if this account is a system account.
+
+            Returns True or False.
+        """
+        pass
+
+###########################################################################
+class UnixUser(UnixAccount):
     def __init__(self,context):
         self._context = context
         self._uid = None
@@ -646,8 +668,26 @@ class UnixUser(object):
         if self._uid is None:
             raise ValueError,"Userobj has no UID!"
 
+    # Common interface for users and groups ###############################
+    def getID(self):
+        """ Returns the numerical ID of the object ( e.g. UID, GID) """
+        return self.getUID()
+    
+    def getSystemName(self):
+        """ Returns the name of the object as referred to in the system
+            ( e.g. username, group name )
+        """
+        return self.getUsername()
+    
+    def isSystemAccount(self):
+        """ See if this account is a system account.
+
+            Returns True or False.
+        """
+        return self.isSystemUser()
+
 ###########################################################################
-class UnixGroup(object):
+class UnixGroup(UnixAccount):
     def __init__(self,context):
         self._context = context
 
@@ -707,6 +747,25 @@ class UnixGroup(object):
 
     def _sanityCheck(self):
         pass
+
+    # Common interface for users and groups ###############################
+    def getID(self):
+        """ Returns the numerical ID of the object ( e.g. GID) """
+        return self.getGID()
+    
+    def getSystemName(self):
+        """ Returns the name of the object as referred to in the system
+            ( e.g. group name )
+        """
+        return self.getGroupname()
+    
+    def isSystemAccount(self):
+        """ See if this group is a system group.
+
+            Returns True or False.
+        """
+        return self.isSystemGroup()
+
 
 ###########################################################################
 class PwdContext(Context):
