@@ -62,14 +62,21 @@ class UserConfigApp(programbase):
         if standalone:
             KPageDialog.__init__(self)
             self.setFaceType(KPageDialog.Tabbed)
-            #self.setButtons( KDialog.Ok | KDialog.Cancel | KDialog.Apply | \
-                             #KDialog.User1 )
+            
+            # Set up buttons
+            self.setButtons(KDialog.ButtonCode(KDialog.Close | KDialog.User1))
+            self.setButtonText(KDialog.ButtonCode(KDialog.User1), i18n("About"))
+            self.setButtonIcon(KDialog.User1, KIcon('help-about'))
+            self.connect(self, SIGNAL("user1Clicked()"), self.slotUser1)
+            
+            # Load UI
             #if os.path.exists('ui/maindialog.ui'):
             self.userstab = uic.loadUi('ui/users.ui')
             self.addPage(self.userstab, i18n("Users") )
             self.groupstab = uic.loadUi('ui/groups.ui')
             self.addPage(self.groupstab, i18n("Groups") )
-        #FIXME: SRSLY! Need to know where the ui crap'll be installed and check for it there too.
+            #FIXME: SRSLY! Need to know where the ui crap'll be installed and
+            #check for it there too.
         else:
             KCModule.__init__(self,parent,name)
             self.setButtons(0)
@@ -95,7 +102,7 @@ class UserConfigApp(programbase):
 
         self.updatingGUI = True
         
-        self.aboutus = KAboutApplicationDialog(self.aboutdata, self) #TODO
+        self.aboutus = KAboutApplicationDialog(self.aboutdata, self)
 
         #######################################################################
         # Set up the users tab
@@ -371,57 +378,6 @@ class UserConfigApp(programbase):
                 self.updatingGUI = False
 
     #######################################################################
-    #def __updateUserList(self):
-        #self.userlistmodel = QStandardItemModel()
-        #parentItem = self.userlistmodel.invisibleRootItem()
-        
-        #users = self.admincontext.getUsers()
-        
-        #for userobj in users:
-            #uid = userobj.getUID()
-            ##itemstrings = QStringList()
-            ##itemstrings.append(userobj.getUsername())
-            ##itemstrings.append(userobj.getRealName())
-            ##itemstrings.append(unicode(uid))
-            
-            #item = QStandardItem(userobj.getUsername())
-            #item.appendColumn(QStandardItem(userobj.getRealName()))
-            #item.appendColumn(QStandardItem(unicode(uid)))
-            #parentItem.appendRow(item)
-            #parentItem = item
-            
-            ##if userobj.isLocked():
-                    ### TODO
-                    ##pass
-                    ###lvi.setPixmap(0,UserIcon("hi16-encrypted"))
-        ##self.userstab.userlist.clear()
-        ##self.useridsToListItems = {}
-        ##firstselecteduserid = None
-
-        ##users = self.admincontext.getUsers()
-
-        ##for userobj in users:
-            ##uid = userobj.getUID()
-            ##if self.showsystemaccounts or not userobj.isSystemUser():
-                ##itemstrings = QStringList()
-                ##itemstrings.append(userobj.getUsername())
-                ##itemstrings.append(userobj.getRealName())
-                ##itemstrings.append(unicode(uid))
-                ##lvi = QTreeWidgetItem(self.userstab.userlistview,itemstrings)
-                ##if userobj.isLocked():
-                    ### TODO
-                    ##pass
-                    ###lvi.setPixmap(0,UserIcon("hi16-encrypted"))
-                ##self.useridsToListItems[uid] = lvi
-                ##if self.selecteduserid==uid:
-                    ##firstselecteduserid = uid
-                ##elif firstselecteduserid==None:
-                    ##firstselecteduserid = uid
-        ##self.selecteduserid = firstselecteduserid
-        ##self.__selectUser(self.selecteduserid)
-        ##self.userlist.ensureItemVisible(self.userlist.currentItem())
-
-    #######################################################################
     def __updateUser(self,userid):
         idx = self.userlistmodel.indexFromID(userid)
         self.userlistmodel.emit(SIGNAL("dataChanged"), idx)
@@ -468,29 +424,6 @@ class UserConfigApp(programbase):
             self.userstab.modifybutton.setEnabled( True )
             # Don't allow deletion the root account
             self.userstab.deletebutton.setDisabled(userobj.getUID()==0)
-
-    #######################################################################
-    #def __updateGroupList(self):
-        #self.grouplist.clear()
-        #self.groupidsToListItems = {}
-        #firstselectedgroupid = None
-
-        #groups = self.admincontext.getGroups()
-        #for groupobj in groups:
-            #gid = groupobj.getGID()
-            #if self.showsystemgroups or not groupobj.isSystemGroup():
-                #itemstrings = QStringList()
-                #itemstrings.append(groupobj.getGroupname())
-                #itemstrings.append(unicode(gid))
-                #lvi = QTreeWidgetItem(self.grouplist,itemstrings)
-                #self.groupidsToListItems[gid] = lvi
-                #if self.selectedgroupid==gid:
-                    #firstselectedgroupid = gid
-                #elif firstselectedgroupid==None:
-                    #firstselectedgroupid = gid
-        #self.selectedgroupid = firstselectedgroupid
-        #self.__selectGroup(self.selectedgroupid)
-        #self.grouplist.ensureItemVisible(self.grouplist.currentItem())
 
     #######################################################################
     def __selectGroup(self,groupid):
@@ -690,9 +623,10 @@ def create_userconfig(parent,name):
 def MakeAboutData():
     aboutdata = KAboutData("guidance", "guidance", ki18n(programname), version,
         ki18n("User and Group Configuration Tool"),
-        KAboutData.License_GPL, ki18n("Copyright (C) 2003-2007 Simon Edwards" +
-                                       ", 2008-2009 by Yuriy Kozlov, " +
-                                       "Jonathan Thomas, Ralph Janke"))
+        KAboutData.License_GPL,
+        ki18n("Copyright (C) 2003-2007 Simon Edwards\n" +
+              "Copyright (C) 2008-2009 by Yuriy Kozlov, Jonathan Thomas, " +
+              "Ralph Janke"))
     aboutdata.addAuthor(ki18n("Simon Edwards"), ki18n("Developer"), "simon@simonzone.com", "http://www.simonzone.com/software/")
     aboutdata.addAuthor(ki18n("Sebastian Kügler"), ki18n("Developer"), "sebas@kde.org", "http://vizZzion.org")
     aboutdata.addAuthor(ki18n("Yuriy Kozlov"), ki18n("Developer"), "yuriy-kozlov@kubuntu.org", "http://www.yktech.us")
