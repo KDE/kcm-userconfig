@@ -57,9 +57,13 @@ class UserConfigApp(programbase):
         global standalone,isroot
         KGlobal.locale().insertCatalog("guidance")
 
+        self.aboutdata = MakeAboutData()
+        
         if standalone:
             KPageDialog.__init__(self)
             self.setFaceType(KPageDialog.Tabbed)
+            #self.setButtons( KDialog.Ok | KDialog.Cancel | KDialog.Apply | \
+                             #KDialog.User1 )
             #if os.path.exists('ui/maindialog.ui'):
             self.userstab = uic.loadUi('ui/users.ui')
             self.addPage(self.userstab, i18n("Users") )
@@ -79,6 +83,8 @@ class UserConfigApp(programbase):
 
         # Create a configuration object.
         self.config = KConfig("userconfigrc")
+        self.generalconfiggroup = KConfigGroup(self.config, "General")
+        self.optionsconfiggroup = KConfigGroup(self.config, "Options")
 
         KIconLoader.global_().addAppDir("guidance")
         
@@ -86,12 +92,10 @@ class UserConfigApp(programbase):
 
         self.selecteduserid = None
         self.selectedgroupid = None
-        self.showsystemaccounts = True
-        self.showsystemgroups = True
 
         self.updatingGUI = True
         
-        #self.aboutus = KAboutApplicationDialog(self) #TODO
+        self.aboutus = KAboutApplicationDialog(self.aboutdata, self) #TODO
 
         #######################################################################
         # Set up the users tab
@@ -121,8 +125,6 @@ class UserConfigApp(programbase):
         self.connect( self.userstab.show_sysaccts_checkbox,
                       SIGNAL("toggled(bool)"),
                       self.userlistmodel.slotShowSystemAccounts )
-        #qDebug( "connected" + str(self.showsystemaccounts))
-        self.userstab.show_sysaccts_checkbox.setChecked(self.showsystemaccounts)
         
         # Buttons
         self.connect( self.userstab.modifybutton,
@@ -228,14 +230,7 @@ class UserConfigApp(programbase):
         #FIXME Need to handle non-standalone when it can be non-standalone
         #if not standalone:
             #tabcontrol.addTab(groupsvbox,i18n("Groups"))
-
         
-
-        self.updatingGUI = True
-
-        self.groupstab.show_sysgroups_checkbox.setChecked(self.showsystemgroups)
-        
-        self.updatingGUI = False
 
         self.usereditdialog = UserEditDialog(None,self.admincontext)
         self.userdeletedialog = UserDeleteDialog(None,self.admincontext)
@@ -244,13 +239,9 @@ class UserConfigApp(programbase):
     #######################################################################
     def exec_(self):
         global programbase
-        #self.__loadOptions()
-        self.updatingGUI = True
-        #self.__updateUserList()
-        #self.__updateGroupList()
-        self.updatingGUI = False
+        self.__loadOptions()
         programbase.exec_(self)
-        #self.__saveOptions()
+        self.__saveOptions()
 
     #######################################################################
     def slotUser1(self):
@@ -522,35 +513,35 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def __loadOptions(self):
-        #self.config.setGroup("General")
+        self.restoreDialogSize(self.generalconfiggroup)
         
-        size = self.config.group("General").readEntry("Geometry")
-        #if size.isEmpty()==False:
-            #self.resize(size)  # TODO
-        #self.config.setGroup("Options")
-        self.showsystemaccounts = self.config.group("Options").readEntry("ShowSystemAccounts")
-        if self.showsystemaccounts == '':
-            self.showsystemaccounts = False
-        else:
-            self.showsystemaccounts = int(self.showsystemaccounts)
-        self.userstab.show_sysaccts_checkbox.setChecked(bool(self.showsystemaccounts))
-        self.showsystemgroups = self.config.group("Options").readEntry("ShowSystemGroups")
-        if self.showsystemgroups == '':
-            self.showsystemgroups == 0
-        else:
-            self.showsystemgroups = int(self.showsystemgroups)
-        self.groupstab.show_sysgroups_checkbox.setChecked(bool(self.showsystemgroups))
+        showsystemaccounts = self.optionsconfiggroup.readEntry("ShowSystemAccounts")
+        if showsystemaccounts:
+            showsystemaccounts = int(showsystemaccounts)
+        showsystemaccounts = bool(showsystemaccounts)
+        self.userstab.show_sysaccts_checkbox.setChecked(showsystemaccounts)
+        # The signal-slot connection doesn't seem to work here.. before exec?
+        self.userlistmodel.slotShowSystemAccounts(showsystemaccounts)
+        
+        showsystemgroups = self.optionsconfiggroup.readEntry("ShowSystemGroups")
+        if showsystemgroups:
+            showsystemgroups = int(showsystemgroups)
+        showsystemgroups = bool(showsystemgroups)
+        self.groupstab.show_sysgroups_checkbox.setChecked(showsystemgroups)
+        # The signal-slot connection doesn't seem to work here.. before exec?
+        self.grouplistmodel.slotShowSystemAccounts(showsystemgroups)
 
     #######################################################################
     def __saveOptions(self):
         global isroot
         if isroot:
             return
-        #self.config.setGroup("General")
-        #self.config.group("General").writeEntry("Geometry", self.size())   # TODO
-        #self.config.setGroup("Options")
-        self.config.group("Options").writeEntry("ShowSystemAccounts",str(int(self.showsystemaccounts)))
-        self.config.group("Options").writeEntry("ShowSystemGroups",str(int(self.showsystemgroups)))
+        self.saveDialogSize(self.generalconfiggroup)
+        
+        self.optionsconfiggroup.writeEntry("ShowSystemAccounts",
+                str(int(self.userstab.show_sysaccts_checkbox.isChecked())))
+        self.optionsconfiggroup.writeEntry("ShowSystemGroups",
+                str(int(self.groupstab.show_sysgroups_checkbox.isChecked())))
         self.config.sync()
 
     #######################################################################
@@ -699,10 +690,14 @@ def create_userconfig(parent,name):
 def MakeAboutData():
     aboutdata = KAboutData("guidance", "guidance", ki18n(programname), version,
         ki18n("User and Group Configuration Tool"),
-        KAboutData.License_GPL, ki18n("Copyright (C) 2003-2007 Simon Edwards"))
+        KAboutData.License_GPL, ki18n("Copyright (C) 2003-2007 Simon Edwards" +
+                                       ", 2008-2009 by Yuriy Kozlov, " +
+                                       "Jonathan Thomas, Ralph Janke"))
     aboutdata.addAuthor(ki18n("Simon Edwards"), ki18n("Developer"), "simon@simonzone.com", "http://www.simonzone.com/software/")
     aboutdata.addAuthor(ki18n("Sebastian Kügler"), ki18n("Developer"), "sebas@kde.org", "http://vizZzion.org")
     aboutdata.addAuthor(ki18n("Yuriy Kozlov"), ki18n("Developer"), "yuriy-kozlov@kubuntu.org", "http://www.yktech.us")
+    aboutdata.addAuthor(ki18n("Jonathan Thomas"), ki18n("Developer"), "", "")
+    aboutdata.addAuthor(ki18n("Ralph Janke"), ki18n("Developer"), "", "")
     return aboutdata
 
 if standalone:
