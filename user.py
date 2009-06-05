@@ -4,8 +4,10 @@
 # user.py - configuration for users for userconfig                        #
 # ------------------------------                                          #
 # begin     : Wed Apr 30 2003                                             #
-# copyright : (C) 2003-2006 by Simon Edwards, 2008 by Yuriy Kozlov        #
-# email     : simon@simonzone.com                                         #
+# copyright : (C) 2003-2006 by Simon Edwards,                             #
+#                 2008-2009 by Yuriy Kozlov, Jonathan Thomas, Ralph Janke #
+# email     : simon@simonzone.com,                                        #
+#             yuriy-kozlov@kubuntu.org                                    #
 #                                                                         #
 ###########################################################################
 #                                                                         #
@@ -31,7 +33,8 @@ from PyKDE4.kio import *
 import locale
 
 # userconfig imports
-from util.groups import PrivilegeNames
+#from util.groups import PrivilegeNames
+from models import GroupListModel, PrivilegeListModel
 
 ###########################################################################
 def SptimeToQDate(sptime):
@@ -47,8 +50,6 @@ def QDateToSptime(qdate):
 
 class UserEditDialog(KPageDialog):
     def __init__(self,parent,admincontext):
-        #KDialogBase.__init__(self,KJanusWidget.Tabbed,i18n("User Account"),KDialogBase.Ok|KDialogBase.Cancel,
-            #KDialogBase.Cancel,parent)
         KPageDialog.__init__( self, parent )
         self.setFaceType(KPageDialog.Tabbed)
         self.setCaption(i18n("User Account"))
@@ -62,15 +63,15 @@ class UserEditDialog(KPageDialog):
         self.addPage(self.pwsec_tab, i18n("Password/Security"))
 
         self.admincontext = admincontext
+        self.userobj = None
         
         self.updatingGUI = True
-        
-        #self.up.statusLabel.setPixmap(KIcon("user-identity")) #TODO need to learn to do it right!
-
-        #self.up.statusLabel.setPixmap(KIcon("encrypted")) #TODO need to learn to do it right!
 
         #######################################################################
         # Set up the user details tab
+        
+        self.details_tab.enabledradio.setIcon(KIcon("user-identity"))
+        self.details_tab.disabledradio.setIcon(KIcon("object-locked"))
         
         self.details_tab.enabledradiogroup = QButtonGroup()
         self.details_tab.enabledradiogroup.addButton(
@@ -92,6 +93,7 @@ class UserEditDialog(KPageDialog):
                         QIntValidator(0, 65535, self.details_tab.uidedit))
 
         self.details_tab.primarygroupedit = KComboBox(self.details_tab)
+        self.details_tab.primarygroupedit.setEditable(True)
         self.details_tab.layout().addWidget(self.details_tab.primarygroupedit,
                                             7, 1) # Not sure why this is 7
 
@@ -111,6 +113,15 @@ class UserEditDialog(KPageDialog):
         #######################################################################
         # Set up the privileges and groups tab
 
+        self.privileges_model = PrivilegeListModel(None,
+                                        self.admincontext.getGroups(),
+                                        self.userobj)
+        self.privgroups_tab.privilegeslistview.setModel(self.privileges_model)
+        
+        self.groups_model = GroupListModel(None,
+                                        self.admincontext.getGroups(),
+                                        self.userobj)
+        self.privgroups_tab.groupslistview.setModel(self.groups_model)
 
         #######################################################################
         # Set up the password/security tab
@@ -151,29 +162,66 @@ class UserEditDialog(KPageDialog):
         self.createhomedirectorydialog = OverwriteHomeDirectoryDialog(None)
         self.updatingGUI = False
 
-    def _repopulateGroupsPrivileges(self,excludegroups=None):
-        # needs listviews to be constructed.  Expects a list of PwdGroups to be excluded
-        
-        # rehash everything
-        self.privgroups_tab.privilegeslistview.clear()
-        self.privgroups_tab.groupslistview.clear()
-        self.secondarygroupcheckboxes = {}
-        pn = PrivilegeNames()
-        
-        if excludegroups: excludegroups = [ g.getGroupname() for g in excludegroups ]
-        else: excludegroups = []
-        for group in [g.getGroupname() for g in self.admincontext.getGroups()]:
-            if group in excludegroups: continue
-            if group in pn:
-                name = i18n(unicode(pn[group]).encode(locale.getpreferredencoding()))
-                wid = self.privgroups_tab.privilegeslistview
-            else:
-                name = unicode(group).encode(locale.getpreferredencoding())
-                wid = self.privgroups_tab.groupslistview
-            self.secondarygroupcheckboxes[group] = QListWidgetItem(name, wid)
-
     ########################################################################
-    def showEditUser(self,userid):
+    #def _repopulateGroupsPrivileges(self,excludegroups=None):
+        ## needs listviews to be constructed.  Expects a list of PwdGroups to be excluded
+        
+        ## rehash everything
+        #self.privgroups_tab.privilegeslistview.clear()
+        #self.privgroups_tab.groupslistview.clear()
+        #self.secondarygroupcheckboxes = {}
+        #pn = PrivilegeNames()
+        
+        #if excludegroups: excludegroups = [ g.getGroupname() for g in excludegroups ]
+        #else: excludegroups = []
+        #for group in [g.getGroupname() for g in self.admincontext.getGroups()]:
+            #if group in excludegroups: continue
+            #if group in pn:
+                #name = i18n(unicode(pn[group]).encode(locale.getpreferredencoding()))
+                #wid = self.privgroups_tab.privilegeslistview
+            #else:
+                #name = unicode(group).encode(locale.getpreferredencoding())
+                #wid = self.privgroups_tab.groupslistview
+            #self.secondarygroupcheckboxes[group] = QListWidgetItem(name, wid)
+
+    #def _repopulateGroupsPrivilegesModels(self, selectedgroups, excludegroups=None):
+        #""" Populates the models for the privileges and groups lists.
+            #selectedgroups: a list of selected group names
+            #excludegroups: a list of PwdGroups to be excluded
+        #"""
+        ## This isn't quite using model/view, but it's an improvement
+        ## rehash everything
+        #self.privileges_model.clear()
+        #self.groups_model.clear()
+        ##self.secondarygroupcheckboxes = {}
+        #pn = PrivilegeNames()
+        
+        #if excludegroups:
+            #excludegroups = [ g.getGroupname() for g in excludegroups ]
+        #else:
+            #excludegroups = []
+        
+        #groupnames = [g.getGroupname() for g in self.admincontext.getGroups()]
+        #for group in groupnames:
+            #if group in excludegroups: continue
+            
+            #groupitem = QStandardItem(group)
+            #groupitem.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+            #check = Qt.Checked if group in selectedgroups else Qt.Unchecked
+            #name = unicode(group).encode(locale.getpreferredencoding())
+            #groupitem.setData(QVariant(check), Qt.CheckStateRole)
+            #groups_model.appendRow(item)
+            
+            #if group in pn:
+                #privitem = QStandardItem(group)
+                #privitem.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+                #name = pn[group]
+                #privitem.setData(QVariant(check), Qt.CheckStateRole)
+                #privileges_model.appendRow(item)
+            
+    
+    ########################################################################
+    def showEditUser(self, userid):
         self.updatingGUI = True
         self.newusermode = False
         self.userobj = self.admincontext.lookupUID(userid)
@@ -182,8 +230,15 @@ class UserEditDialog(KPageDialog):
         self.selectedgroups = [g.getGroupname() for g in self.userobj.getGroups()
             if g is not self.userobj.getPrimaryGroup()]
         
-        # Rudd-O: now here we tick the appropriate group listing checkbox, and hide the currently active primary group of the user.  We are repopulating because if the user to edit changes, we need to hide the user's secondary group.  FIXME we should repopulate the groups privileges list when the primary group is changed in the other tab -- that is, on the change slot of the primary group drop down.
-        self._repopulateGroupsPrivileges(excludegroups=[self.userobj.getPrimaryGroup()])
+        # Rudd-O: now here we tick the appropriate group listing checkbox, and
+        # hide the currently active primary group of the user.  We are
+        # repopulating because if the user to edit changes, we need to hide
+        # the user's secondary group.
+        # FIXME we should repopulate the groups
+        # privileges list when the primary group is changed in the other tab --
+        # that is, on the change slot of the primary group drop down.
+        self._repopulateGroupsPrivileges(
+                    excludegroups=[self.userobj.getPrimaryGroup()])
         for group,checkbox in self.secondarygroupcheckboxes.items():
             if group in self.selectedgroups: checkbox.setCheckState(Qt.Checked)
             else: checkbox.setCheckState(Qt.Unchecked)
@@ -191,7 +246,7 @@ class UserEditDialog(KPageDialog):
         self.originalgroups = self.selectedgroups[:]
         self.selectedgroups.sort()
         self.__syncGUI()
-        self.uidedit.setReadOnly(True)
+        self.details_tab.uidedit.setReadOnly(True)
         self.updatingGUI = False
         self.homedirectoryislinked = False
         if self.exec_()==QDialog.Accepted:
@@ -227,13 +282,28 @@ class UserEditDialog(KPageDialog):
 
         self.selectedgroups = [ u'dialout',u'cdrom',u'floppy',u'audio',u'video',
                                 u'plugdev',u'lpadmin',u'scanner']
+        for groupname in self.selectedgroups:
+            groupobj = self.admincontext.lookupGroupname(groupname)
+            if groupobj: self.userobj.addToGroup(groupobj)
+        
         homedir = self.__fudgeNewHomeDirectory(self.userobj.getUsername())
         
-        # Rudd-O FIXME: now here we tick the proper groups that should be allowed.  Now it selects what userconfig selected before.  FIXME consider adding a drop down that will select the appropriate profile Limited User, Advanced User or Administrator (and see if there is a config file where these profiles can be read).    We are repopulating because if the user to edit changes, we need to hide the user's secondary group.  FIXME we should repopulate the groups privileges list when the primary group is changed in the other tab -- that is, on the change slot of the primary group drop down.
-        self._repopulateGroupsPrivileges()
-        for group,checkbox in self.secondarygroupcheckboxes.items():
-            if group in self.selectedgroups: checkbox.setCheckState(Qt.Checked)
-            else: checkbox.setCheckState(Qt.Checked)
+        # Rudd-O FIXME: now here we tick the proper groups that should be
+        # allowed.  Now it selects what userconfig selected before.
+        # FIXME consider adding a drop down that will select the appropriate
+        # profile Limited User, Advanced User or Administrator (and see if
+        # there is a config file where these profiles can be read).
+        # We are repopulating because if the user to edit changes, we need to
+        # hide the user's secondary group.
+        # FIXME we should repopulate the groups privileges list when the
+        # primary group is changed in the other tab -- that is, on the change
+        # slot of the primary group drop down.
+        #self._repopulateGroupsPrivilegesModels()
+        #for group,checkbox in self.secondarygroupcheckboxes.items():
+            #if group in self.selectedgroups: checkbox.setCheckState(Qt.Checked)
+            #else: checkbox.setCheckState(Qt.Checked)
+        self.groups_model.setUser(self.userobj)
+        self.privileges_model.setUser(self.userobj)
         
         self.userobj.setHomeDirectory(homedir)
         self.details_tab.homediredit.setText(homedir)
@@ -282,9 +352,9 @@ class UserEditDialog(KPageDialog):
             # Update the groups for this user object. Rudd-O here's when you go in, stud.
             # we collect the selected groups
             # TODO not sure how to fix next line
-            # self.selectedgroups = [ group for group.checkbox in self.secondarygroupcheckboxes.items() if checkbox.isOn() ]
-            for gn in self.selectedgroups:
-                self.userobj.addToGroup(self.admincontext.lookupGroupname(gn))
+            #self.selectedgroups = [ group for group.checkbox in self.secondarygroupcheckboxes.items() if checkbox.isChecked() ]
+            #for gn in self.selectedgroups:
+                #self.userobj.addToGroup(self.admincontext.lookupGroupname(gn))
 
             # Set the password.
             # if self.passwordedit.password()!="":
@@ -472,7 +542,7 @@ class UserEditDialog(KPageDialog):
         else:
             userobj.setMinimumPasswordAgeBeforeChange(0)
 
-        userobj.setPasswordExpireWarning(self.warningedit.value())
+        userobj.setPasswordExpireWarning(self.pwsec_tab.warningedit.value())
 
     ########################################################################
     def slotBrowseHomeDirClicked(self):

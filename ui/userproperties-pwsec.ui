@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>497</width>
-    <height>405</height>
+    <width>408</width>
+    <height>374</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -87,105 +87,99 @@
     <widget class="QGroupBox" name="groupBox">
      <property name="minimumSize">
       <size>
-       <width>489</width>
+       <width>400</width>
        <height>190</height>
       </size>
      </property>
      <property name="title">
       <string>Password Aging</string>
      </property>
-     <widget class="QWidget" name="layoutWidget_2">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>30</y>
-        <width>451</width>
-        <height>138</height>
-       </rect>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="0">
-        <widget class="QCheckBox" name="forcepasswordchangecheckbox">
-         <property name="text">
-          <string>Require new password after:</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QSpinBox" name="maximumpasswordedit">
-         <property name="suffix">
-          <string> days</string>
-         </property>
-         <property name="minimum">
-          <number>1</number>
-         </property>
-         <property name="maximum">
-          <number>1825</number>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label_13">
-         <property name="text">
-          <string>Warn before password expires:</string>
-         </property>
-         <property name="buddy">
-          <cstring>warningedit</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QSpinBox" name="warningedit">
-         <property name="suffix">
-          <string> days</string>
-         </property>
-         <property name="prefix">
-          <string>After </string>
-         </property>
-         <property name="maximum">
-          <number>1825</number>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QLabel" name="label_14">
-         <property name="text">
-          <string>Disable account after password expires:</string>
-         </property>
-         <property name="buddy">
-          <cstring>disableexpireedit</cstring>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <widget class="QSpinBox" name="disableexpireedit">
-         <property name="suffix">
-          <string> days</string>
-         </property>
-         <property name="prefix">
-          <string>After </string>
-         </property>
-         <property name="maximum">
-          <number>1825</number>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QCheckBox" name="enforcepasswordminagecheckbox">
-         <property name="text">
-          <string>Enforce minimum password age:</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1">
-        <widget class="QSpinBox" name="minimumpasswordedit">
-         <property name="suffix">
-          <string> days</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <widget class="QCheckBox" name="forcepasswordchangecheckbox">
+          <property name="text">
+           <string>Require new password after:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QSpinBox" name="maximumpasswordedit">
+          <property name="suffix">
+           <string> days</string>
+          </property>
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>1825</number>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_13">
+          <property name="text">
+           <string>Warn before password expires:</string>
+          </property>
+          <property name="buddy">
+           <cstring>warningedit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QSpinBox" name="warningedit">
+          <property name="suffix">
+           <string> days</string>
+          </property>
+          <property name="prefix">
+           <string>After </string>
+          </property>
+          <property name="maximum">
+           <number>1825</number>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_14">
+          <property name="text">
+           <string>Disable account after password expires:</string>
+          </property>
+          <property name="buddy">
+           <cstring>disableexpireedit</cstring>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QSpinBox" name="disableexpireedit">
+          <property name="suffix">
+           <string> days</string>
+          </property>
+          <property name="prefix">
+           <string>After </string>
+          </property>
+          <property name="maximum">
+           <number>1825</number>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QCheckBox" name="enforcepasswordminagecheckbox">
+          <property name="text">
+           <string>Enforce minimum password age:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QSpinBox" name="minimumpasswordedit">
+          <property name="suffix">
+           <string> days</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>
