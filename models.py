@@ -111,8 +111,14 @@ class UCAbstractItemModel(QAbstractItemModel):
         self.emit(SIGNAL("modelReset()"))
         
     def indexFromID(self, ID):
-        for i, userobj in enumerate(self.items):
-            if userobj.getID() == ID:
+        for i, obj in enumerate(self.items):
+            if obj.getID() == ID:
+                return self.index(i, 0)
+        return QModelIndex()
+    
+    def indexFromSystemName(self, name):
+        for i, obj in enumerate(self.items):
+            if obj.getSystemName() == name:
                 return self.index(i, 0)
         return QModelIndex()
 
@@ -234,16 +240,8 @@ class GroupListModel(UCAbstractItemModel):
         return QVariant()
     
 
-class PrivilegeListModel(GroupListModel):
-    """ Item model for list views in userconfig.  Shows groups as privileges.
-        Allows groups to be checked.
-    """
-    
-    # map known secondary groups to privilege
-    # names, provide default mapping for groups that do not have a
-    # description.
-    # TODO This should ideally be included in a more general module so
-    #      it can be reused.
+class PrivilegeListProxyModel(QSortFilterProxyModel):
+
     privilege_names = {
             "plugdev" : i18n("Access external storage devices automatically"),
             "adm" : i18n("Administer the system"),
@@ -257,82 +255,18 @@ class PrivilegeListModel(GroupListModel):
             "modem" : i18n("Use modems"),
             "scanner" : i18n("Use scanners"),
         }
-    
-    def __init__(self, parent, items, userobj):
-        GroupListModel.__init__(self, parent, items, userobj)
-        self.group_names = self.privilege_names.keys()
-        self.group_names.sort()
-    
-    def rowCount(self, parent = QModelIndex()):
-        size = len(self.privilege_names)
-        if self.userobj.getPrimaryGroup().getGroupname() in self.privilege_names:
-            size -= 1
-        return size
+
+    def filterAcceptsRow(self, source_row, source_parent=QModelIndex()):
+        sourceIndex = self.sourceModel().index(source_row, 0, source_parent)
+        group_name = self.sourceModel().data(sourceIndex, Qt.DisplayRole)\
+                                                                .toString()
+        return str(group_name) in self.privilege_names
 
     def data(self, idx, role):
-        if not idx.isValid():
-            return QVariant()
-        
-        row = idx.row()
-        if row >= self.rowCount():
-            return QVariant()
-        
-        group_name = self.group_names[row]
-        obj = self._lookupGroupname(group_name)
-        if obj is self.userobj.getPrimaryGroup():
-            row += 1
-            try:
-                group_name = self.group_names.items[row]
-                obj = _lookupGroupname(group_name)
-            except IndexError:
-                return QVariant()
-        
-        if role == Qt.DisplayRole:
-            return QVariant(self.privilege_names[group_name])
-        elif role == Qt.EditRole:
-            return QVariant(obj.getID())
-        elif role == Qt.CheckStateRole:
-            check = Qt.Unchecked
-            if obj in self.userobj.getGroups():
-                check = Qt.Checked
-            return QVariant(check)
+        #print dir(super(PrivilegeListProxyModel, self).__self__)
+        data = QSortFilterProxyModel.data(self, idx, role)
+        if data.isValid() and role == Qt.DisplayRole:
+            data = self.privilege_names[str(data.toString())]
+            return QVariant(data)
         else:
-            return QVariant()
-    
-    def setData(self, idx, val, role):
-        if not idx.isValid():
-            return False
-        
-        row = idx.row()
-        if row >= self.rowCount():
-            return False
-        
-        group_name = self.group_names[row]
-        obj = self._lookupGroupname(group_name)
-        if obj is self.userobj.getPrimaryGroup():
-            row += 1
-            try:
-                group_name = self.group_names.items[row]
-                obj = _lookupGroupname(group_name)
-            except IndexError:
-                return False
-        
-        if role == Qt.CheckStateRole:
-            if val.toInt()[0] == Qt.Checked:
-                self.userobj.addToGroup(obj)
-            else:
-                self.userobj.removeFromGroup(obj)
-            self.emit(SIGNAL("dataChanged(QModelIndex&,QModelIndex&)"), idx, idx)
-            return True
-        else:
-            return False
-        return True
-    
-    def _lookupGroupname(self, group_name):
-        """Lookup a UnixGroup object by groupname.
-
-        Returns the matching UnixGroup object or None if it was not found.
-        """
-        for group in self.items:
-            if group.getGroupname()==group_name:
-                return group
+            return data

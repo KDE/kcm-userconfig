@@ -34,7 +34,7 @@ import locale
 
 # userconfig imports
 #from util.groups import PrivilegeNames
-from models import GroupListModel, PrivilegeListModel
+from models import GroupListModel, PrivilegeListProxyModel
 
 ###########################################################################
 def SptimeToQDate(sptime):
@@ -112,16 +112,15 @@ class UserEditDialog(KPageDialog):
 
         #######################################################################
         # Set up the privileges and groups tab
-
-        self.privileges_model = PrivilegeListModel(None,
-                                        self.admincontext.getGroups(),
-                                        self.userobj)
-        self.privgroups_tab.privilegeslistview.setModel(self.privileges_model)
         
         self.groups_model = GroupListModel(None,
                                         self.admincontext.getGroups(),
                                         self.userobj)
         self.privgroups_tab.groupslistview.setModel(self.groups_model)
+        
+        self.privileges_model = PrivilegeListProxyModel(None)
+        self.privileges_model.setSourceModel(self.groups_model)
+        self.privgroups_tab.privilegeslistview.setModel(self.privileges_model)
 
         #######################################################################
         # Set up the password/security tab
@@ -303,7 +302,6 @@ class UserEditDialog(KPageDialog):
             #if group in self.selectedgroups: checkbox.setCheckState(Qt.Checked)
             #else: checkbox.setCheckState(Qt.Checked)
         self.groups_model.setUser(self.userobj)
-        self.privileges_model.setUser(self.userobj)
         
         self.userobj.setHomeDirectory(homedir)
         self.details_tab.homediredit.setText(homedir)
@@ -315,9 +313,9 @@ class UserEditDialog(KPageDialog):
         elif '/bin/bash' in shells:
             self.userobj.setLoginShell('/bin/bash')
         elif '/bin/sh' in shells:
-            self.userobj.setLoginShell('/bin/sh')        
+            self.userobj.setLoginShell('/bin/sh')
         elif len(shells)!=0:
-            self.userobj.setLoginShell(shells[0])            
+            self.userobj.setLoginShell(shells[0])
 
         self.__syncGUI()
 
