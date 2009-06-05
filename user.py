@@ -160,64 +160,7 @@ class UserEditDialog(KPageDialog):
         self.homedirdialog = KDirSelectDialog(KUrl.fromPath("/"),True,self)
         self.createhomedirectorydialog = OverwriteHomeDirectoryDialog(None)
         self.updatingGUI = False
-
-    ########################################################################
-    #def _repopulateGroupsPrivileges(self,excludegroups=None):
-        ## needs listviews to be constructed.  Expects a list of PwdGroups to be excluded
         
-        ## rehash everything
-        #self.privgroups_tab.privilegeslistview.clear()
-        #self.privgroups_tab.groupslistview.clear()
-        #self.secondarygroupcheckboxes = {}
-        #pn = PrivilegeNames()
-        
-        #if excludegroups: excludegroups = [ g.getGroupname() for g in excludegroups ]
-        #else: excludegroups = []
-        #for group in [g.getGroupname() for g in self.admincontext.getGroups()]:
-            #if group in excludegroups: continue
-            #if group in pn:
-                #name = i18n(unicode(pn[group]).encode(locale.getpreferredencoding()))
-                #wid = self.privgroups_tab.privilegeslistview
-            #else:
-                #name = unicode(group).encode(locale.getpreferredencoding())
-                #wid = self.privgroups_tab.groupslistview
-            #self.secondarygroupcheckboxes[group] = QListWidgetItem(name, wid)
-
-    #def _repopulateGroupsPrivilegesModels(self, selectedgroups, excludegroups=None):
-        #""" Populates the models for the privileges and groups lists.
-            #selectedgroups: a list of selected group names
-            #excludegroups: a list of PwdGroups to be excluded
-        #"""
-        ## This isn't quite using model/view, but it's an improvement
-        ## rehash everything
-        #self.privileges_model.clear()
-        #self.groups_model.clear()
-        ##self.secondarygroupcheckboxes = {}
-        #pn = PrivilegeNames()
-        
-        #if excludegroups:
-            #excludegroups = [ g.getGroupname() for g in excludegroups ]
-        #else:
-            #excludegroups = []
-        
-        #groupnames = [g.getGroupname() for g in self.admincontext.getGroups()]
-        #for group in groupnames:
-            #if group in excludegroups: continue
-            
-            #groupitem = QStandardItem(group)
-            #groupitem.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-            #check = Qt.Checked if group in selectedgroups else Qt.Unchecked
-            #name = unicode(group).encode(locale.getpreferredencoding())
-            #groupitem.setData(QVariant(check), Qt.CheckStateRole)
-            #groups_model.appendRow(item)
-            
-            #if group in pn:
-                #privitem = QStandardItem(group)
-                #privitem.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-                #name = pn[group]
-                #privitem.setData(QVariant(check), Qt.CheckStateRole)
-                #privileges_model.appendRow(item)
-            
     
     ########################################################################
     def showEditUser(self, userid):
@@ -276,16 +219,17 @@ class UserEditDialog(KPageDialog):
         self.userobj = self.admincontext.newUser(True)
 
         self.newgroup = self.admincontext.newGroup(True)
-        self.newgroup.setGroupname(self.__fudgeNewGroupName(self.userobj.getUsername()))
+        self.newgroup.setGroupname(self.__fudgeNewGroupName(
+                                            self.userobj.getUsername()))
         self.userobj.setPrimaryGroup(self.newgroup)
 
+        # Add the new user to a default set of groups
+        # TODO: move this list somewhere more general?
         self.selectedgroups = [ u'dialout',u'cdrom',u'floppy',u'audio',u'video',
                                 u'plugdev',u'lpadmin',u'scanner']
         for groupname in self.selectedgroups:
             groupobj = self.admincontext.lookupGroupname(groupname)
             if groupobj: self.userobj.addToGroup(groupobj)
-        
-        homedir = self.__fudgeNewHomeDirectory(self.userobj.getUsername())
         
         # Rudd-O FIXME: now here we tick the proper groups that should be
         # allowed.  Now it selects what userconfig selected before.
@@ -297,14 +241,10 @@ class UserEditDialog(KPageDialog):
         # FIXME we should repopulate the groups privileges list when the
         # primary group is changed in the other tab -- that is, on the change
         # slot of the primary group drop down.
-        #self._repopulateGroupsPrivilegesModels()
-        #for group,checkbox in self.secondarygroupcheckboxes.items():
-            #if group in self.selectedgroups: checkbox.setCheckState(Qt.Checked)
-            #else: checkbox.setCheckState(Qt.Checked)
         self.groups_model.setUser(self.userobj)
         
+        homedir = self.__fudgeNewHomeDirectory(self.userobj.getUsername())
         self.userobj.setHomeDirectory(homedir)
-        self.details_tab.homediredit.setText(homedir)
 
         shells = self.admincontext.getUserShells()
         dshell = self.admincontext.dshell
@@ -314,7 +254,7 @@ class UserEditDialog(KPageDialog):
             self.userobj.setLoginShell('/bin/bash')
         elif '/bin/sh' in shells:
             self.userobj.setLoginShell('/bin/sh')
-        elif len(shells)!=0:
+        elif len(shells) != 0:
             self.userobj.setLoginShell(shells[0])
 
         self.__syncGUI()
@@ -434,12 +374,6 @@ class UserEditDialog(KPageDialog):
         self.details_tab.primarygroupedit.clear()
         allgroups = [g.getGroupname() for g in self.admincontext.getGroups()]
         allgroups.sort()
-        self.availablegroups = allgroups[:]
-
-        try:
-            self.availablegroups.remove(self.userobj.getPrimaryGroup().getGroupname())
-        except ValueError:
-            pass
 
         if self.newusermode:
             # New user mode
@@ -493,16 +427,18 @@ class UserEditDialog(KPageDialog):
             self.pwsec_tab.disableexpireedit.setValue(self.userobj.getPasswordDisableAfterExpire())
 
         minage = self.userobj.getMinimumPasswordAgeBeforeChange()
-        self.pwsec_tab.enforcepasswordminagecheckbox.setChecked(minage>0)
-        self.pwsec_tab.minimumpasswordedit.setDisabled(minage<=0)
-        if minage<=0:
+        self.pwsec_tab.enforcepasswordminagecheckbox.setChecked(minage > 0)
+        self.pwsec_tab.minimumpasswordedit.setDisabled(minage <= 0)
+        if minage <= 0:
             minage = 1
         self.pwsec_tab.minimumpasswordedit.setValue(minage)
 
-        if self.userobj.getLastPasswordChange() in (None,0):
+        if self.userobj.getLastPasswordChange() in (None, 0):
             self.pwsec_tab.lastchangelabel.setText('-');
         else:
-            self.pwsec_tab.lastchangelabel.setText(KGlobal.locale().formatDate(SptimeToQDate(int(self.userobj.getLastPasswordChange()))))
+            self.pwsec_tab.lastchangelabel.setText(
+                KGlobal.locale().formatDate(SptimeToQDate(
+                                  int(self.userobj.getLastPasswordChange()))))
 
     ########################################################################
     def __updateObjectFromGUI(self,userobj):

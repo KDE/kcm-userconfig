@@ -263,7 +263,6 @@ class PrivilegeListProxyModel(QSortFilterProxyModel):
         return str(group_name) in self.privilege_names
 
     def data(self, idx, role):
-        #print dir(super(PrivilegeListProxyModel, self).__self__)
         data = QSortFilterProxyModel.data(self, idx, role)
         if data.isValid() and role == Qt.DisplayRole:
             data = self.privilege_names[str(data.toString())]
