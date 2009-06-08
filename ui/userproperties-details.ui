@@ -131,8 +131,25 @@
      </property>
     </spacer>
    </item>
+   <item row="7" column="1">
+    <widget class="KComboBox" name="primarygroupedit">
+     <property name="editable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="1">
+    <widget class="KComboBox" name="shelledit"/>
+   </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>KComboBox</class>
+   <extends>QComboBox</extends>
+   <header>kcombobox.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
  <buttongroups>

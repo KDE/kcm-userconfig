@@ -93,11 +93,6 @@ class UserEditDialog(KPageDialog):
         self.details_tab.uidedit.setValidator(
                         QIntValidator(0, 65535, self.details_tab.uidedit))
 
-        self.details_tab.primarygroupedit = KComboBox(self.details_tab)
-        self.details_tab.primarygroupedit.setEditable(True)
-        self.details_tab.layout().addWidget(self.details_tab.primarygroupedit,
-                                            7, 1) # Not sure why this is 7
-
         self.connect(self.details_tab.homediredit,
                      SIGNAL("textChanged(const QString &)"),
                      self.slotHomeDirChanged)
@@ -105,9 +100,6 @@ class UserEditDialog(KPageDialog):
                      SIGNAL("clicked()"),
                      self.slotBrowseHomeDirClicked)
 
-        self.details_tab.shelledit = KComboBox(True, self)
-        self.details_tab.gridLayout.addWidget(self.details_tab.shelledit,
-                                              9, 1)
         for shell in self.admincontext.getUserShells():
             self.details_tab.shelledit.addItem(shell)
 
@@ -128,10 +120,6 @@ class UserEditDialog(KPageDialog):
         
         #FIXME Doesn't work
         #self.up.passwordLabel.setPixmap(UserIcon("hi32-password"))
-
-        self.pwsec_tab.expiredate = KDateWidget(self.pwsec_tab)
-        self.pwsec_tab.expirelayout.addWidget(self.pwsec_tab.expiredate)
-        self.pwsec_tab.expirelayout.addStretch(1)
         
         self.pwsec_tab.validradiogroup = QButtonGroup()
         self.pwsec_tab.validradiogroup.addButton(
@@ -165,60 +153,80 @@ class UserEditDialog(KPageDialog):
     
     ########################################################################
     def showEditUser(self, userid):
+        """ Sets up the dialog to modify an existing user.
+            Returns the UID of the user if successful, None otherwise.
+        """
         self.updatingGUI = True
         self.newusermode = False
         self.userobj = self.admincontext.lookupUID(userid)
-        self.userid = userid
-        self.pwsec_tab.passwordedit.clear()
-        self.selectedgroups = [g.getGroupname() for g in self.userobj.getGroups()
-            if g is not self.userobj.getPrimaryGroup()]
+        self.setCaption(i18n("Modifying User Account %1")\
+                            .arg(self.userobj.getUsername()))
+        # Set up buttons
+        self.setButtons(KDialog.ButtonCode(KDialog.Cancel | KDialog.Ok |
+                                           KDialog.Apply))
         
-        # Rudd-O: now here we tick the appropriate group listing checkbox, and
-        # hide the currently active primary group of the user.  We are
-        # repopulating because if the user to edit changes, we need to hide
-        # the user's secondary group.
+        self.pwsec_tab.passwordedit.clear()
+        
+        # Save the secondary groups so they can be restored
+        originalgroups = [g for g in self.userobj.getGroups()
+                                if g is not self.userobj.getPrimaryGroup()]
+        
         # FIXME we should repopulate the groups
         # privileges list when the primary group is changed in the other tab --
         # that is, on the change slot of the primary group drop down.
-        self._repopulateGroupsPrivileges(
-                    excludegroups=[self.userobj.getPrimaryGroup()])
-        for group,checkbox in self.secondarygroupcheckboxes.items():
-            if group in self.selectedgroups: checkbox.setCheckState(Qt.Checked)
-            else: checkbox.setCheckState(Qt.Unchecked)
+        self.groups_model.setUser(self.userobj)
         
-        self.originalgroups = self.selectedgroups[:]
-        self.selectedgroups.sort()
+        # Puts most of the user data into the GUI
         self.__syncGUI()
+        
         self.details_tab.uidedit.setReadOnly(True)
+        
         self.updatingGUI = False
         self.homedirectoryislinked = False
+        
         if self.exec_() == QDialog.Accepted:
+            # Put in most of the data
             self.__updateObjectFromGUI(self.userobj)
+            
             # Set the password.
             if self.pwsec_tab.passwordedit.text()!="":
                 self.userobj.setPassword(str(self.pwsec_tab.passwordedit.text()))
             
             # Secondary groups are updated within the model, nothing to do here
             #  if dialog accepted, need to revert if rejected.
+
+            # __updateObjectFromGUI tries to set the primary group, but won't
+            #  set it if the group doesn't exist yet
+            # TODO: ask for confirmation
+            if self.admincontext.lookupGroupname(self.primarygroupname) is None:
+                # Create a new group
+                newgroup = self.admincontext.newGroup(True)
+                newgroup.setGroupname(self.primarygroupname)
+                self.admincontext.addGroup(newgroup)
+                self.userobj.setPrimaryGroup(newgroup)
+
+            # Enable/Disable the account
+            self.userobj.setLocked(
+                self.details_tab.enabledradiogroup.checkedId() != 0)
             
-            # Update the groups for this user object. Rudd-O here's when you go in, stud.
-            # we collect the selected groups
-            #self.selectedgroups = [ group for group,checkbox in self.secondarygroupcheckboxes.items() if checkbox.checkState() == Qt.Checked ]
-
-            #for g in self.userobj.getGroups(): # this seems wasteful to remove the user from all groups then re-add, why not a cross check?
-                #self.userobj.removeFromGroup(g)
-            #for gn in self.selectedgroups:
-                #self.userobj.addToGroup(self.admincontext.lookupGroupname(gn))
-
-            primarygroupname = unicode(self.details_tab.primarygroupedit.currentText())
-            self.userobj.setPrimaryGroup(self.admincontext.lookupGroupname(primarygroupname))
-
-            # Enable/Disable the account            
-            self.userobj.setLocked(self.details_tab.enabledradiogroup.checkedId() != 0)
+            # Save everything
             self.admincontext.save()
+            
+            return self.userobj.getUID()
         else: # Dialog rejected
             # Revert secondary groups, since those are being stored in the user
             #  by the model
+            # FIXME: might be borked if primary group is changed
+            currentgroups = [g for g in self.userobj.getGroups()
+                                   if g is not self.userobj.getPrimaryGroup()]
+            addedgroups = [g for g in currentgroups
+                               if g not in originalgroups]
+            removedgroups = [g for g in originalgroups
+                               if g not in currentgroups]
+            for group in removedgroups:
+                self.userobj.addToGroup(group)
+            for group in addedgroups:
+                self.userobj.removeFromGroup(group)
             return None
 
     ########################################################################
@@ -229,6 +237,9 @@ class UserEditDialog(KPageDialog):
         self.updatingGUI = True
         self.newusermode = True
         self.userobj = self.admincontext.newUser(True)
+        self.setCaption(i18n("New User Account"))
+        # Set up buttons
+        self.setButtons(KDialog.ButtonCode(KDialog.Cancel | KDialog.Ok))
 
         self.newgroup = self.admincontext.newGroup(True)
         self.newgroup.setGroupname(self.__fudgeNewGroupName(
@@ -243,8 +254,6 @@ class UserEditDialog(KPageDialog):
             groupobj = self.admincontext.lookupGroupname(groupname)
             if groupobj: self.userobj.addToGroup(groupobj)
         
-        # Rudd-O FIXME: now here we tick the proper groups that should be
-        # allowed.  Now it selects what userconfig selected before.
         # FIXME consider adding a drop down that will select the appropriate
         # profile Limited User, Advanced User or Administrator (and see if
         # there is a config file where these profiles can be read).
@@ -269,6 +278,7 @@ class UserEditDialog(KPageDialog):
         elif len(shells) != 0:
             self.userobj.setLoginShell(shells[0])
 
+        # Puts most of the user data into the GUI
         self.__syncGUI()
 
         self.details_tab.uidedit.setReadOnly(False)
@@ -465,7 +475,8 @@ class UserEditDialog(KPageDialog):
 
         userobj.setHomeDirectory(unicode(self.details_tab.homediredit.text()))
         userobj.setLoginShell(unicode(self.details_tab.shelledit.currentText()))
-        self.primarygroupname = unicode(self.details_tab.primarygroupedit.currentText())
+        self.primarygroupname = \
+                    unicode(self.details_tab.primarygroupedit.currentText())
         groupobj =  self.admincontext.lookupGroupname(self.primarygroupname)
         if groupobj is not None:
             userobj.setPrimaryGroup(groupobj)
@@ -558,10 +569,7 @@ class UserEditDialog(KPageDialog):
 
 ###########################################################################
 class LoginNameValidator(QValidator):
-    def __init__(self,parent):
-        QValidator.__init__(self,parent)
 
-    #######################################################################
     def validate(self,inputstr,pos):
         instr = unicode(inputstr)
         if len(instr)==0:
@@ -595,10 +603,7 @@ class LoginNameValidator(QValidator):
 
 ###########################################################################
 class RealUserNameValidator(QValidator):
-    def __init__(self,parent):
-        QValidator.__init__(self,parent)
 
-    #######################################################################
     def validate(self,inputstr,pos):
         instr = unicode(inputstr)
         for c in instr:
@@ -636,8 +641,6 @@ class OverwriteHomeDirectoryDialog(KDialog):
 
         # Set up buttons
         self.setButtons(KDialog.ButtonCode(KDialog.Cancel | KDialog.Ok))
-        self.connect(self, SIGNAL("okClicked()"), self.slotOkClicked)
-        self.connect(self, SIGNAL("cancelClicked()"), self.slotCancelClicked)
         
         self.ui.iconlabel.setPixmap(
             KIconLoader.global_().loadIcon('dialog-warning', KIconLoader.Dialog))
@@ -672,12 +675,6 @@ class OverwriteHomeDirectoryDialog(KDialog):
                 return OverwriteHomeDirectoryDialog.OK_REPLACE
         else:
             return OverwriteHomeDirectoryDialog.CANCEL
-
-    def slotOkClicked(self):
-        self.accept()
-
-    def slotCancelClicked(self):
-        self.reject()
         
 
 ###########################################################################

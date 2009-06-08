@@ -379,7 +379,7 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def slotDeleteGroupClicked(self):
-        if self.selectedgroupid!=None:
+        if self.selectedgroupid != None:
             groupobj = self.admincontext.lookupGID(self.selectedgroupid)
             groupname = groupobj.getGroupname()
             gid = groupobj.getGID()
