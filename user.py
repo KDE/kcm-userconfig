@@ -263,7 +263,7 @@ class UserEditDialog(KPageDialog):
         self.updatingGUI = False
         self.homedirectoryislinked = True
         self.pwsec_tab.passwordedit.clear()
-        if self.exec_()==QDialog.Accepted:
+        if self.exec_() == QDialog.Accepted:
             self.__updateObjectFromGUI(self.userobj)
 
             makehomedir = True
@@ -271,11 +271,11 @@ class UserEditDialog(KPageDialog):
 
             if os.path.exists(self.userobj.getHomeDirectory()):
                 rc = self.createhomedirectorydialog.do(self.userobj)
-                if rc==OverwriteHomeDirectoryDialog.CANCEL:
+                if rc == OverwriteHomeDirectoryDialog.CANCEL:
                     return None
-                if rc==OverwriteHomeDirectoryDialog.OK_KEEP:
+                if rc == OverwriteHomeDirectoryDialog.OK_KEEP:
                     makehomedir = False
-                else:
+                elif rc == OverwriteHomeDirectoryDialog.OK_REPLACE:
                     deleteoldhomedir = True
 
             self.admincontext.addUser(self.userobj)
@@ -608,77 +608,48 @@ class OverwriteHomeDirectoryDialog(KDialog):
     OK_KEEP = 1
     OK_REPLACE = 2
 
-    def __init__(self,parent):
-        KDialog.__init__(self,parent)
+    def __init__(self, parent):
+        KDialog.__init__(self, parent)
         self.setModal(True)
-        #,Qt.WType_Dialog)
         self.setCaption(i18n("Create home directory"))
+        
         self.updatingGUI = True
+        
+        self.ui = uic.loadUi('ui/overwritehomedirectory.ui', self.mainWidget())
 
-        toplayout = QVBoxLayout(self)
-        toplayout.setSpacing(self.spacingHint())
-        toplayout.setMargin(self.marginHint())
-
-        contentbox = KHBox(self)
-        contentbox.setSpacing(self.spacingHint())
-        toplayout.addWidget(contentbox)
-        toplayout.setStretchFactor(contentbox,1)
-
-        label = QLabel(contentbox)
-        #label.setPixmap(KGlobal.iconLoader().loadIcon("messagebox_warning", KIcon.NoGroup, KIcon.SizeMedium,
-            #KIcon.DefaultState, None, True))   # TODO
-        contentbox.setStretchFactor(label,0)
-
-        textbox = KVBox(contentbox)
-
-        textbox.setSpacing(self.spacingHint())
-        textbox.setMargin(self.marginHint())
-
-        # "%dir was selected as the home directory for %user. This directory already exists. Shall I:."
-        self.toplabel = QLabel("",textbox)
-        textbox.setStretchFactor(self.toplabel,0)
+        # Set up buttons
+        self.setButtons(KDialog.ButtonCode(KDialog.Cancel | KDialog.Ok))
+        self.connect(self, SIGNAL("okClicked()"), self.slotOkClicked)
+        self.connect(self, SIGNAL("cancelClicked()"), self.slotCancelClicked)
+        
+        self.ui.iconlabel.setPixmap(
+            KIconLoader.global_().loadIcon('dialog-warning', KIconLoader.Dialog))
 
         self.radiogroup = QButtonGroup()
-        #self.radiogroup.setRadioButtonExclusive(True)  # TODO
-
         # Use Existing home directory radio button.
-        self.usehomedirectoryradio = QRadioButton(i18n("Use the existing directory without changing it."),textbox)
-        textbox.setStretchFactor(self.usehomedirectoryradio,0)
-
+        self.ui.usehomedirectoryradio.setText(
+                i18n("Use the existing directory without changing it."))
         # Replace home directory radio button
-        self.replacehomedirectoryradio = QRadioButton(i18n("Delete the directory and replace it with a new home directory."),textbox)
-        textbox.setStretchFactor(self.replacehomedirectoryradio ,0)
+        self.ui.replacehomedirectoryradio.setText(
+                i18n("Delete the directory and replace it with " +
+                     "a new home directory."))
+        self.radiogroup.addButton(self.ui.usehomedirectoryradio, 0)
+        self.radiogroup.addButton(self.ui.replacehomedirectoryradio, 1)
+        
+        self.updatingGUI = False
 
-        self.radiogroup.addButton(self.usehomedirectoryradio,0)
-        self.radiogroup.addButton(self.replacehomedirectoryradio,1)
-
-        # Buttons
-        buttonbox = KHBox(self)
-        toplayout.addWidget(buttonbox)
-
-        buttonbox.setSpacing(self.spacingHint())
-        toplayout.setStretchFactor(buttonbox,0)
-
-        spacer = QWidget(buttonbox)
-        buttonbox.setStretchFactor(spacer,1)
-
-        okbutton = QPushButton(i18n("OK"),buttonbox)
-        buttonbox.setStretchFactor(okbutton,0)
-        self.connect(okbutton,SIGNAL("clicked()"),self.slotOkClicked)
-
-        cancelbutton = QPushButton(i18n("Cancel"),buttonbox)
-        cancelbutton.setDefault(True)
-        buttonbox.setStretchFactor(cancelbutton,0)
-        self.connect(cancelbutton,SIGNAL("clicked()"),self.slotCancelClicked)
-
-    def do(self,userobj):
-        # Setup the 
-        self.toplabel.setText(i18n("The directory '%1' was entered as the home directory for new user '%2'.\n This directory already exists.") \
+    def do(self, userobj):
+        """ Executes the dialog.  Sets the text for the top label and defaults
+            to using the existing home directory.  Returns a result code.
+        """
+        self.ui.toplabel.setText(i18n("The directory '%1' was entered as the " +
+            "home directory for new user '%2'.\n" +
+            "This directory already exists.")\
             .arg(userobj.getHomeDirectory()).arg(userobj.getUsername()) )
-        self.radiogroup.setButton(0)
+        self.radiogroup.button(0).setChecked(True)
 
-        if self.exec_()==QDialog.Accepted:
-            if self.radiogroup.selectedId()==0:
+        if self.exec_() == QDialog.Accepted:
+            if self.radiogroup.checkedId() == 0:
                 return OverwriteHomeDirectoryDialog.OK_KEEP
             else:
                 return OverwriteHomeDirectoryDialog.OK_REPLACE

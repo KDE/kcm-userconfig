@@ -231,7 +231,11 @@ class GroupListModel(UCAbstractItemModel):
                 self.userobj.addToGroup(obj)
             else:
                 self.userobj.removeFromGroup(obj)
-            self.emit(SIGNAL("dataChanged(QModelIndex&,QModelIndex&)"), idx, idx)
+            # dataChanged doesn't seem to get the other view to repaint right
+            #   away, so modelReset will have to do.  Should be fine for
+            #   this size data set.
+            #self.emit(SIGNAL("dataChanged(QModelIndex&,QModelIndex&)"), idx, idx)
+            self.emit(SIGNAL("modelReset()"))
             return True
         else:
             return False
