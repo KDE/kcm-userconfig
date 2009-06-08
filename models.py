@@ -35,16 +35,12 @@ class UCAbstractItemModel(QAbstractItemModel):
     def __init__(self, parent, items):
         QAbstractItemModel.__init__(self, parent)
         self.items = items
-        self.showsystemaccounts = True
     
     def columnCount(self, parent=None):
         return len(self.column_data)
 
     def rowCount(self, parent = QModelIndex()):
-        if self.showsystemaccounts:
-            return len(self.items)
-        else:
-            return len([obj for obj in self.items if not obj.isSystemAccount()])
+        return len(self.items)
     
     def index(self, row, column, parent=QModelIndex()):
         return self.createIndex(row, column)
@@ -59,20 +55,9 @@ class UCAbstractItemModel(QAbstractItemModel):
             return True
 
     def data(self, idx, role):
-        if not idx.isValid():
+        obj = self.objData(idx)
+        if obj is None:
             return QVariant()
-        
-        row = idx.row()
-        if row >= self.rowCount():
-            return QVariant()
-        
-        obj = self.items[row]
-        while (not self.showsystemaccounts) and obj.isSystemAccount():
-            row += 1
-            try:
-                obj = self.items[row]
-            except IndexError:
-                return QVariant()
         
         if role == Qt.DisplayRole:
             col = idx.column()
@@ -94,17 +79,24 @@ class UCAbstractItemModel(QAbstractItemModel):
         
     def _icon_data(self, obj, col):
         return QVariant()
+    
+    def objData(self, idx):
+        if not idx.isValid():
+            return None
         
+        row = idx.row()
+        if row >= self.rowCount():
+            return None
+        
+        obj = self.items[row]
+        return obj
+    
     def headerData(self, section, orientation, role):
         col = section
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return QVariant(self.column_data[col]["header"])
         
         return QVariant()
-
-    def slotShowSystemAccounts(self, on):
-        self.showsystemaccounts = on
-        self.emit(SIGNAL("modelReset()"))
         
     def setItems(self, items):
         self.items = items
@@ -121,6 +113,13 @@ class UCAbstractItemModel(QAbstractItemModel):
             if obj.getSystemName() == name:
                 return self.index(i, 0)
         return QModelIndex()
+        
+    def selectionFromID(self, ID):
+        for i, obj in enumerate(self.items):
+            if obj.getID() == ID:
+                return QItemSelection(self.index(i, 0),
+                                      self.index(i, self.columnCount() - 1))
+        return QItemSelection()
 
 
 class UserModel(UCAbstractItemModel):
@@ -154,6 +153,15 @@ class GroupModel(UCAbstractItemModel):
                     ]
 
 
+class FilterSystemAcctsProxyModel(QSortFilterProxyModel):
+    """ Proxy model to filter out system accounts from a group or user model """
+
+    def filterAcceptsRow(self, source_row, source_parent=QModelIndex()):
+        sourceIndex = self.sourceModel().index(source_row, 0, source_parent)
+        obj = self.sourceModel().objData(sourceIndex)
+        return not obj.isSystemAccount()
+
+
 class GroupListModel(UCAbstractItemModel):
     """ Item model for list views in userconfig.  Allows groups to be checked.
     """
@@ -183,20 +191,9 @@ class GroupListModel(UCAbstractItemModel):
         return self.createIndex(row, 0)
 
     def data(self, idx, role):
-        if not idx.isValid():
+        obj = self.objData(idx)
+        if obj is None:
             return QVariant()
-        
-        row = idx.row()
-        if row >= self.rowCount():
-            return QVariant()
-        
-        obj = self.items[row]
-        #if obj is self.userobj.getPrimaryGroup():
-            #row += 1
-            #try:
-                #obj = self.items[row]
-            #except IndexError:
-                #return QVariant()
         
         if role == Qt.DisplayRole:
             return QVariant(obj.getGroupname())
@@ -211,20 +208,9 @@ class GroupListModel(UCAbstractItemModel):
             return QVariant()
     
     def setData(self, idx, val, role):
-        if not idx.isValid():
-            return False
-        
-        row = idx.row()
-        if row >= self.rowCount():
-            return False
-        
-        obj = self.items[row]
-        #if obj is self.userobj.getPrimaryGroup():
-            #row += 1
-            #try:
-                #obj = self.items[row]
-            #except IndexError:
-                #return False
+        obj = self.objData(idx)
+        if obj is None:
+            return QVariant()
         
         if role == Qt.CheckStateRole:
             if val.toInt()[0] == Qt.Checked:
@@ -245,7 +231,10 @@ class GroupListModel(UCAbstractItemModel):
     
 
 class PrivilegeListProxyModel(QSortFilterProxyModel):
-
+    """ Proxy model to show just groups with known privilege descriptions
+        and show those descriptions instead of the group names.
+    """
+    
     privilege_names = {
             "plugdev" : i18n("Access external storage devices automatically"),
             "adm" : i18n("Administer the system"),

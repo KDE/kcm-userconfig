@@ -30,7 +30,7 @@ import shutil
 from util import unixauthdb
 from util.groups import PrivilegeNames
 from user import UserEditDialog, UserDeleteDialog
-from models import UserModel, GroupModel
+from models import UserModel, GroupModel, FilterSystemAcctsProxyModel
 from group import GroupEditDialog
 import locale
 
@@ -110,8 +110,11 @@ class UserConfigApp(programbase):
         self.userstab.accountIconLabel.setPixmap(
             KIconLoader.global_().loadIcon('user-identity', KIconLoader.Small))
 
-        self.userlistmodel = UserModel(None, self.admincontext.getUsers() )
+        self.userlistmodel = UserModel(None, self.admincontext.getUsers())
         self.userstab.userlistview.setModel(self.userlistmodel)
+        
+        self.userlist_nosys_model = FilterSystemAcctsProxyModel(None)
+        self.userlist_nosys_model.setSourceModel(self.userlistmodel)
         
         # Last column is really big without this
         #fix_treeview(self.userstab.userlistview)
@@ -129,9 +132,9 @@ class UserConfigApp(programbase):
         # TODO: context menu
         #self.connect(self.userstab.userlistview, SIGNAL("contextMenu(KListView*,QListViewItem*,const QPoint&)"), self.slotUserContext)
 
-        self.connect( self.userstab.show_sysaccts_checkbox,
+        self.connect( self.userstab.show_sysusers_checkbox,
                       SIGNAL("toggled(bool)"),
-                      self.userlistmodel.slotShowSystemAccounts )
+                      self.slotShowSystemUsers )
         
         # Buttons
         self.connect( self.userstab.modifybutton,
@@ -174,8 +177,11 @@ class UserConfigApp(programbase):
             KIconLoader.global_()\
                 .loadIcon('user-group-properties', KIconLoader.Small))
 
-        self.grouplistmodel = GroupModel(None, self.admincontext.getGroups() )
+        self.grouplistmodel = GroupModel(None, self.admincontext.getGroups())
         self.groupstab.grouplistview.setModel(self.grouplistmodel)
+        
+        self.grouplist_nosys_model = FilterSystemAcctsProxyModel(None)
+        self.grouplist_nosys_model.setSourceModel(self.grouplistmodel)
         
         # Last column is really big without this
         fix_treeview(self.groupstab.grouplistview)
@@ -201,7 +207,7 @@ class UserConfigApp(programbase):
 
         self.connect( self.groupstab.show_sysgroups_checkbox,
                       SIGNAL("toggled(bool)"),
-                      self.grouplistmodel.slotShowSystemAccounts )
+                      self.slotShowSystemGroups )
 
         # Buttons
         self.connect( self.groupstab.modifygroupbutton,
@@ -306,17 +312,20 @@ class UserConfigApp(programbase):
     #######################################################################
     def slotNewClicked(self):
         newuid = self.usereditdialog.showNewUser()
-        if newuid!=None:
+        if newuid != None:
             self.updatingGUI = True
-            self.__updateUserList()
+            self.userlistmodel.setItems(self.admincontext.getUsers())
+            self.__selectUserInList(newuid)
+            #self.userstab.userlistview.repaint()
             self.__selectUser(newuid)
-            #self.__updateGroupList()
             self.updatingGUI = False
 
     #######################################################################
     def slotDeleteClicked(self):
         if self.userdeletedialog.deleteUser(self.selecteduserid):
             self.updatingGUI = True
+            self.userlistmodel.setItems(self.admincontext.getUsers())
+            #self.userstab.userlistview.repaint()
             self.selecteduserid = None
             #self.__updateUserList()
             #self.__updateGroupList()
@@ -330,12 +339,24 @@ class UserConfigApp(programbase):
         self.updatingGUI = False
 
     #######################################################################
-    def slotShowSystemGroupsToggled(self,on):
-        self.showsystemgroups = on
-        if self.updatingGUI==False:
-            self.updatingGUI = True
-            #self.__updateGroupList()
-            self.updatingGUI = False
+    def slotShowSystemUsers(self, on):
+        if on:
+            self.userstab.userlistview.setModel(self.userlistmodel)
+        else:
+            self.userstab.userlistview.setModel(self.userlist_nosys_model)
+        self.connect( self.userstab.userlistview.selectionModel(),
+                      SIGNAL("currentChanged(const QModelIndex&,const QModelIndex&)"),
+                      self.slotUserSelected )
+        
+    #######################################################################
+    def slotShowSystemGroups(self, on):
+        if on:
+            self.groupstab.grouplistview.setModel(self.grouplistmodel)
+        else:
+            self.groupstab.grouplistview.setModel(self.grouplist_nosys_model)
+        self.connect( self.groupstab.grouplistview.selectionModel(),
+                      SIGNAL("currentChanged(const QModelIndex&,const QModelIndex&)"),
+                      self.slotGroupSelected )
 
     #######################################################################
     def slotModifyGroupClicked(self):
@@ -378,19 +399,23 @@ class UserConfigApp(programbase):
                 self.updatingGUI = False
 
     #######################################################################
-    def __updateUser(self,userid):
+    def __updateUser(self, userid):
         idx = self.userlistmodel.indexFromID(userid)
-        self.userlistmodel.emit(SIGNAL("dataChanged"), idx)
-        #userobj = self.admincontext.lookupUID(userid)
-        #if userobj.isLocked():
-            #pass
-            ##lvi.setPixmap(0,UserIcon("hi16-encrypted")) # TODO
-        #else:
-            #pass
-            ##lvi.setPixmap(0,QPixmap())  # TODO
+        self.userlistmodel.emit(
+                    SIGNAL("dataChanged(QModelIndex&,QModelIndex&)"), idx, idx)
 
     #######################################################################
-    def __selectUser(self,userid):
+    def __selectUserInList(self, userid):
+        """ Selects the user in the list view """
+        selection = self.userlistmodel.selectionFromID(userid)
+        if not self.userstab.show_sysusers_checkbox.isChecked():
+            selection = self.userlist_nosys_model.mapSelectionFromSource(
+                                                            selection)
+        self.userstab.userlistview.selectionModel().select(
+                selection, QItemSelectionModel.Select)
+
+    #######################################################################
+    def __selectUser(self, userid):
         """ Selects a user in the list and updates the GUI to reflect
             information about that user.  Enables/disables buttons as needed.
             
@@ -423,7 +448,7 @@ class UserConfigApp(programbase):
             # Enable/disable buttons
             self.userstab.modifybutton.setEnabled( True )
             # Don't allow deletion the root account
-            self.userstab.deletebutton.setDisabled(userobj.getUID()==0)
+            self.userstab.deletebutton.setDisabled(userobj.getUID() == 0)
 
     #######################################################################
     def __selectGroup(self,groupid):
@@ -448,13 +473,13 @@ class UserConfigApp(programbase):
     def __loadOptions(self):
         self.restoreDialogSize(self.generalconfiggroup)
         
-        showsystemaccounts = self.optionsconfiggroup.readEntry("ShowSystemAccounts")
-        if showsystemaccounts:
-            showsystemaccounts = int(showsystemaccounts)
-        showsystemaccounts = bool(showsystemaccounts)
-        self.userstab.show_sysaccts_checkbox.setChecked(showsystemaccounts)
+        showsystemusers = self.optionsconfiggroup.readEntry("ShowSystemUsers")
+        if showsystemusers:
+            showsystemusers = int(showsystemusers)
+        showsystemusers = bool(showsystemusers)
+        self.userstab.show_sysusers_checkbox.setChecked(showsystemusers)
         # The signal-slot connection doesn't seem to work here.. before exec?
-        self.userlistmodel.slotShowSystemAccounts(showsystemaccounts)
+        self.slotShowSystemUsers(showsystemusers)
         
         showsystemgroups = self.optionsconfiggroup.readEntry("ShowSystemGroups")
         if showsystemgroups:
@@ -462,7 +487,7 @@ class UserConfigApp(programbase):
         showsystemgroups = bool(showsystemgroups)
         self.groupstab.show_sysgroups_checkbox.setChecked(showsystemgroups)
         # The signal-slot connection doesn't seem to work here.. before exec?
-        self.grouplistmodel.slotShowSystemAccounts(showsystemgroups)
+        self.slotShowSystemGroups(showsystemgroups)
 
     #######################################################################
     def __saveOptions(self):
@@ -471,8 +496,8 @@ class UserConfigApp(programbase):
             return
         self.saveDialogSize(self.generalconfiggroup)
         
-        self.optionsconfiggroup.writeEntry("ShowSystemAccounts",
-                str(int(self.userstab.show_sysaccts_checkbox.isChecked())))
+        self.optionsconfiggroup.writeEntry("ShowSystemUsers",
+                str(int(self.userstab.show_sysusers_checkbox.isChecked())))
         self.optionsconfiggroup.writeEntry("ShowSystemGroups",
                 str(int(self.groupstab.show_sysgroups_checkbox.isChecked())))
         self.config.sync()

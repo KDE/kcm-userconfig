@@ -71,7 +71,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="show_sysaccts_checkbox">
+    <widget class="QCheckBox" name="show_sysusers_checkbox">
      <property name="text">
       <string>Show System Accounts</string>
      </property>

@@ -19,6 +19,7 @@
 ###########################################################################
 
 import os.path
+import shutil
 
 # Qt imports
 from PyQt4.QtGui import *
@@ -191,19 +192,23 @@ class UserEditDialog(KPageDialog):
         self.details_tab.uidedit.setReadOnly(True)
         self.updatingGUI = False
         self.homedirectoryislinked = False
-        if self.exec_()==QDialog.Accepted:
+        if self.exec_() == QDialog.Accepted:
             self.__updateObjectFromGUI(self.userobj)
             # Set the password.
             if self.pwsec_tab.passwordedit.text()!="":
                 self.userobj.setPassword(str(self.pwsec_tab.passwordedit.text()))
+            
+            # Secondary groups are updated within the model, nothing to do here
+            #  if dialog accepted, need to revert if rejected.
+            
             # Update the groups for this user object. Rudd-O here's when you go in, stud.
             # we collect the selected groups
-            self.selectedgroups = [ group for group,checkbox in self.secondarygroupcheckboxes.items() if checkbox.checkState() == Qt.Checked ]
+            #self.selectedgroups = [ group for group,checkbox in self.secondarygroupcheckboxes.items() if checkbox.checkState() == Qt.Checked ]
 
-            for g in self.userobj.getGroups(): # this seems wasteful to remove the user from all groups then re-add, why not a cross check?
-                self.userobj.removeFromGroup(g)
-            for gn in self.selectedgroups:
-                self.userobj.addToGroup(self.admincontext.lookupGroupname(gn))
+            #for g in self.userobj.getGroups(): # this seems wasteful to remove the user from all groups then re-add, why not a cross check?
+                #self.userobj.removeFromGroup(g)
+            #for gn in self.selectedgroups:
+                #self.userobj.addToGroup(self.admincontext.lookupGroupname(gn))
 
             primarygroupname = unicode(self.details_tab.primarygroupedit.currentText())
             self.userobj.setPrimaryGroup(self.admincontext.lookupGroupname(primarygroupname))
@@ -211,9 +216,16 @@ class UserEditDialog(KPageDialog):
             # Enable/Disable the account            
             self.userobj.setLocked(self.details_tab.enabledradiogroup.checkedId() != 0)
             self.admincontext.save()
+        else: # Dialog rejected
+            # Revert secondary groups, since those are being stored in the user
+            #  by the model
+            return None
 
     ########################################################################
     def showNewUser(self):
+        """ Sets up the dialog to create a new user.
+            Returns the UID of the new user if successful, None otherwise.
+        """
         self.updatingGUI = True
         self.newusermode = True
         self.userobj = self.admincontext.newUser(True)
@@ -260,15 +272,18 @@ class UserEditDialog(KPageDialog):
         self.__syncGUI()
 
         self.details_tab.uidedit.setReadOnly(False)
+        self.pwsec_tab.passwordedit.clear()
+        
         self.updatingGUI = False
         self.homedirectoryislinked = True
-        self.pwsec_tab.passwordedit.clear()
+        
         if self.exec_() == QDialog.Accepted:
+            # Put in most of the data
             self.__updateObjectFromGUI(self.userobj)
 
+            # Decide what to do about the home directory
             makehomedir = True
             deleteoldhomedir = False
-
             if os.path.exists(self.userobj.getHomeDirectory()):
                 rc = self.createhomedirectorydialog.do(self.userobj)
                 if rc == OverwriteHomeDirectoryDialog.CANCEL:
@@ -278,8 +293,12 @@ class UserEditDialog(KPageDialog):
                 elif rc == OverwriteHomeDirectoryDialog.OK_REPLACE:
                     deleteoldhomedir = True
 
+            # Add the user to the admin context.  Before this the userobj
+            #  exists on its own.
             self.admincontext.addUser(self.userobj)
 
+            # __updateObjectFromGUI tries to set the primary group, but won't
+            #  set it if the group doesn't exist yet
             if self.admincontext.lookupGroupname(self.primarygroupname) is None:
                 # Create a new group
                 newgroup = self.admincontext.newGroup(True)
@@ -287,23 +306,21 @@ class UserEditDialog(KPageDialog):
                 self.admincontext.addGroup(newgroup)
                 self.userobj.setPrimaryGroup(newgroup)
 
-            # Update the groups for this user object. Rudd-O here's when you go in, stud.
-            # we collect the selected groups
-            # TODO not sure how to fix next line
-            #self.selectedgroups = [ group for group.checkbox in self.secondarygroupcheckboxes.items() if checkbox.isChecked() ]
-            #for gn in self.selectedgroups:
-                #self.userobj.addToGroup(self.admincontext.lookupGroupname(gn))
+            # Secondary groups are updated within the model, nothing to do here
 
             # Set the password.
             # if self.passwordedit.password()!="":
-            if self.passwordedit.text()!="":
+            if self.pwsec_tab.passwordedit.text() != "":
                  self.userobj.setPassword(str(self.passwordedit.text()))
 
-            # Enable/Disable the account            
-            #self.userobj.setLocked(self.details_tab.enabledradiogroup.id(self.details_tab.enabledradiogroup.selected())!=0)
-            self.userobj.setLocked(self.details_tab.enabledradiogroup.id(self.details_tab.enabledradiogroup.checkedButton())!=0)
+            # Enable/Disable the account
+            self.userobj.setLocked(
+                self.details_tab.enabledradiogroup.checkedId() != 0)
+            
+            # Save everything
             self.admincontext.save()
 
+            # Create the home directory if needed
             if deleteoldhomedir:
                 if os.path.exists(self.userobj.getHomeDirectory()):
                     shutil.rmtree(self.userobj.getHomeDirectory())
@@ -311,7 +328,7 @@ class UserEditDialog(KPageDialog):
                 self.admincontext.createHomeDirectory(self.userobj)
 
             return self.userobj.getUID()
-        else:
+        else: # Dialog rejected
             return None
 
     ########################################################################
