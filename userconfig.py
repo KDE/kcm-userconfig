@@ -316,7 +316,6 @@ class UserConfigApp(programbase):
             self.updatingGUI = True
             self.userlistmodel.setItems(self.admincontext.getUsers())
             self.__selectUserInList(newuid)
-            #self.userstab.userlistview.repaint()
             self.__selectUser(newuid)
             self.updatingGUI = False
 
@@ -325,10 +324,7 @@ class UserConfigApp(programbase):
         if self.userdeletedialog.deleteUser(self.selecteduserid):
             self.updatingGUI = True
             self.userlistmodel.setItems(self.admincontext.getUsers())
-            #self.userstab.userlistview.repaint()
             self.selecteduserid = None
-            #self.__updateUserList()
-            #self.__updateGroupList()
             self.updatingGUI = False
 
     #######################################################################
@@ -371,13 +367,14 @@ class UserConfigApp(programbase):
     #######################################################################
     def slotNewGroupClicked(self):
         newgroupid = self.groupeditdialog.showNewGroup()
-        if newgroupid!=None:
+        if newgroupid != None:
             self.updatingGUI = True
-            #self.__updateGroupList()
-            #self.__updateGroupList()
+            self.grouplistmodel.setItems(self.admincontext.getGroups())
+            self.__selectGroupInList(newgroupid)
             self.__selectGroup(newgroupid)
-            self.__updateUser(self.selecteduserid)
-            #self.__selectUser(self.selecteduserid)
+            if self.selecteduserid is not None:
+                self.__updateUser(self.selecteduserid)
+                self.__selectUser(self.selecteduserid)
             self.updatingGUI = False
 
     #######################################################################
@@ -388,14 +385,20 @@ class UserConfigApp(programbase):
             gid = groupobj.getGID()
             nummembers = len(groupobj.getUsers())
 
-            message = i18n("Are you sure you want to delete group '%1' (%2)?\nIt currently has %3 members.").arg(groupname).arg(gid).arg(nummembers)
-            if KMessageBox.warningYesNo(self,message,i18n("Delete Group?"))==KMessageBox.Yes:
+            message = i18n("Are you sure you want to delete group '%1' (%2)?" +
+                           "\nIt currently has %3 members.")\
+                           .arg(groupname).arg(gid).arg(nummembers)
+            if KMessageBox.warningYesNo(self, message,
+                                i18n("Delete Group?")) == KMessageBox.Yes:
                 self.admincontext.removeGroup(groupobj)
                 self.admincontext.save()
+                
                 self.updatingGUI = True
-                #self.__updateGroupList()
-                self.__updateUser(self.selecteduserid)
-                self.__selectUser(self.selecteduserid)
+                self.grouplistmodel.setItems(self.admincontext.getGroups())
+                self.selectedgroupid = None
+                if self.selecteduserid is not None:
+                    self.__updateUser(self.selecteduserid)
+                    self.__selectUser(self.selecteduserid)
                 self.updatingGUI = False
 
     #######################################################################
@@ -449,6 +452,16 @@ class UserConfigApp(programbase):
             self.userstab.modifybutton.setEnabled( True )
             # Don't allow deletion the root account
             self.userstab.deletebutton.setDisabled(userobj.getUID() == 0)
+
+    #######################################################################
+    def __selectGroupInList(self, groupid):
+        """ Selects the user in the list view """
+        selection = self.grouplistmodel.selectionFromID(groupid)
+        if not self.groupstab.show_sysgroups_checkbox.isChecked():
+            selection = self.grouplist_nosys_model.mapSelectionFromSource(
+                                                            selection)
+        self.groupstab.grouplistview.selectionModel().select(
+                selection, QItemSelectionModel.Select)
 
     #######################################################################
     def __selectGroup(self,groupid):
