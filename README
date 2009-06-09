@@ -1,0 +1,12 @@
+Userconfig uses PyKDE4 and PyQt4
+
+ui/ contains all .ui files from qt4-designer
+util/ contains code that doesn't depend on qt/kde
+
+TODO:
+- context menus
+- policykit
+- various FIXMEs and TODOs in the code
+- UI improvements
+- code documentation
+- user documentation

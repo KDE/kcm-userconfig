@@ -391,12 +391,14 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def __updateUser(self, userid):
+        """ Lets the user list view know the user data changed """
         idx = self.userlistmodel.indexFromID(userid)
         self.userlistmodel.emit(
                     SIGNAL("dataChanged(QModelIndex&,QModelIndex&)"), idx, idx)
 
     #######################################################################
     def __updateGroup(self, groupid):
+        """ Lets the group list view know the group data changed """
         idx = self.grouplistmodel.indexFromID(groupid)
         self.grouplistmodel.emit(
                     SIGNAL("dataChanged(QModelIndex&,QModelIndex&)"), idx, idx)
@@ -529,24 +531,6 @@ class UserConfigApp(programbase):
                 str(int(self.groupstab.show_sysgroups_checkbox.isChecked())))
         self.config.sync()
 
-    #######################################################################
-    # KControl virtual void methods
-    #def load(self):
-        #pass
-    #def save(self):
-        #pass
-    #def defaults(self):
-        #pass        
-    #def sysdefaults(self):
-        #pass
-
-    #def aboutData(self):
-        ## Return the KAboutData object which we created during initialisation.
-        #return self.aboutdata
-    #def buttons(self):
-        ## Only supply a Help button. Other choices are Default and Apply.
-        #return KCModule.Help
-
 ###########################################################################
 
 
@@ -580,7 +564,4 @@ if standalone:
     userconfigapp.exec_()
 
 def CreatePlugin(widget_parent, parent, component_data):
-    print("WIdget parent:"+repr(widget_parent))
-    print(r"\o/ Yippie! it kind of works!")
-    print("component data: " +repr(component_data))
     return UserConfigApp(component_data, widget_parent)
