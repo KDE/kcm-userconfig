@@ -39,7 +39,7 @@ from models import GroupListModel, PrivilegeListProxyModel,\
                    SimpleGroupListProxyModel
 
 if os.path.exists("ui/users.ui"):
-    APP_DIR = QDir.currentPath()
+    APP_DIR = unicode(QDir.currentPath())
 else:
     f = KGlobal.dirs().findResourceDir("data", "userconfig/ui/users.ui")
     APP_DIR = pj(unicode(f), 'userconfig/')
