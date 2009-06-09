@@ -1,11 +1,13 @@
 #!/usr/bin/python
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 ###########################################################################
 # group.py - configuration for groups for userconfig                      #
 # ------------------------------                                          #
 # begin     : Wed Apr 30 2003                                             #
-# copyright : (C) 2003-2006 by Simon Edwards, 2008 by Yuriy Kozlov        #
-# email     : simon@simonzone.com                                         #
+# copyright : (C) 2003-2006 by Simon Edwards,                             #
+#                 2008-2009 by Yuriy Kozlov, Jonathan Thomas, Ralph Janke #
+# email     : simon@simonzone.com,                                        #
+#             yuriy-kozlov@kubuntu.org                                    #
 #                                                                         #
 ###########################################################################
 #                                                                         #
@@ -28,14 +30,14 @@ import locale
 
 class GroupEditDialog(KDialog):
     def __init__(self,parent,admincontext):
-        #KDialogBase.__init__(self,parent,None,True,i18n("Edit Group"),KDialogBase.Ok|KDialogBase.Cancel,
-            #KDialogBase.Cancel)
         KDialog.__init__(self, parent)
         self.setModal(True)
         self.setCaption(i18n("Edit Group"))
-        #self.setButtons(KDialog.Ok|KDialog.Cancel) # TODO
-
+        
         self.admincontext = admincontext
+        self.groupobj = None
+        
+        self.updatingGUI = True
 
         topvbox = KVBox(self)
         topvbox.setSpacing(self.spacingHint())
@@ -58,6 +60,8 @@ class GroupEditDialog(KDialog):
         self.groupidlabel = KLineEdit("",detailspace)
         self.groupidlabel.setReadOnly(True)
         editgrid.addWidget(self.groupidlabel,1,1)
+        self.groupidlabel.setValidator(
+                        QIntValidator(0, 65535, self.groupidlabel))
 
         # Available Groups
         tophbox = KHBox(topvbox)
@@ -100,84 +104,203 @@ class GroupEditDialog(KDialog):
         vbox.setStretchFactor(self.selectedlist,1)
         self.selectedlist.setSelectionMode(QAbstractItemView.SingleSelection)
         self.selectedlist.setSelectionBehavior(QAbstractItemView.SelectRows)
+        
+        # Data changed signals
+        self.connect(self.selectedlist.model(),
+                     SIGNAL("rowsInserted(const QModelIndex&,int,int)"),
+                     self.slotDataChanged)
+        self.connect(self.selectedlist.model(),
+                     SIGNAL("rowsRemoved(const QModelIndex&,int,int)"),
+                     self.slotDataChanged)
+        
+        self.updatingGUI = False
 
     #######################################################################
-    def showEditGroup(self,groupid):
-        self.groupid = groupid
+    def showEditGroup(self, groupid):
+        """ Sets up the dialog to modify an existing group.
+            Returns the GID of the group if successful, None otherwise.
+        """
+        self.updatingGUI = True
         self.newgroupmode = False
+        self.groupobj = self.admincontext.lookupGID(groupid)
+        self.setCaption(i18n("Modifying Group %1")\
+                            .arg(self.groupobj.getGroupname()))
+        # Set up buttons
+        self.setButtons(KDialog.ButtonCode(KDialog.Cancel | KDialog.Ok |
+                                           KDialog.Apply))
+        self.connect(self, SIGNAL("applyClicked()"), self.applyChanges)
 
-        groupobj = self.admincontext.lookupGID(groupid)
-
-        self.groupnamelabel.setText(groupobj.getGroupname())
+        self.groupnamelabel.setText(self.groupobj.getGroupname())
+        self.groupnamelabel.setReadOnly(True)
         self.groupidlabel.setText(unicode(groupid))
+        self.groupidlabel.setReadOnly(True)
 
-        availablemembers = [u.getUsername() for u in self.admincontext.getUsers()]
-        originalmembers = [u.getUsername() for u in groupobj.getUsers()]
+        availablemembers = [u.getUsername()
+                                for u in self.admincontext.getUsers()]
+        self.originalmembers = [u.getUsername()
+                                    for u in self.groupobj.getUsers()]
+        self.originalmembers.sort()
 
-        self.__updateLists(availablemembers,originalmembers)
+        # Works, not worth porting to Model/View
+        self.__updateLists(availablemembers, self.originalmembers)
+        
+        self.slotDataChanged()
 
-        if self.exec_()==QDialog.Accepted:
-            newmembers = []
-            for i in range(self.selectedlist.count()):
-                newmembers.append(unicode(self.selectedlist.item(i).text()))
-
-            # Remove from the group object any unselected users.
-            for member in originalmembers:
-                if u not in newmembers:
-                    self.admincontext.lookupUsername(member).removeFromGroup(groupobj)
-            # Put the additional members in the group
-            for member in newmembers:
-                self.admincontext.lookupUsername(member).addToGroup(groupobj)
-            self.admincontext.save()
-            return True
+        self.updatingGUI = False
+        
+        if self.exec_() == QDialog.Accepted:
+            result = self.applyChanges()
+            if result:
+                return self.groupobj.getGID()
+            else:
+                return None
         else:
-            return False
+            return None
 
     #######################################################################
     def showNewGroup(self):
+        """ Sets up the dialog to create a new group.
+            Returns the GID of the new group if successful, None otherwise.
+        """
         self.updatingGUI = True
         self.newgroupmode = True
-
+        self.setCaption(i18n("New Group"))
+        # Set up buttons
+        self.setButtons(KDialog.ButtonCode(KDialog.Cancel | KDialog.Ok))
+        
+        self.groupobj = self.admincontext.newGroup(True)
+        
         groupname = self.__fudgeNewGroupName(i18n("<Base string for creating new group names>","new_group"))
         groupname = self.__fudgeNewGroupName(i18n("new_group","new_group"))
-
-        self.groupobj = self.admincontext.newGroup(True)
+        
+        # Populate group data from autogenerated
         self.groupobj.setGroupname(groupname)
 
+        # Populate GUI
         groupname = self.groupobj.getGroupname()
         self.groupnamelabel.setText(groupname)
         self.groupnamelabel.setReadOnly(False)
         self.groupidlabel.setText(unicode(self.groupobj.getGID()))
         self.groupidlabel.setReadOnly(False)
 
-        availablemembers = [u.getUsername() for u in self.admincontext.getUsers()]
+        availablemembers = [u.getUsername()
+                                for u in self.admincontext.getUsers()]
 
         self.__updateLists(availablemembers,[])
+        
+        self.updatingGUI = False
 
-        if self.exec_()==QDialog.Accepted:
+        if self.exec_() == QDialog.Accepted:
+            # Populate group data from GUI
             self.groupobj.setGroupname(unicode(self.groupnamelabel.text()))
             newgroupid = int(unicode(self.groupidlabel.text()))
             self.groupobj.setGID(newgroupid)
 
-            newmembers = []
-            for i in range(self.selectedlist.count()):
-                newmembers.append(unicode(self.selectedlist.item(i).text()))
-
-            self.admincontext.addGroup(self.groupobj)
-
-            # Put the additional members in the group
-            for member in newmembers:
-                self.admincontext.lookupUsername(member).addToGroup(self.groupobj)
-            self.admincontext.save()
-
-            return newgroupid
+            result = self.applyChanges()
+            if result:
+                return self.groupobj.getGID()
+            else:
+                return None
         else:
             return None
 
+    ########################################################################
+    def sanityCheck(self):
+        """ Do some sanity checks.
+            Returns True if data is ok or has been fixed up, otherwise pops up
+            a message and returns False
+        """
+        # Check that the username doesn't clash
+        # TODO: do this in the UI instead of canceling the operation
+        newgroupname = unicode(self.groupnamelabel.text())
+        existinggroup = self.admincontext.lookupGroupname(newgroupname)
+        if existinggroup is not None and existinggroup is not self.groupobj:
+            KMessageBox.sorry(self, i18n("Sorry, you must choose a different " +
+                                         "group name.\n" +
+                                         "'%1' is already being used.")\
+                                         .arg(newgroupname))
+            return False
+        
+        # Check that the UID doesn't clash (can't change GID of existing group)
+        # TODO: do this in the UI instead of canceling the operation
+        if self.newgroupmode:
+            newgid = int(unicode(self.groupidlabel.text()))
+            originalgid = self.groupobj.getGID()
+            if self.admincontext.lookupGID(newgid) is not None:
+                rc = KMessageBox.questionYesNo(self,
+                        i18n("Sorry, the GID %1 is already in use. Should %2" +
+                             " be used instead?").arg(newgid).arg(originalgid),
+                        i18n("Group ID in use"))
+                if rc == KMessageBox.Yes:
+                    self.groupidlabel.setValue(unicode(originalgid))
+                else:
+                    return False
+        
+        return True
+    
+    ########################################################################
+    def applyChanges(self):
+        if not self.newgroupmode and not self.isChanged():
+            return False
+        
+        if not self.sanityCheck():
+            return False
+        
+        newmembers = []
+        for i in range(self.selectedlist.count()):
+            newmembers.append(unicode(self.selectedlist.item(i).text()))
+
+        if self.newgroupmode:
+            self.admincontext.addGroup(self.groupobj)
+        else:
+            # Remove from the group object any unselected users.
+            for member in self.originalmembers:
+                if member not in newmembers:
+                    self.admincontext.lookupUsername(member)\
+                            .removeFromGroup(self.groupobj)
+
+        # Put the additional members in the group
+        for member in newmembers:
+            self.admincontext.lookupUsername(member).addToGroup(self.groupobj)
+        
+        # Save everything
+        self.admincontext.save()
+        
+        # For the apply button
+        self.originalmembers = [u.getUsername()
+                                    for u in self.groupobj.getUsers()]
+        self.originalmembers.sort()
+        self.slotDataChanged()
+        
+        return True
+    
+    ########################################################################
+    def isChanged(self):
+        if not self.newgroupmode:
+            newmembers = []
+            for i in range(self.selectedlist.count()):
+                newmembers.append(unicode(self.selectedlist.item(i).text()))
+            newmembers.sort()
+            changed = newmembers != self.originalmembers
+            return changed
+        else:
+            return False
+    
+    ########################################################################
+    def slotDataChanged(self):
+        changed = self.isChanged()
+        
+        if not self.newgroupmode:
+            self.enableButtonOk(changed)
+            self.enableButtonApply(changed)
+            self.setCaption(i18n("Modifying Group %1")\
+                            .arg(self.groupobj.getGroupname()),
+                            changed)
+    
     #######################################################################
     def slotAddClicked(self):
         item = self.availablelist.currentItem()
-        if item!=None:
+        if item is not None:
             self.selectedlist.addItem(item.text())
             self.availablelist.takeItem(self.availablelist.row(item))
             self._selectFirstAvailable()
@@ -188,7 +311,7 @@ class GroupEditDialog(KDialog):
     #######################################################################
     def slotRemoveClicked(self):
         item = self.selectedlist.currentItem()
-        if item!=None:
+        if item is not None:
             self.availablelist.addItem(item.text())
             self.selectedlist.takeItem(self.selectedlist.row(item))
             self._selectFirstAvailable()
@@ -197,7 +320,7 @@ class GroupEditDialog(KDialog):
             self.removebutton.setDisabled(self.selectedlist.currentItem()==None)
 
     #######################################################################
-    def __updateLists(self,grouplist,selectedlist):
+    def __updateLists(self, grouplist, selectedlist):
         self.selectedlist.clear()
         for item in selectedlist:
             self.selectedlist.addItem(item)
@@ -210,21 +333,21 @@ class GroupEditDialog(KDialog):
         self.availablelist.sortItems()
 
         self._selectFirstAvailable()
-        self.addbutton.setDisabled(self.availablelist.currentItem()==None)
+        self.addbutton.setDisabled(self.availablelist.currentItem() == None)
 
         self._selectFirstSelected()
-        self.removebutton.setDisabled(self.selectedlist.currentItem()==None)
+        self.removebutton.setDisabled(self.selectedlist.currentItem() == None)
 
     #######################################################################
     def _selectFirstAvailable(self):
-        if self.availablelist.count()!=0:
-            if self.availablelist.currentItem()==None:
+        if self.availablelist.count() != 0:
+            if self.availablelist.currentItem() is None:
                 self.availablelist.setCurrentRow(0)
 
     #######################################################################
     def _selectFirstSelected(self):
         if self.selectedlist.count()!=0:
-            if self.selectedlist.currentItem()==None:
+            if self.selectedlist.currentItem() is None:
                 self.selectedlist.setCurrentRow(0)
 
     #######################################################################

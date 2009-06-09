@@ -328,6 +328,7 @@ class UserConfigApp(programbase):
             self.userlistmodel.setItems(self.admincontext.getUsers())
             self.grouplistmodel.setItems(self.admincontext.getGroups())
             self.selecteduserid = None
+            self.__selectUser(self.selecteduserid)
             self.updatingGUI = False
 
     #######################################################################
@@ -359,18 +360,18 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def slotModifyGroupClicked(self):
-        if self.selectedgroupid!=None:
-            if self.groupeditdialog.showEditGroup(self.selectedgroupid):
-                #self.__selectGroup(self.selectedgroupid)
-                self.updatingGUI = True
-                self.__updateUser(self.selecteduserid)
-                #self.__selectUser(self.selecteduserid)
-                self.updatingGUI = False
+        if self.groupeditdialog.showEditGroup(self.selectedgroupid) is not None:
+            self.updatingGUI = True
+            self.__updateGroup(self.selectedgroupid)
+            self.__selectGroup(self.selectedgroupid)
+            self.__updateUser(self.selecteduserid)
+            self.__selectUser(self.selecteduserid)
+            self.updatingGUI = False
 
     #######################################################################
     def slotNewGroupClicked(self):
         newgroupid = self.groupeditdialog.showNewGroup()
-        if newgroupid != None:
+        if newgroupid is not None:
             self.updatingGUI = True
             self.grouplistmodel.setItems(self.admincontext.getGroups())
             self.__selectGroupInList(newgroupid)
@@ -382,7 +383,7 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def slotDeleteGroupClicked(self):
-        if self.selectedgroupid != None:
+        if self.selectedgroupid is not None:
             groupobj = self.admincontext.lookupGID(self.selectedgroupid)
             groupname = groupobj.getGroupname()
             gid = groupobj.getGID()
@@ -399,6 +400,7 @@ class UserConfigApp(programbase):
                 self.updatingGUI = True
                 self.grouplistmodel.setItems(self.admincontext.getGroups())
                 self.selectedgroupid = None
+                self.__selectGroup(self.selectedgroupid)
                 if self.selecteduserid is not None:
                     self.__updateUser(self.selecteduserid)
                     self.__selectUser(self.selecteduserid)
@@ -408,6 +410,12 @@ class UserConfigApp(programbase):
     def __updateUser(self, userid):
         idx = self.userlistmodel.indexFromID(userid)
         self.userlistmodel.emit(
+                    SIGNAL("dataChanged(QModelIndex&,QModelIndex&)"), idx, idx)
+
+    #######################################################################
+    def __updateGroup(self, groupid):
+        idx = self.grouplistmodel.indexFromID(groupid)
+        self.grouplistmodel.emit(
                     SIGNAL("dataChanged(QModelIndex&,QModelIndex&)"), idx, idx)
 
     #######################################################################
@@ -431,6 +439,18 @@ class UserConfigApp(programbase):
 
         userobj = self.admincontext.lookupUID(userid)
 
+        if userobj is None:
+            self.userstab.loginname.setText("")
+            self.userstab.realname.setText("")
+            self.userstab.uid.setText("")
+            self.userstab.status.setText("")
+            self.userstab.primarygroup.setText("")
+            self.userstab.secondarygroup.setText("")
+            # Enable/disable buttons
+            self.userstab.modifybutton.setEnabled(False)
+            self.userstab.deletebutton.setEnabled(False)
+            return
+            
         self.userstab.loginname.setText(userobj.getUsername())
         self.userstab.realname.setText(userobj.getRealName())
         self.userstab.uid.setText(unicode(userid))
@@ -452,7 +472,7 @@ class UserConfigApp(programbase):
 
         if isroot:
             # Enable/disable buttons
-            self.userstab.modifybutton.setEnabled( True )
+            self.userstab.modifybutton.setEnabled(True)
             # Don't allow deletion the root account
             self.userstab.deletebutton.setDisabled(userobj.getUID() == 0)
 
@@ -476,12 +496,20 @@ class UserConfigApp(programbase):
         self.selectedgroupid = groupid
 
         groupobj = self.admincontext.lookupGID(groupid)
+        
+        if groupobj is None:
+            self.groupmemberslistmodel.setItems([])
+            # Enable/disable buttons
+            self.groupstab.modifygroupbutton.setEnabled(False)
+            self.groupstab.deletegroupbutton.setEnabled(False)
+            return
+        
         members = groupobj.getUsers()
-        self.groupmemberslistmodel.setItems( members )
+        self.groupmemberslistmodel.setItems(members)
         
         if isroot:
             # Enable/disable buttons
-            self.groupstab.modifygroupbutton.setEnabled( True )
+            self.groupstab.modifygroupbutton.setEnabled(True)
             # Don't allow deletion of the root group
             self.groupstab.deletegroupbutton.setDisabled(groupobj.getGID()==0)
 
