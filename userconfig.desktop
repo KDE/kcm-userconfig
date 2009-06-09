@@ -12,6 +12,7 @@ Name[sr]=Управљање корисницима
 Name[sr@Latn]=Upravljanje korisnicima
 Name[sv]=Användarhantering
 Name[xx]=xxUser Managementxx
+
 Comment=Users & Groups Administration
 Comment[el]=Διαχείριση χρηστών & ομάδων
 Comment[es]=Administrador de usuarios y grupos
@@ -25,15 +26,23 @@ Comment[sr]=Администрирање корисника и група
 Comment[sr@Latn]=Administriranje korisnika i grupa
 Comment[sv]=Administration av användare och grupper
 Comment[xx]=xxUsers & Groups Administrationxx
+
+Exec=kcmshell4 userconfig
 Icon=user-identity
+Type=Service
 Encoding=UTF-8
-X-KDE-ModuleType=Library
-X-KDE-Library=userconfig
-X-KDE-FactoryName=userconfig
-X-KDE-RootOnly=true
-Type=Application
-Exec=kcmshell System/userconfig
-Categories=Qt;KDE;X-KDE-settings-system;
+
+X-KDE-ServiceTypes=KCModule
+X-KDE-Library=kpythonpluginfactory
+X-KDE-ParentApp=kcontrol
+X-KDE-PluginKeyword=userconfig/userconfig.py
+X-KDE-Keywords=user, users, group, groups
+X-KDE-System-Settings-Parent-Category=system
+X-KDE-Weight=60
+X-DocPath=kcontrol/colors/index.html
+
+Categories=Qt;KDE;System;
+
 GenericName=User Account Editor
 GenericName[el]=Επεξεργαστής λογαριασμών χρηστών
 GenericName[es]=Editor de cuenta de usuario

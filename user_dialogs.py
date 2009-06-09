@@ -34,7 +34,6 @@ from PyKDE4.kio import *
 import locale
 
 # userconfig imports
-#from util.groups import PrivilegeNames
 from models import GroupListModel, PrivilegeListProxyModel,\
                    SimpleGroupListProxyModel
 

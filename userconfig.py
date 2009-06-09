@@ -23,15 +23,12 @@ from PyQt4.QtCore import *
 from PyQt4 import uic
 from PyKDE4.kdecore import *
 from PyKDE4.kdeui import *
-from PyKDE4.kio import *
 import sys
-import os.path
-import shutil
+import os
 from util import unixauthdb
-from util.groups import PrivilegeNames
-from user import UserEditDialog, UserDeleteDialog
+from user_dialogs import UserEditDialog, UserDeleteDialog
 from models import UserModel, GroupModel, FilterSystemAcctsProxyModel
-from group import GroupEditDialog
+from group_dialogs import GroupEditDialog
 import locale
 
 programname = "userconfig"
@@ -41,8 +38,6 @@ standalone = __name__=='__main__'
 
 # Running as the root user or not?
 isroot = os.getuid()==0
-#isroot = True
-
 
 
 ###########################################################################
@@ -53,8 +48,8 @@ else:
     programbase = KCModule
 
 class UserConfigApp(programbase):
-    def __init__(self,parent=None,name=None):
-        global standalone,isroot
+    def __init__(self, component_data=None, parent=None):
+        global standalone, isroot
         KGlobal.locale().insertCatalog("guidance")
 
         self.aboutdata = MakeAboutData()
@@ -70,23 +65,31 @@ class UserConfigApp(programbase):
             self.connect(self, SIGNAL("user1Clicked()"), self.slotUser1)
             
             # Load UI
-            #if os.path.exists('ui/maindialog.ui'):
             self.userstab = uic.loadUi('ui/users.ui')
             self.addPage(self.userstab, i18n("Users") )
             self.groupstab = uic.loadUi('ui/groups.ui')
             self.addPage(self.groupstab, i18n("Groups") )
             #FIXME: SRSLY! Need to know where the ui crap'll be installed and
             #check for it there too.
-        else:
-            KCModule.__init__(self,parent,name)
-            self.setButtons(0)
-            self.aboutdata = MakeAboutData()
             
-            # TODO!
-            #toplayout = KVBoxLayout( self, 0, KDialog.spacingHint() )
-            #tabcontrol = QTabWidget(self)
-            #toplayout.addWidget(tabcontrol)
-            #toplayout.setStretchFactor(tabcontrol,1)
+            self.aboutus = KAboutApplicationDialog(self.aboutdata, self)
+        else:
+            KCModule.__init__(self, component_data, parent)
+            self.setAboutData(self.aboutdata)
+            self.setButtons(KCModule.Help)
+            self.setUseRootOnlyMessage(True)
+            
+            # Create layout and tabs otherwise taken care of by KPageDialog
+            toplayout = QVBoxLayout()
+            self.setLayout(toplayout)
+            tabcontrol = KPageWidget(self)
+            tabcontrol.setFaceType(KPageWidget.Tabbed)
+            toplayout.addWidget(tabcontrol)
+            # Load UI
+            self.userstab = uic.loadUi('ui/users.ui')
+            tabcontrol.addPage(self.userstab, i18n("Users") )
+            self.groupstab = uic.loadUi('ui/groups.ui')
+            tabcontrol.addPage(self.groupstab, i18n("Groups") )
 
         # Create a configuration object.
         self.config = KConfig("userconfigrc")
@@ -101,8 +104,6 @@ class UserConfigApp(programbase):
         self.selectedgroupid = None
 
         self.updatingGUI = True
-        
-        self.aboutus = KAboutApplicationDialog(self.aboutdata, self)
 
         #######################################################################
         # Set up the users tab
@@ -153,21 +154,6 @@ class UserConfigApp(programbase):
         self.userstab.deletebutton.setIcon( SmallIconSet('list-remove-user') )
 
         userdetails_groupbox = self.userstab.userdetails_groupbox
-
-        # FIXME need to implement w/ ui file when we can
-        #if not standalone:
-            #tabcontrol.addTab(vbox,i18n("Users"))
-
-        ##--- Groups Tab ---
-        #if standalone:
-            #groupsvbox = KVBox(self)
-            #item = self.addPage( groupsvbox, i18n( "Groups" ) )
-            #item.setHeader( i18n( "Groups" ) )
-            #hb = KHBox(groupsvbox)
-        #else:
-            #groupsvbox = KVBox(tabcontrol)
-            #groupsvbox.setMargin(KDialog.marginHint())
-            #hb = KHBox(groupsvbox)
 
         #######################################################################
         # Set up the groups tab
@@ -239,12 +225,6 @@ class UserConfigApp(programbase):
         for widget in disablebuttons:
             widget.setDisabled(True)
 
-
-        #FIXME Need to handle non-standalone when it can be non-standalone
-        #if not standalone:
-            #tabcontrol.addTab(groupsvbox,i18n("Groups"))
-        
-
         self.usereditdialog = UserEditDialog(None,self.admincontext)
         self.userdeletedialog = UserDeleteDialog(None,self.admincontext)
         self.groupeditdialog = GroupEditDialog(None,self.admincontext)
@@ -280,18 +260,6 @@ class UserConfigApp(programbase):
             cmenu.setItemEnabled(0,False)
             cmenu.setItemEnabled(1,False)
         cmenu.exec_(p)
-
-    #######################################################################        
-    def sizeHint(self):
-        global programbase
-        size_hint = programbase.sizeHint(self)
-        # Just make the dialog a little shorter by default.
-        size_hint.setHeight(size_hint.height()-150) 
-        return size_hint
-
-    #######################################################################
-    def slotCloseButton(self):
-        self.close()
 
     #######################################################################
     def slotUserSelected(self, current):
@@ -548,131 +516,21 @@ class UserConfigApp(programbase):
 
     #######################################################################
     # KControl virtual void methods
-    def load(self):
-        pass
-    def save(self):
-        pass
-    def defaults(self):
-        pass        
-    def sysdefaults(self):
-        pass
+    #def load(self):
+        #pass
+    #def save(self):
+        #pass
+    #def defaults(self):
+        #pass        
+    #def sysdefaults(self):
+        #pass
 
-    def aboutData(self):
-        # Return the KAboutData object which we created during initialisation.
-        return self.aboutdata
-    def buttons(self):
-        # Only supply a Help button. Other choices are Default and Apply.
-        return KCModule.Help
-
-###########################################################################
-
-
-
-
-
-
-###########################################################################
-#class ListPickerDialog(KDialog):
-    #def __init__(self,parent,caption,leftlabel,rightlabel):
-        ##KDialogBase.__init__(self,parent,None,True,caption,KDialogBase.Ok|KDialogBase.Cancel, KDialogBase.Cancel)
-        #KDialog.__init__(parent)
-        #KDialog.setCaption(caption)
-        #KDialog.setModal(True)
-        #KDialog.setButtons(KDialog.Ok|KDialog.Cancel)
-
-        #self.tophbox = KHBox(self)
-        #self.setMainWidget(self.tophbox)
-        #self.tophbox.setSpacing(self.spacingHint())
-        ## Available Groups
-        #vbox = KVBox(self.tophbox)
-        #self.tophbox.setStretchFactor(vbox,1)
-        #label = QLabel(leftlabel,vbox)
-        #vbox.setStretchFactor(label,0)
-        #self.availablelist = KListBox(vbox)
-        #vbox.setStretchFactor(self.availablelist,1)
-
-        ## ->, <- Buttons
-        #vbox = KVBox(self.tophbox)
-        #self.tophbox.setStretchFactor(vbox,0)
-        #spacer = QWidget(vbox);
-        #vbox.setStretchFactor(spacer,1)
-        #self.addbutton = KPushButton(i18n("Add ->"),vbox)
-        #self.connect(self.addbutton,SIGNAL("clicked()"),self.slotAddClicked)
-        #vbox.setStretchFactor(self.addbutton,0)
-        #self.removebutton = KPushButton(i18n("<- Remove"),vbox)
-        #self.connect(self.removebutton,SIGNAL("clicked()"),self.slotRemoveClicked)
-        #vbox.setStretchFactor(self.removebutton,0)
-        #spacer = QWidget(vbox);
-        #vbox.setStretchFactor(spacer,1)
-
-        ## Selected Groups
-        #vbox = KVBox(self.tophbox)
-        #self.tophbox.setStretchFactor(vbox,1)
-        #label = QLabel(rightlabel,vbox)
-        #vbox.setStretchFactor(label,0)
-        #self.selectedlist = KListBox(vbox)
-        #vbox.setStretchFactor(self.selectedlist,1)
-
-    ########################################################################
-    #def do(self,grouplist,selectedlist):
-        #self.selectedlist.clear()
-        #for item in selectedlist:
-            #self.selectedlist.insertItem(item)
-        #self.selectedlist.sort()
-
-        #self.availablelist.clear()
-        #for item in grouplist:
-            #if item not in selectedlist:
-                #self.availablelist.insertItem(item)
-        #self.availablelist.sort()
-
-        #self._selectFirstAvailable()
-        #self.addbutton.setDisabled(self.availablelist.selectedItem()==None)
-
-        #self._selectFirstSelected()
-        #self.removebutton.setDisabled(self.selectedlist.selectedItem()==None)
-
-        #if self.exec_()==QDialog.Accepted:
-            #newlist = []
-            #for i in range(self.selectedlist.count()):
-                #newlist.append(unicode(self.selectedlist.item(i).text()))
-            #return newlist
-        #else:
-            #return selectedlist
-
-    ########################################################################
-    #def slotAddClicked(self):
-        #item = self.availablelist.selectedItem()
-        #if item!=None:
-            #self.selectedlist.insertItem(item.text())
-            #self.availablelist.removeItem(self.availablelist.index(item))
-            #self._selectFirstAvailable()
-            #self._selectFirstSelected()
-            #self.addbutton.setDisabled(self.availablelist.selectedItem()==None)
-            #self.removebutton.setDisabled(self.selectedlist.selectedItem()==None)
-
-    ########################################################################
-    #def slotRemoveClicked(self):
-        #item = self.selectedlist.selectedItem()
-        #if item!=None:
-            #self.availablelist.insertItem(item.text())
-            #self.selectedlist.removeItem(self.selectedlist.index(item))
-            #self._selectFirstAvailable()
-            #self._selectFirstSelected()
-            #self.addbutton.setDisabled(self.availablelist.selectedItem()==None)
-            #self.removebutton.setDisabled(self.selectedlist.selectedItem()==None)
-
-    ########################################################################
-    #def _selectFirstAvailable(self):
-        #if self.availablelist.count()!=0:
-            #if self.availablelist.selectedItem()==None:
-                #self.availablelist.setSelected(0,True)
-
-    ########################################################################
-    #def _selectFirstSelected(self):
-        #if self.selectedlist.count()!=0:
-            #if self.selectedlist.selectedItem()==None:
-                #self.selectedlist.setSelected(0,True)
+    #def aboutData(self):
+        ## Return the KAboutData object which we created during initialisation.
+        #return self.aboutdata
+    #def buttons(self):
+        ## Only supply a Help button. Other choices are Default and Apply.
+        #return KCModule.Help
 
 ###########################################################################
 
@@ -681,12 +539,6 @@ def fix_treeview(view):
     """ Resizes all columns to contents """
     for col in range(view.model().columnCount()):
         view.resizeColumnToContents(col)
-
-
-############################################################################
-# Factory function for KControl
-def create_userconfig(parent,name):
-    return UserConfigApp(parent, name)
 
 ##########################################################################
 def MakeAboutData():
@@ -706,8 +558,14 @@ def MakeAboutData():
 if standalone:
     aboutdata = MakeAboutData()
 
-    KCmdLineArgs.init(sys.argv,aboutdata)
+    KCmdLineArgs.init(sys.argv, aboutdata)
 
     kapp = KApplication()
     userconfigapp = UserConfigApp()
     userconfigapp.exec_()
+
+def CreatePlugin(widget_parent, parent, component_data):
+    print("WIdget parent:"+repr(widget_parent))
+    print(r"\o/ Yippie! it kind of works!")
+    print("component data: " +repr(component_data))
+    return UserConfigApp(component_data, widget_parent)
