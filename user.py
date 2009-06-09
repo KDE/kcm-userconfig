@@ -35,7 +35,8 @@ import locale
 
 # userconfig imports
 #from util.groups import PrivilegeNames
-from models import GroupListModel, PrivilegeListProxyModel
+from models import GroupListModel, PrivilegeListProxyModel,\
+                   SimpleGroupListProxyModel
 
 ###########################################################################
 def SptimeToQDate(sptime):
@@ -67,6 +68,10 @@ class UserEditDialog(KPageDialog):
         self.userobj = None
         
         self.updatingGUI = True
+        
+        self.groups_model = GroupListModel(None,
+                                           self.admincontext.getGroups(),
+                                           self.userobj)
 
         #######################################################################
         # Set up the user details tab
@@ -79,7 +84,6 @@ class UserEditDialog(KPageDialog):
                                         self.details_tab.enabledradio, 0)
         self.details_tab.enabledradiogroup.addButton(
                                         self.details_tab.disabledradio, 1)
-        #self.details_tab.enabledradio.setChecked(True)
 
         self.details_tab.loginnameedit.setValidator(
                         LoginNameValidator(self.details_tab.loginnameedit))
@@ -94,6 +98,17 @@ class UserEditDialog(KPageDialog):
         self.details_tab.uidedit.setValidator(
                         QIntValidator(0, 65535, self.details_tab.uidedit))
 
+        self.details_tab.primarygroupedit.setValidator(
+                        LoginNameValidator(self.details_tab.primarygroupedit))
+        self.details_tab.primarygroupedit.setInsertPolicy(
+                        QComboBox.NoInsert)
+        self.simple_groups_model = SimpleGroupListProxyModel(None)
+        self.simple_groups_model.setSourceModel(self.groups_model)
+        self.details_tab.primarygroupedit.setModel(self.simple_groups_model)
+        self.connect(self.details_tab.primarygroupedit,
+                     SIGNAL("editTextChanged(const QString&)"),
+                     self.slotPrimaryGroupChanged)
+        
         self.connect(self.details_tab.homediredit,
                      SIGNAL("textChanged(const QString &)"),
                      self.slotHomeDirChanged)
@@ -106,10 +121,6 @@ class UserEditDialog(KPageDialog):
 
         #######################################################################
         # Set up the privileges and groups tab
-        
-        self.groups_model = GroupListModel(None,
-                                        self.admincontext.getGroups(),
-                                        self.userobj)
         self.privgroups_tab.groupslistview.setModel(self.groups_model)
         
         self.privileges_model = PrivilegeListProxyModel(None)
@@ -159,6 +170,9 @@ class UserEditDialog(KPageDialog):
                      self.slotDataChanged)
         self.connect(self.details_tab.realnameedit,
                      SIGNAL("textEdited(const QString&)"),
+                     self.slotDataChanged)
+        self.connect(self.details_tab.primarygroupedit,
+                     SIGNAL("editTextChanged(const QString&)"),
                      self.slotDataChanged)
         self.connect(self.details_tab.homediredit,
                      SIGNAL("textEdited(const QString&)"),
@@ -219,9 +233,10 @@ class UserEditDialog(KPageDialog):
         
         self.pwsec_tab.passwordedit.clear()
         
-        # Save the secondary groups so they can be restored
+        # Save the groups so they can be restored, and for isChanged()
         self.originalgroups = [g for g in self.userobj.getGroups()
                                      if g is not self.userobj.getPrimaryGroup()]
+        self.originalprimarygroup = self.userobj.getPrimaryGroup()
         
         # FIXME we should repopulate the groups
         # privileges list when the primary group is changed in the other tab --
@@ -235,6 +250,7 @@ class UserEditDialog(KPageDialog):
         
         self.updatingGUI = False
         self.homedirectoryislinked = False
+        self.primarygroupislinked = False
         
         if self.exec_() == QDialog.Accepted:
             result = self.applyChanges()
@@ -246,9 +262,9 @@ class UserEditDialog(KPageDialog):
         else: # Dialog rejected
             # Revert secondary groups, since those are being stored in the user
             #  by the model
-            # FIXME: might be borked if primary group is changed
             currentgroups = [g for g in self.userobj.getGroups()
-                                   if g is not self.userobj.getPrimaryGroup()]
+                                   if g not in (self.userobj.getPrimaryGroup(),
+                                                self.originalprimarygroup)]
             addedgroups = [g for g in currentgroups
                                if g not in self.originalgroups]
             removedgroups = [g for g in self.originalgroups
@@ -257,6 +273,9 @@ class UserEditDialog(KPageDialog):
                 self.userobj.addToGroup(group)
             for group in addedgroups:
                 self.userobj.removeFromGroup(group)
+            
+            # Revert the primary group
+            self.userobj.setPrimaryGroup(self.originalprimarygroup)
             
             self.pwsec_tab.passwordedit.clear()
             return None
@@ -291,9 +310,6 @@ class UserEditDialog(KPageDialog):
         # there is a config file where these profiles can be read).
         # We are repopulating because if the user to edit changes, we need to
         # hide the user's secondary group.
-        # FIXME we should repopulate the groups privileges list when the
-        # primary group is changed in the other tab -- that is, on the change
-        # slot of the primary group drop down.
         self.groups_model.setUser(self.userobj)
         
         homedir = self.__fudgeNewHomeDirectory(self.userobj.getUsername())
@@ -318,6 +334,7 @@ class UserEditDialog(KPageDialog):
         
         self.updatingGUI = False
         self.homedirectoryislinked = True
+        self.primarygroupislinked = True
         
         if self.exec_() == QDialog.Accepted:
             result = self.applyChanges()
@@ -337,6 +354,7 @@ class UserEditDialog(KPageDialog):
             a message and returns False
         """
         # Check that the username doesn't clash
+        # TODO: do this in the UI instead of canceling the operation
         newusername = unicode(self.details_tab.loginnameedit.text())
         existinguser = self.admincontext.lookupUsername(newusername)
         if existinguser is not None and existinguser is not self.userobj:
@@ -347,6 +365,7 @@ class UserEditDialog(KPageDialog):
             return False
         
         # Check that the UID doesn't clash (can't change UID of existing user)
+        # TODO: do this in the UI instead of canceling the operation
         if self.newusermode:
             newuid = int(unicode(self.details_tab.uidedit.text()))
             originaluid = self.userobj.getUID()
@@ -390,15 +409,6 @@ class UserEditDialog(KPageDialog):
             #  exists on its own.
             self.admincontext.addUser(self.userobj)
 
-            # __updateObjectFromGUI tries to set the primary group, but won't
-            #  set it if the group doesn't exist yet
-            if self.admincontext.lookupGroupname(self.primarygroupname) is None:
-                # Create a new group
-                newgroup = self.admincontext.newGroup(True)
-                newgroup.setGroupname(self.primarygroupname)
-                self.admincontext.addGroup(newgroup)
-                self.userobj.setPrimaryGroup(newgroup)
-
             # Secondary groups are updated within the model, nothing to do here
 
             # Set the password.
@@ -437,7 +447,11 @@ class UserEditDialog(KPageDialog):
             newgroup = self.admincontext.newGroup(True)
             newgroup.setGroupname(self.primarygroupname)
             self.admincontext.addGroup(newgroup)
+            origprimarygroup = self.userobj.getPrimaryGroup()
             self.userobj.setPrimaryGroup(newgroup)
+            self.userobj.removeFromGroup(origprimarygroup)
+            # For Apply button, make sure views get updated
+            self.groups_model.setItems(self.admincontext.getGroups())
 
         # Enable/Disable the account
         self.userobj.setLocked(
@@ -445,6 +459,13 @@ class UserEditDialog(KPageDialog):
         
         # Save everything
         self.admincontext.save()
+        
+        # For Apply button
+        if not self.newusermode:
+            # Save the groups so they can be restored, and for isChanged()
+            self.originalgroups = [g for g in self.userobj.getGroups()
+                                     if g is not self.userobj.getPrimaryGroup()]
+            self.originalprimarygroup = self.userobj.getPrimaryGroup()
         
         self.slotDataChanged()
         
@@ -455,13 +476,47 @@ class UserEditDialog(KPageDialog):
         newtext = unicode(text)
         if not self.updatingGUI:
             if self.newusermode:
-                self.newprimarygroupname = self.__fudgeNewGroupName(newtext)
                 self.updatingGUI = True
-                #self.up.primarygroupedit.setItemText(self.newprimarygroupname,0) FIXME! Doesn't work...
+                if self.primarygroupislinked:
+                    newprimarygroupname = self.__fudgeNewGroupName(newtext)
+                    self.details_tab.primarygroupedit.setEditText(
+                            newprimarygroupname)
                 if self.homedirectoryislinked:
                     homedir = self.__fudgeNewHomeDirectory(newtext)
                     self.details_tab.homediredit.setText(homedir)
                 self.updatingGUI = False
+    
+    ########################################################################
+    def slotPrimaryGroupChanged(self, text):
+        newtext = unicode(text)
+        
+        if not self.updatingGUI:
+            self.updatingGUI = True
+            self.primarygroupislinked = False
+            
+            if not newtext:
+                self.__selectPrimaryGroup()
+            else:
+                groupobj = self.admincontext.lookupGroupname(text)
+                origprimarygroup = self.userobj.getPrimaryGroup()
+                if groupobj is not None:
+                    if groupobj is origprimarygroup:
+                        self.__selectPrimaryGroup()
+                    else:
+                        self.userobj.setPrimaryGroup(groupobj)
+                        self.userobj.removeFromGroup(origprimarygroup)
+                else:
+                    # FIXME: Can't remove the group here because unixauthdb
+                    #   will asign a random one
+                    pass
+            
+            self.updatingGUI = False
+
+    ########################################################################
+    def __selectPrimaryGroup(self):
+        idx = self.details_tab.primarygroupedit.findText(
+                            self.userobj.getPrimaryGroup().getGroupname())
+        self.details_tab.primarygroupedit.setCurrentIndex(idx)
 
     ########################################################################
     def slotHomeDirChanged(self, newdir):
@@ -482,22 +537,15 @@ class UserEditDialog(KPageDialog):
         self.details_tab.shelledit.setEditText(self.userobj.getLoginShell())
 
         # Primary Group
-        self.details_tab.primarygroupedit.clear()
-        allgroups = [g.getGroupname() for g in self.admincontext.getGroups()]
-        allgroups.sort()
-
         if self.newusermode:
             # New user mode
-            self.newprimarygroupname = \
+            newprimarygroupname = \
                 self.__fudgeNewGroupName(unicode(self.userobj.getUsername()))
-            primarygroupname = self.newprimarygroupname
-            self.details_tab.primarygroupedit.addItem(self.newprimarygroupname)
+            self.details_tab.primarygroupedit.setEditText(newprimarygroupname)
         else:
             # Existing user mode
             primarygroupname = self.userobj.getPrimaryGroup().getGroupname()
-        for group in allgroups:
-            self.details_tab.primarygroupedit.addItem(group)
-        self.details_tab.primarygroupedit.setEditText(primarygroupname)
+            self.__selectPrimaryGroup()
 
         # If ShadowExpire is turn off then we change the radio box.
         if self.userobj.getExpirationDate() is None:
@@ -582,7 +630,7 @@ class UserEditDialog(KPageDialog):
         else:
             userobj.setMaximumPasswordAge(None)
 
-        if self.pwsec_tab.disableexpireedit.value()==0:
+        if self.pwsec_tab.disableexpireedit.value() == 0:
             userobj.setPasswordDisableAfterExpire(None)
         else:
             userobj.setPasswordDisableAfterExpire(self.pwsec_tab.disableexpireedit.value())
@@ -655,6 +703,8 @@ class UserEditDialog(KPageDialog):
                         self.userobj.getUsername()\
                 or self.details_tab.realnameedit.text() !=
                         self.userobj.getRealName()
+                or self.details_tab.primarygroupedit.currentText() !=
+                        self.originalprimarygroup.getGroupname()
                 or self.details_tab.homediredit.text() !=
                         self.userobj.getHomeDirectory()
                 or self.details_tab.shelledit.currentText() !=
@@ -675,8 +725,13 @@ class UserEditDialog(KPageDialog):
                          self.pwsec_tab.maximumpasswordedit.value()
                          or self.userobj.getPasswordExpireWarning() !=
                          self.pwsec_tab.warningedit.value()
-                         or self.userobj.getPasswordDisableAfterExpire() !=
-                         self.pwsec_tab.disableexpireedit.value()
+                         or (self.userobj.getPasswordDisableAfterExpire()
+                             is not None and
+                             self.userobj.getPasswordDisableAfterExpire() !=
+                             self.pwsec_tab.disableexpireedit.value())
+                         or (self.userobj.getPasswordDisableAfterExpire() is
+                             None
+                             and self.pwsec_tab.disableexpireedit.value() != 0)
                         ))
                 or (not self.pwsec_tab.enforcepasswordminagecheckbox.isChecked()
                     and self.userobj.getMinimumPasswordAgeBeforeChange() > 0)
@@ -744,6 +799,7 @@ class LoginNameValidator(QValidator):
 
     #######################################################################
     def fixup(self,inputstr):
+        # TODO: TypeError: invalid result type from LoginNameValidator.fixup()
         instr = unicode(inputstr)
         newstr = ""
         for c in instr:

@@ -172,13 +172,16 @@ class GroupListModel(UCAbstractItemModel):
 
     def setUser(self, userobj):
         self.userobj = userobj
+        self.emit(SIGNAL("modelReset()"))
     
     def _primaryGroupRow(self):
-        for i, group in enumerate(self.items):
-            if group is self.userobj.getPrimaryGroup():
-                return i
+        if self.userobj is not None:
+            for i, group in enumerate(self.items):
+                if group is self.userobj.getPrimaryGroup():
+                    return i
+        return None
     
-    def flags(self, idx=None):
+    def flags(self, idx):
         if idx.isValid() and idx.row() == self._primaryGroupRow():
             return Qt.ItemFlag(Qt.ItemIsEnabled)
         else:
@@ -200,6 +203,9 @@ class GroupListModel(UCAbstractItemModel):
         elif role == Qt.EditRole:
             return QVariant(obj.getID())
         elif role == Qt.CheckStateRole:
+            # No checkbox for the primary group (nevermind, looks ugly)
+            #if idx.row() == self._primaryGroupRow():
+                #return QVariant()
             check = Qt.Unchecked
             if obj in self.userobj.getGroups():
                 check = Qt.Checked
@@ -210,9 +216,11 @@ class GroupListModel(UCAbstractItemModel):
     def setData(self, idx, val, role):
         obj = self.objData(idx)
         if obj is None:
-            return QVariant()
+            return False
         
         if role == Qt.CheckStateRole:
+            if obj is self.userobj.getPrimaryGroup():
+                return False
             if val.toInt()[0] == Qt.Checked:
                 self.userobj.addToGroup(obj)
             else:
@@ -228,7 +236,23 @@ class GroupListModel(UCAbstractItemModel):
         
     def headerData(self, section, orientation, role):
         return QVariant()
+
+
+class SimpleGroupListProxyModel(QSortFilterProxyModel):
+    """ Group list model without checkboxes """
     
+    def flags(self, idx=None):
+        return Qt.ItemFlag(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
+
+    def data(self, idx, role):
+        if role == Qt.CheckStateRole:
+            return QVariant()
+        elif role == Qt.EditRole:
+            # Needed for combo box
+            return QSortFilterProxyModel.data(self, idx, Qt.DisplayRole)
+        else:
+            return QSortFilterProxyModel.data(self, idx, role)
+
 
 class PrivilegeListProxyModel(QSortFilterProxyModel):
     """ Proxy model to show just groups with known privilege descriptions
