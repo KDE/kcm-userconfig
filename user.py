@@ -683,16 +683,6 @@ class UserEditDialog(KPageDialog):
     ########################################################################
     def slotDataChanged(self):
         changed = self.isChanged()
-        #print self.details_tab.enabledradio.isChecked() , \
-                    #self.userobj.isLocked()\
-            #, "un", self.details_tab.loginnameedit.text() , \
-                  #"un", self.userobj.getUsername()\
-            #, "rn",self.details_tab.realnameedit.text() , \
-                    #"rn",self.userobj.getRealName()\
-            #, self.details_tab.homediredit.text() , \
-                    #self.userobj.getHomeDirectory()\
-            #, self.details_tab.shelledit.currentText() , \
-                #self.userobj.getLoginShell()
         
         if not self.newusermode:
             self.enableButtonOk(changed)
@@ -900,93 +890,58 @@ class OverwriteHomeDirectoryDialog(KDialog):
 
 ###########################################################################
 
-class UserDeleteDialog(KPageDialog):
+class UserDeleteDialog(KDialog):
     def __init__(self,parent,admincontext):
-        KPageDialog.__init__(self,parent)
-        if os.path.exists('ui/deleteuserdialog.ui'): 
-            self.up = uic.loadUi('ui/deleteuserdialog.ui', self)
-
-        self.setModal(True) #,Qt.WType_Dialog)
+        KPageDialog.__init__(self, parent)
+        self.setModal(True)
         self.setCaption(i18n("Delete User Account"))
+        
         self.admincontext = admincontext
+        
         self.updatingGUI = True
 
-        #toplayout = QVBoxLayout(self)
-        #toplayout = QGridLayout(self)
-        #toplayout.setSpacing(self.spacingHint())
-        #toplayout.setMargin(self.marginHint())
+        self.ui = uic.loadUi('ui/deleteuser.ui', self.mainWidget())
+        
+        # Set up buttons
+        self.setButtons(KDialog.ButtonCode(KDialog.Cancel | KDialog.Ok))
+        
+        self.ui.iconlabel.setPixmap(
+            KIconLoader.global_().loadIcon('dialog-warning', KIconLoader.Dialog))
+        
+        self.updatingGUI = False
 
-        #contentbox = KHBox(self)
-        #contentbox.setSpacing(self.spacingHint())
-        #toplayout.addWidget(contentbox)
-        #toplayout.setStretchFactor(contentbox,1)
-
-        #label = QLabel(contentbox)
-        #label.setPixmap(KGlobal.iconLoader().loadIcon("messagebox_warning", KIcon.NoGroup, KIcon.SizeMedium,
-            #KIcon.DefaultState, None, True)) # TODO:
-        #contentbox.setStretchFactor(label,0)
-
-        #textbox = KVBox(contentbox)
-
-        #textbox.setSpacing(self.spacingHint())
-        #textbox.setMargin(self.marginHint())
-
-        #self.usernamelabel = QLabel("",textbox)
-        #textbox.setStretchFactor(self.usernamelabel,0)
-
-        # Remove directory checkbox.
-        #self.deletedirectorycheckbox = QCheckBox(i18n("Delete home directory ()"),textbox)
-        #textbox.setStretchFactor(self.deletedirectorycheckbox,0)
-
-        # Delete the User's private group.
-        #self.deletegroupcheckbox = QCheckBox(i18n("Delete group ()"),textbox)
-        #textbox.setStretchFactor(self.deletegroupcheckbox ,0)
-
-        # Buttons
-        #buttonbox = KHBox(self)
-        #toplayout.addWidget(buttonbox)
-
-        #buttonbox.setSpacing(self.spacingHint())
-        #toplayout.setStretchFactor(buttonbox,0)
-
-        #spacer = QWidget(buttonbox)
-        #buttonbox.setStretchFactor(spacer,1)
-
-        #okbutton = QPushButton(i18n("OK"),buttonbox)
-        #buttonbox.setStretchFactor(okbutton,0)
-        #self.connect(okbutton,SIGNAL("clicked()"),self.slotOkClicked)
-
-        #cancelbutton = QPushButton(i18n("Cancel"),buttonbox)
-        #cancelbutton.setDefault(True)
-        #buttonbox.setStretchFactor(cancelbutton,0)
-        #self.connect(cancelbutton,SIGNAL("clicked()"),self.slotCancelClicked)
-
-    def deleteUser(self,userid):
-        # Setup the 
+    def do(self, userid):
+        # Setup the label text
         userobj = self.admincontext.lookupUID(userid)
-        self.usernamelabel.setText(i18n("Are you sure want to delete user account '%1' (%2)?").arg(userobj.getUsername()).arg(userobj.getUID()) )
-        self.deletedirectorycheckbox.setChecked(False)
-        self.deletedirectorycheckbox.setText(i18n("Delete home directory (%1)").arg(userobj.getHomeDirectory()))
+        
+        self.ui.toplabel.setText(i18n("Are you sure want to delete user " +
+                                      "account '%1' (%2)?")\
+                                      .arg(userobj.getUsername())\
+                                      .arg(userobj.getUID()))
+        
+        self.ui.deletedirectorycheckbox.setText(i18n("Delete home directory " +
+                                                     "(%1)")\
+                                               .arg(userobj.getHomeDirectory()))
+        self.ui.deletedirectorycheckbox.setChecked(False)
+        
         primarygroupobj = userobj.getPrimaryGroup()
         primarygroupname = primarygroupobj.getGroupname()
-        self.deletegroupcheckbox.setText(i18n("Delete group '%1' (%2)").arg(primarygroupname).arg(primarygroupobj.getGID()))
-        self.deletegroupcheckbox.setChecked(len(primarygroupobj.getUsers())==1)
-        if self.exec_()==QDialog.Accepted:
+        self.ui.deletegroupcheckbox.setText(i18n("Delete group '%1' (%2)")\
+                                            .arg(primarygroupname)
+                                            .arg(primarygroupobj.getGID()))
+        self.ui.deletegroupcheckbox.setChecked(
+                                        len(primarygroupobj.getUsers()) == 1)
+        
+        if self.exec_() == QDialog.Accepted:
             self.admincontext.removeUser(userobj)
-            if self.deletedirectorycheckbox.isChecked():
+            if self.ui.deletedirectorycheckbox.isChecked():
                 self.admincontext.removeHomeDirectory(userobj)
                 # FIXME
                 #self.admincontext.removeMail(userobj)
-            if self.deletegroupcheckbox.isChecked():
+            if self.ui.deletegroupcheckbox.isChecked():
                 self.admincontext.removeGroup(primarygroupobj)
             self.admincontext.save()
             return True
         else:
             return False
-
-    def slotOkClicked(self):
-        self.accept()
-
-    def slotCancelClicked(self):
-        self.reject()
 

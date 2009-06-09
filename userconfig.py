@@ -323,7 +323,7 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def slotDeleteClicked(self):
-        if self.userdeletedialog.deleteUser(self.selecteduserid):
+        if self.userdeletedialog.do(self.selecteduserid):
             self.updatingGUI = True
             self.userlistmodel.setItems(self.admincontext.getUsers())
             self.grouplistmodel.setItems(self.admincontext.getGroups())
