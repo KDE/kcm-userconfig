@@ -79,6 +79,7 @@ class UserEditDialog(KPageDialog):
                                         self.details_tab.enabledradio, 0)
         self.details_tab.enabledradiogroup.addButton(
                                         self.details_tab.disabledradio, 1)
+        #self.details_tab.enabledradio.setChecked(True)
 
         self.details_tab.loginnameedit.setValidator(
                         LoginNameValidator(self.details_tab.loginnameedit))
@@ -126,9 +127,9 @@ class UserEditDialog(KPageDialog):
                             self.pwsec_tab.validalwaysradio, 0)
         self.pwsec_tab.validradiogroup.addButton(
                             self.pwsec_tab.expireradio, 1)
-        self.connect(self.pwsec_tab.validradiogroup,
-                     SIGNAL("clicked(int)"),
-                     self.slotValidUntilClicked)
+        self.connect(self.pwsec_tab.expireradio,
+                     SIGNAL("toggled(bool)"),
+                     self.slotValidUntilToggled)
 
         # Password Aging & Expiration.
 
@@ -145,9 +146,59 @@ class UserEditDialog(KPageDialog):
                      SIGNAL("toggled(bool)"),
                      self.slotEnforePasswordAgeToggled)
 
-
         self.homedirdialog = KDirSelectDialog(KUrl.fromPath("/"),True,self)
         self.createhomedirectorydialog = OverwriteHomeDirectoryDialog(None)
+        
+        # Data changed signals
+        # Details tab
+        self.connect(self.details_tab.enabledradio,
+                     SIGNAL("toggled(bool)"),
+                     self.slotDataChanged)
+        self.connect(self.details_tab.loginnameedit,
+                     SIGNAL("textEdited(const QString&)"),
+                     self.slotDataChanged)
+        self.connect(self.details_tab.realnameedit,
+                     SIGNAL("textEdited(const QString&)"),
+                     self.slotDataChanged)
+        self.connect(self.details_tab.homediredit,
+                     SIGNAL("textEdited(const QString&)"),
+                     self.slotDataChanged)
+        self.connect(self.details_tab.shelledit,
+                     SIGNAL("editTextChanged(const QString&)"),
+                     self.slotDataChanged)
+        # Groups tab
+        self.connect(self.groups_model,
+                     SIGNAL("modelReset()"),
+                     self.slotDataChanged)
+        # Password/security tab
+        self.connect(self.pwsec_tab.passwordedit,
+                     SIGNAL("textEdited(const QString&)"),
+                     self.slotDataChanged)
+        self.connect(self.pwsec_tab.expireradio,
+                     SIGNAL("toggled(bool)"),
+                     self.slotDataChanged)
+        self.connect(self.pwsec_tab.expiredate,
+                     SIGNAL("changed(const QDate&)"),
+                     self.slotDataChanged)
+        self.connect(self.pwsec_tab.forcepasswordchangecheckbox,
+                     SIGNAL("toggled(bool)"),
+                     self.slotDataChanged)
+        self.connect(self.pwsec_tab.maximumpasswordedit,
+                     SIGNAL("valueChanged(int)"),
+                     self.slotDataChanged)
+        self.connect(self.pwsec_tab.warningedit,
+                     SIGNAL("valueChanged(int)"),
+                     self.slotDataChanged)
+        self.connect(self.pwsec_tab.disableexpireedit,
+                     SIGNAL("valueChanged(int)"),
+                     self.slotDataChanged)
+        self.connect(self.pwsec_tab.enforcepasswordminagecheckbox,
+                     SIGNAL("toggled(bool)"),
+                     self.slotDataChanged)
+        self.connect(self.pwsec_tab.minimumpasswordedit,
+                     SIGNAL("valueChanged(int)"),
+                     self.slotDataChanged)
+        
         self.updatingGUI = False
         
     
@@ -164,12 +215,13 @@ class UserEditDialog(KPageDialog):
         # Set up buttons
         self.setButtons(KDialog.ButtonCode(KDialog.Cancel | KDialog.Ok |
                                            KDialog.Apply))
+        self.connect(self, SIGNAL("applyClicked()"), self.applyChanges)
         
         self.pwsec_tab.passwordedit.clear()
         
         # Save the secondary groups so they can be restored
-        originalgroups = [g for g in self.userobj.getGroups()
-                                if g is not self.userobj.getPrimaryGroup()]
+        self.originalgroups = [g for g in self.userobj.getGroups()
+                                     if g is not self.userobj.getPrimaryGroup()]
         
         # FIXME we should repopulate the groups
         # privileges list when the primary group is changed in the other tab --
@@ -185,34 +237,12 @@ class UserEditDialog(KPageDialog):
         self.homedirectoryislinked = False
         
         if self.exec_() == QDialog.Accepted:
-            # Put in most of the data
-            self.__updateObjectFromGUI(self.userobj)
-            
-            # Set the password.
-            if self.pwsec_tab.passwordedit.text()!="":
-                self.userobj.setPassword(str(self.pwsec_tab.passwordedit.text()))
-            
-            # Secondary groups are updated within the model, nothing to do here
-            #  if dialog accepted, need to revert if rejected.
-
-            # __updateObjectFromGUI tries to set the primary group, but won't
-            #  set it if the group doesn't exist yet
-            # TODO: ask for confirmation
-            if self.admincontext.lookupGroupname(self.primarygroupname) is None:
-                # Create a new group
-                newgroup = self.admincontext.newGroup(True)
-                newgroup.setGroupname(self.primarygroupname)
-                self.admincontext.addGroup(newgroup)
-                self.userobj.setPrimaryGroup(newgroup)
-
-            # Enable/Disable the account
-            self.userobj.setLocked(
-                self.details_tab.enabledradiogroup.checkedId() != 0)
-            
-            # Save everything
-            self.admincontext.save()
-            
-            return self.userobj.getUID()
+            result = self.applyChanges()
+            self.pwsec_tab.passwordedit.clear()
+            if result:
+                return self.userobj.getUID()
+            else:
+                return None
         else: # Dialog rejected
             # Revert secondary groups, since those are being stored in the user
             #  by the model
@@ -220,13 +250,15 @@ class UserEditDialog(KPageDialog):
             currentgroups = [g for g in self.userobj.getGroups()
                                    if g is not self.userobj.getPrimaryGroup()]
             addedgroups = [g for g in currentgroups
-                               if g not in originalgroups]
-            removedgroups = [g for g in originalgroups
+                               if g not in self.originalgroups]
+            removedgroups = [g for g in self.originalgroups
                                if g not in currentgroups]
             for group in removedgroups:
                 self.userobj.addToGroup(group)
             for group in addedgroups:
                 self.userobj.removeFromGroup(group)
+            
+            self.pwsec_tab.passwordedit.clear()
             return None
 
     ########################################################################
@@ -288,16 +320,67 @@ class UserEditDialog(KPageDialog):
         self.homedirectoryislinked = True
         
         if self.exec_() == QDialog.Accepted:
-            # Put in most of the data
-            self.__updateObjectFromGUI(self.userobj)
+            result = self.applyChanges()
+            self.pwsec_tab.passwordedit.clear()
+            if result:
+                return self.userobj.getUID()
+            else:
+                return None
+        else: # Dialog rejected
+            self.pwsec_tab.passwordedit.clear()
+            return None
 
+    ########################################################################
+    def sanityCheck(self):
+        """ Do some sanity checks.
+            Returns True if data is ok or has been fixed up, otherwise pops up
+            a message and returns False
+        """
+        # Check that the username doesn't clash
+        newusername = unicode(self.details_tab.loginnameedit.text())
+        existinguser = self.admincontext.lookupUsername(newusername)
+        if existinguser is not None and existinguser is not self.userobj:
+            KMessageBox.sorry(self, i18n("Sorry, you must choose a different " +
+                                         "user name.\n" +
+                                         "'%1' is already being used.")\
+                                         .arg(newusername))
+            return False
+        
+        # Check that the UID doesn't clash (can't change UID of existing user)
+        if self.newusermode:
+            newuid = int(unicode(self.details_tab.uidedit.text()))
+            originaluid = self.userobj.getUID()
+            if self.admincontext.lookupUID(newuid) is not None:
+                rc = KMessageBox.questionYesNo(self,
+                        i18n("Sorry, the UID %1 is already in use. Should %2" +
+                             " be used instead?").arg(newuid).arg(originaluid),
+                        i18n("User ID in use"))
+                if rc == KMessageBox.Yes:
+                    self.details_tab.uidedit.setValue(unicode(originaluid))
+                else:
+                    return False
+        
+        return True
+
+    ########################################################################
+    def applyChanges(self):
+        if not self.newusermode and not self.isChanged():
+            return False
+        
+        if not self.sanityCheck():
+            return False
+        
+        # Put in most of the data
+        self.__updateObjectFromGUI(self.userobj)
+
+        if self.newusermode:
             # Decide what to do about the home directory
             makehomedir = True
             deleteoldhomedir = False
             if os.path.exists(self.userobj.getHomeDirectory()):
                 rc = self.createhomedirectorydialog.do(self.userobj)
                 if rc == OverwriteHomeDirectoryDialog.CANCEL:
-                    return None
+                    return False
                 if rc == OverwriteHomeDirectoryDialog.OK_KEEP:
                     makehomedir = False
                 elif rc == OverwriteHomeDirectoryDialog.OK_REPLACE:
@@ -319,9 +402,8 @@ class UserEditDialog(KPageDialog):
             # Secondary groups are updated within the model, nothing to do here
 
             # Set the password.
-            # if self.passwordedit.password()!="":
             if self.pwsec_tab.passwordedit.text() != "":
-                 self.userobj.setPassword(str(self.passwordedit.text()))
+                self.userobj.setPassword(str(self.pwsec_tab.passwordedit.text()))
 
             # Enable/Disable the account
             self.userobj.setLocked(
@@ -336,38 +418,40 @@ class UserEditDialog(KPageDialog):
                     shutil.rmtree(self.userobj.getHomeDirectory())
             if makehomedir:
                 self.admincontext.createHomeDirectory(self.userobj)
+        
+        # The rest applies to both new users and existing users
+        
+        # Set the password.
+        # TODO: password should need to be typed twice
+        if self.pwsec_tab.passwordedit.text() != "":
+            self.userobj.setPassword(str(self.pwsec_tab.passwordedit.text()))
+            
+        # Secondary groups are updated within the model, nothing to do here
+        #  if dialog accepted, need to revert if rejected.
 
-            return self.userobj.getUID()
-        else: # Dialog rejected
-            return None
+        # __updateObjectFromGUI tries to set the primary group, but won't
+        #  set it if the group doesn't exist yet
+        # TODO: for an existing user, ask for confirmation
+        if self.admincontext.lookupGroupname(self.primarygroupname) is None:
+            # Create a new group
+            newgroup = self.admincontext.newGroup(True)
+            newgroup.setGroupname(self.primarygroupname)
+            self.admincontext.addGroup(newgroup)
+            self.userobj.setPrimaryGroup(newgroup)
 
+        # Enable/Disable the account
+        self.userobj.setLocked(
+            self.details_tab.enabledradiogroup.checkedId() != 0)
+        
+        # Save everything
+        self.admincontext.save()
+        
+        self.slotDataChanged()
+        
+        return True
+    
     ########################################################################
-    def slotOk(self):
-        ok = True
-        # Sanity check all values.
-        if self.newusermode:
-            newusername = unicode(self.details_tab.realnameedit.text())
-            if self.admincontext.lookupUsername(newusername)!=None:
-                KMessageBox.sorry(self,i18n("Sorry, you must choose a different user name.\n'%1' is already being used.").arg(newusername))
-                ok = False
-            else:
-                newuid = int(unicode(self.uidedit.text()))
-                originaluid = self.userobj.getUID()
-                if self.admincontext.lookupUID(newuid)!=None:
-                    rc = KMessageBox.questionYesNo(self,i18n("User ID in use"),
-                        i18n("Sorry, the UID %1 is already in use. Should %2 be used instead?").arg(newuid).arg(originaluid))
-                    if rc==KMessageBox.Yes:
-                        self.uidedit.setValue(unicode(originaluid))
-                    else:
-                        ok = False
-                else:
-                    self.userobj.setUID(newuid)
-        if ok:
-            self.passwordedit.clear()
-            KDialogBase.slotOk(self)
-
-    ########################################################################
-    def slotLoginChanged(self,text):
+    def slotLoginChanged(self, text):
         newtext = unicode(text)
         if not self.updatingGUI:
             if self.newusermode:
@@ -380,10 +464,10 @@ class UserEditDialog(KPageDialog):
                 self.updatingGUI = False
 
     ########################################################################
-    def slotHomeDirChanged(self,text):
-        if self.updatingGUI==False:
+    def slotHomeDirChanged(self, newdir):
+        if not self.updatingGUI:
             self.homedirectoryislinked = False
-
+        
     ########################################################################
     def __syncGUI(self):
         if self.userobj.isLocked():
@@ -446,12 +530,14 @@ class UserEditDialog(KPageDialog):
         if self.userobj.getMaximumPasswordAge() is None:
             self.pwsec_tab.maximumpasswordedit.setValue(30)
         else:
-            self.pwsec_tab.maximumpasswordedit.setValue(self.userobj.getMaximumPasswordAge())
+            self.pwsec_tab.maximumpasswordedit.setValue(
+                    self.userobj.getMaximumPasswordAge())
 
         if self.userobj.getPasswordDisableAfterExpire() is None:
             self.pwsec_tab.disableexpireedit.setValue(0)
         else:
-            self.pwsec_tab.disableexpireedit.setValue(self.userobj.getPasswordDisableAfterExpire())
+            self.pwsec_tab.disableexpireedit.setValue(
+                    self.userobj.getPasswordDisableAfterExpire())
 
         minage = self.userobj.getMinimumPasswordAgeBeforeChange()
         self.pwsec_tab.enforcepasswordminagecheckbox.setChecked(minage > 0)
@@ -466,9 +552,11 @@ class UserEditDialog(KPageDialog):
             self.pwsec_tab.lastchangelabel.setText(
                 KGlobal.locale().formatDate(SptimeToQDate(
                                   int(self.userobj.getLastPasswordChange()))))
+        
+        self.slotDataChanged()
 
     ########################################################################
-    def __updateObjectFromGUI(self,userobj):
+    def __updateObjectFromGUI(self, userobj):
         username = unicode(self.details_tab.loginnameedit.text())
         userobj.setUsername(username)
         userobj.setRealName(unicode(self.details_tab.realnameedit.text()))
@@ -482,25 +570,25 @@ class UserEditDialog(KPageDialog):
             userobj.setPrimaryGroup(groupobj)
 
         # Password expiration.
-        if self.pwsec_tab.validradiogroup.id(self.pwsec_tab.validradiogroup.checkedButton())==0:
+        if self.pwsec_tab.validradiogroup.checkedId() == 0:
             # Password is always valid.
             userobj.setExpirationDate(None)
         else:
             # Password will expire at...
-            userobj.setExpirationDate(QDateToSptime(self.expiredate.date()))
+            userobj.setExpirationDate(QDateToSptime(self.pwsec_tab.expiredate.date()))
 
         if self.pwsec_tab.forcepasswordchangecheckbox.isChecked():
-            userobj.setMaximumPasswordAge(self.maximumpasswordedit.value())
+            userobj.setMaximumPasswordAge(self.pwsec_tab.maximumpasswordedit.value())
         else:
             userobj.setMaximumPasswordAge(None)
 
         if self.pwsec_tab.disableexpireedit.value()==0:
             userobj.setPasswordDisableAfterExpire(None)
         else:
-            userobj.setPasswordDisableAfterExpire(self.disableexpireedit.value())
+            userobj.setPasswordDisableAfterExpire(self.pwsec_tab.disableexpireedit.value())
 
         if self.pwsec_tab.enforcepasswordminagecheckbox.isChecked():
-            userobj.setMinimumPasswordAgeBeforeChange(self.minimumpasswordedit.value())
+            userobj.setMinimumPasswordAgeBeforeChange(self.pwsec_tab.minimumpasswordedit.value())
         else:
             userobj.setMinimumPasswordAgeBeforeChange(0)
 
@@ -516,11 +604,11 @@ class UserEditDialog(KPageDialog):
             self.homedirectoryislinked = False
 
     ########################################################################
-    def slotValidUntilClicked(self,id):
-        if id==0:
-            self.expiredate.setDisabled(True)
+    def slotValidUntilToggled(self, expire_on):
+        if expire_on:
+            self.pwsec_tab.expiredate.setEnabled(True)
         else:
-            self.expiredate.setDisabled(False)
+            self.pwsec_tab.expiredate.setEnabled(False)
 
     ########################################################################
     def slotForcePasswordChangeToggled(self,on):
@@ -532,6 +620,73 @@ class UserEditDialog(KPageDialog):
     ########################################################################
     def slotEnforePasswordAgeToggled(self,on):
         self.pwsec_tab.minimumpasswordedit.setDisabled(not on)
+
+    ########################################################################
+    def slotDataChanged(self):
+        changed = self.isChanged()
+        #print self.details_tab.enabledradio.isChecked() , \
+                    #self.userobj.isLocked()\
+            #, "un", self.details_tab.loginnameedit.text() , \
+                  #"un", self.userobj.getUsername()\
+            #, "rn",self.details_tab.realnameedit.text() , \
+                    #"rn",self.userobj.getRealName()\
+            #, self.details_tab.homediredit.text() , \
+                    #self.userobj.getHomeDirectory()\
+            #, self.details_tab.shelledit.currentText() , \
+                #self.userobj.getLoginShell()
+        
+        if not self.newusermode:
+            self.enableButtonOk(changed)
+            self.enableButtonApply(changed)
+            self.setCaption(i18n("Modifying User Account %1")\
+                            .arg(self.userobj.getUsername()),
+                            changed)
+    
+    ########################################################################
+    def isChanged(self):
+        if not self.newusermode:
+            # Kind of ugly.  Hopefully short-circuit evaluation makes it not
+            #  too much work.
+            # TODO: Primary group
+            # UID not included, it can't be modified
+            changed = ( self.details_tab.enabledradio.isChecked() ==
+                        self.userobj.isLocked()
+                or self.details_tab.loginnameedit.text() !=
+                        self.userobj.getUsername()\
+                or self.details_tab.realnameedit.text() !=
+                        self.userobj.getRealName()
+                or self.details_tab.homediredit.text() !=
+                        self.userobj.getHomeDirectory()
+                or self.details_tab.shelledit.currentText() !=
+                        self.userobj.getLoginShell()
+                or [g for g in self.userobj.getGroups()
+                        if g is not self.userobj.getPrimaryGroup()] !=
+                        self.originalgroups
+                or self.pwsec_tab.passwordedit.text() != ""
+                or (self.pwsec_tab.validalwaysradio.isChecked()
+                    and self.userobj.getExpirationDate() is not None)
+                or (self.pwsec_tab.expireradio.isChecked()
+                    and (self.userobj.getExpirationDate() !=
+                         QDateToSptime(self.pwsec_tab.expiredate.date())))
+                or (not self.pwsec_tab.forcepasswordchangecheckbox.isChecked()
+                    and self.userobj.getMaximumPasswordAge() is not None)
+                or (self.pwsec_tab.forcepasswordchangecheckbox.isChecked()
+                    and (self.userobj.getMaximumPasswordAge() !=
+                         self.pwsec_tab.maximumpasswordedit.value()
+                         or self.userobj.getPasswordExpireWarning() !=
+                         self.pwsec_tab.warningedit.value()
+                         or self.userobj.getPasswordDisableAfterExpire() !=
+                         self.pwsec_tab.disableexpireedit.value()
+                        ))
+                or (not self.pwsec_tab.enforcepasswordminagecheckbox.isChecked()
+                    and self.userobj.getMinimumPasswordAgeBeforeChange() > 0)
+                or (self.pwsec_tab.enforcepasswordminagecheckbox.isChecked()
+                    and (self.userobj.getMinimumPasswordAgeBeforeChange() !=
+                         self.pwsec_tab.minimumpasswordedit.value()))
+                )
+            return changed
+        else:
+            return False
 
     #######################################################################
     def __fudgeNewGroupName(self,basename):
