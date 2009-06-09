@@ -39,6 +39,7 @@ class GroupEditDialog(KDialog):
         
         self.updatingGUI = True
 
+        # TODO: Port this to designer
         topvbox = KVBox(self)
         topvbox.setSpacing(self.spacingHint())
         self.setMainWidget(topvbox)
@@ -85,10 +86,12 @@ class GroupEditDialog(KDialog):
         hbox.setStretchFactor(vbox,0)
         spacer = QWidget(vbox);
         vbox.setStretchFactor(spacer,1)
-        self.addbutton = KPushButton(i18n("Add ->"),vbox)
+        self.addbutton = KPushButton(i18n("Add"), vbox)
+        self.addbutton.setIcon(KIcon('arrow-right'))
         self.connect(self.addbutton,SIGNAL("clicked()"),self.slotAddClicked)
         vbox.setStretchFactor(self.addbutton,0)
-        self.removebutton = KPushButton(i18n("<- Remove"),vbox)
+        self.removebutton = KPushButton(i18n("Remove"), vbox)
+        self.removebutton.setIcon(KIcon('arrow-left'))
         self.connect(self.removebutton,SIGNAL("clicked()"),self.slotRemoveClicked)
         vbox.setStretchFactor(self.removebutton,0)
         spacer = QWidget(vbox);
