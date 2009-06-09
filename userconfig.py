@@ -306,6 +306,7 @@ class UserConfigApp(programbase):
         self.usereditdialog.showEditUser(self.selecteduserid)
         self.updatingGUI = True
         self.__updateUser(self.selecteduserid)
+        self.grouplistmodel.setItems(self.admincontext.getGroups())
         self.__selectUser(self.selecteduserid)
         self.updatingGUI = False
 
@@ -315,6 +316,7 @@ class UserConfigApp(programbase):
         if newuid != None:
             self.updatingGUI = True
             self.userlistmodel.setItems(self.admincontext.getUsers())
+            self.grouplistmodel.setItems(self.admincontext.getGroups())
             self.__selectUserInList(newuid)
             self.__selectUser(newuid)
             self.updatingGUI = False
@@ -324,6 +326,7 @@ class UserConfigApp(programbase):
         if self.userdeletedialog.deleteUser(self.selecteduserid):
             self.updatingGUI = True
             self.userlistmodel.setItems(self.admincontext.getUsers())
+            self.grouplistmodel.setItems(self.admincontext.getGroups())
             self.selecteduserid = None
             self.updatingGUI = False
 

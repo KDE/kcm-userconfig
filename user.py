@@ -238,9 +238,8 @@ class UserEditDialog(KPageDialog):
                                      if g is not self.userobj.getPrimaryGroup()]
         self.originalprimarygroup = self.userobj.getPrimaryGroup()
         
-        # FIXME we should repopulate the groups
-        # privileges list when the primary group is changed in the other tab --
-        # that is, on the change slot of the primary group drop down.
+        # Set the user on the model.  This should update all views and select
+        #  groups.
         self.groups_model.setUser(self.userobj)
         
         # Puts most of the user data into the GUI
@@ -258,26 +257,10 @@ class UserEditDialog(KPageDialog):
             if result:
                 return self.userobj.getUID()
             else:
+                self.revertChanges()
                 return None
         else: # Dialog rejected
-            # Revert secondary groups, since those are being stored in the user
-            #  by the model
-            currentgroups = [g for g in self.userobj.getGroups()
-                                   if g not in (self.userobj.getPrimaryGroup(),
-                                                self.originalprimarygroup)]
-            addedgroups = [g for g in currentgroups
-                               if g not in self.originalgroups]
-            removedgroups = [g for g in self.originalgroups
-                               if g not in currentgroups]
-            for group in removedgroups:
-                self.userobj.addToGroup(group)
-            for group in addedgroups:
-                self.userobj.removeFromGroup(group)
-            
-            # Revert the primary group
-            self.userobj.setPrimaryGroup(self.originalprimarygroup)
-            
-            self.pwsec_tab.passwordedit.clear()
+            self.revertChanges()
             return None
 
     ########################################################################
@@ -305,11 +288,12 @@ class UserEditDialog(KPageDialog):
             groupobj = self.admincontext.lookupGroupname(groupname)
             if groupobj: self.userobj.addToGroup(groupobj)
         
-        # FIXME consider adding a drop down that will select the appropriate
+        # TODO consider adding a drop down that will select the appropriate
         # profile Limited User, Advanced User or Administrator (and see if
         # there is a config file where these profiles can be read).
-        # We are repopulating because if the user to edit changes, we need to
-        # hide the user's secondary group.
+        
+        # Set the user on the model.  This should update all views and select
+        #  groups.
         self.groups_model.setUser(self.userobj)
         
         homedir = self.__fudgeNewHomeDirectory(self.userobj.getUsername())
@@ -441,9 +425,15 @@ class UserEditDialog(KPageDialog):
 
         # __updateObjectFromGUI tries to set the primary group, but won't
         #  set it if the group doesn't exist yet
-        # TODO: for an existing user, ask for confirmation
         if self.admincontext.lookupGroupname(self.primarygroupname) is None:
             # Create a new group
+            if not self.newusermode:
+                if KMessageBox.questionYesNo(self,
+                        i18n("You selected %1 as the new primary group. This " +
+                             "group does not exist. Would you like to create " +
+                             "it?").arg(self.primarygroupname),
+                        i18n("Create group")) != KMessageBox.Yes:
+                    return False
             newgroup = self.admincontext.newGroup(True)
             newgroup.setGroupname(self.primarygroupname)
             self.admincontext.addGroup(newgroup)
@@ -470,6 +460,27 @@ class UserEditDialog(KPageDialog):
         self.slotDataChanged()
         
         return True
+        
+    ########################################################################
+    def revertChanges(self):
+        # Revert secondary groups, since those are being stored in the user
+        #  by the model
+        currentgroups = [g for g in self.userobj.getGroups()
+                                if g not in (self.userobj.getPrimaryGroup(),
+                                            self.originalprimarygroup)]
+        addedgroups = [g for g in currentgroups
+                            if g not in self.originalgroups]
+        removedgroups = [g for g in self.originalgroups
+                            if g not in currentgroups]
+        for group in removedgroups:
+            self.userobj.addToGroup(group)
+        for group in addedgroups:
+            self.userobj.removeFromGroup(group)
+        
+        # Revert the primary group
+        self.userobj.setPrimaryGroup(self.originalprimarygroup)
+        
+        self.pwsec_tab.passwordedit.clear()
     
     ########################################################################
     def slotLoginChanged(self, text):
@@ -695,7 +706,6 @@ class UserEditDialog(KPageDialog):
         if not self.newusermode:
             # Kind of ugly.  Hopefully short-circuit evaluation makes it not
             #  too much work.
-            # TODO: Primary group
             # UID not included, it can't be modified
             changed = ( self.details_tab.enabledradio.isChecked() ==
                         self.userobj.isLocked()
