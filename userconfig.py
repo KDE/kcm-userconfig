@@ -18,17 +18,26 @@
 #                                                                         #
 ###########################################################################
 
+# Python imports
+import sys
+import os.path
+from os.path import join as pj
+
+# Qt imports
 from PyQt4.QtGui import *
 from PyQt4.QtCore import *
 from PyQt4 import uic
+
+# KDE imports
 from PyKDE4.kdecore import *
 from PyKDE4.kdeui import *
-import sys
-import os
+
+# Userconfig imports
 from util import unixauthdb
 from user_dialogs import UserEditDialog, UserDeleteDialog
 from models import UserModel, GroupModel, FilterSystemAcctsProxyModel
 from group_dialogs import GroupEditDialog
+
 import locale
 
 programname = "userconfig"
@@ -39,6 +48,12 @@ standalone = __name__=='__main__'
 # Running as the root user or not?
 isroot = os.getuid()==0
 
+if os.path.exists("ui/users.ui"):
+    APP_DIR = QDir.currentPath()
+else:
+    f = KGlobal.dirs().findResourceDir("data", "userconfig/ui/users.ui")
+    APP_DIR = pj(unicode(f), 'userconfig/')
+UI_DIR = pj(APP_DIR, 'ui/')
 
 ###########################################################################
 # Try translating this code to C++. I dare ya!
@@ -65,9 +80,9 @@ class UserConfigApp(programbase):
             self.connect(self, SIGNAL("user1Clicked()"), self.slotUser1)
             
             # Load UI
-            self.userstab = uic.loadUi('ui/users.ui')
+            self.userstab = uic.loadUi(pj(UI_DIR, 'users.ui'))
             self.addPage(self.userstab, i18n("Users") )
-            self.groupstab = uic.loadUi('ui/groups.ui')
+            self.groupstab = uic.loadUi(pj(UI_DIR, 'groups.ui'))
             self.addPage(self.groupstab, i18n("Groups") )
             #FIXME: SRSLY! Need to know where the ui crap'll be installed and
             #check for it there too.
@@ -86,9 +101,9 @@ class UserConfigApp(programbase):
             tabcontrol.setFaceType(KPageWidget.Tabbed)
             toplayout.addWidget(tabcontrol)
             # Load UI
-            self.userstab = uic.loadUi('ui/users.ui')
+            self.userstab = uic.loadUi(pj(UI_DIR, 'users.ui'))
             tabcontrol.addPage(self.userstab, i18n("Users") )
-            self.groupstab = uic.loadUi('ui/groups.ui')
+            self.groupstab = uic.loadUi(pj(UI_DIR, 'groups.ui'))
             tabcontrol.addPage(self.groupstab, i18n("Groups") )
 
         # Create a configuration object.

@@ -19,6 +19,7 @@
 ###########################################################################
 
 import os.path
+from os.path import join as pj
 import shutil
 
 # Qt imports
@@ -36,6 +37,13 @@ import locale
 # userconfig imports
 from models import GroupListModel, PrivilegeListProxyModel,\
                    SimpleGroupListProxyModel
+
+if os.path.exists("ui/users.ui"):
+    APP_DIR = QDir.currentPath()
+else:
+    f = KGlobal.dirs().findResourceDir("data", "userconfig/ui/users.ui")
+    APP_DIR = pj(unicode(f), 'userconfig/')
+UI_DIR = pj(APP_DIR, 'ui/')
 
 ###########################################################################
 def SptimeToQDate(sptime):
@@ -56,11 +64,11 @@ class UserEditDialog(KPageDialog):
         self.setCaption(i18n("User Account"))
         self.setModal(True)
         
-        self.details_tab = uic.loadUi('ui/userproperties-details.ui')
+        self.details_tab = uic.loadUi(pj(UI_DIR, 'userproperties-details.ui'))
         self.addPage(self.details_tab, i18n("Details"))
-        self.privgroups_tab = uic.loadUi('ui/userproperties-privgroups.ui')
+        self.privgroups_tab = uic.loadUi(pj(UI_DIR, 'userproperties-privgroups.ui'))
         self.addPage(self.privgroups_tab, i18n("Privileges and Groups"))
-        self.pwsec_tab = uic.loadUi('ui/userproperties-pwsec.ui')
+        self.pwsec_tab = uic.loadUi(pj(UI_DIR, 'userproperties-pwsec.ui'))
         self.addPage(self.pwsec_tab, i18n("Password/Security"))
 
         self.admincontext = admincontext
@@ -847,7 +855,7 @@ class OverwriteHomeDirectoryDialog(KDialog):
         
         self.updatingGUI = True
         
-        self.ui = uic.loadUi('ui/overwritehomedirectory.ui', self.mainWidget())
+        self.ui = uic.loadUi(pj(UI_DIR, 'overwritehomedirectory.ui'), self.mainWidget())
 
         # Set up buttons
         self.setButtons(KDialog.ButtonCode(KDialog.Cancel | KDialog.Ok))
@@ -899,7 +907,7 @@ class UserDeleteDialog(KDialog):
         
         self.updatingGUI = True
 
-        self.ui = uic.loadUi('ui/deleteuser.ui', self.mainWidget())
+        self.ui = uic.loadUi(pj(UI_DIR, 'deleteuser.ui'), self.mainWidget())
         
         # Set up buttons
         self.setButtons(KDialog.ButtonCode(KDialog.Cancel | KDialog.Ok))

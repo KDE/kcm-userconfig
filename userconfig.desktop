@@ -32,6 +32,7 @@ Icon=user-identity
 Type=Service
 Encoding=UTF-8
 
+X-KDE-RootOnly=true
 X-KDE-ServiceTypes=KCModule
 X-KDE-Library=kpythonpluginfactory
 X-KDE-ParentApp=kcontrol
