@@ -40,7 +40,7 @@ X-KDE-PluginKeyword=userconfig/userconfig.py
 X-KDE-Keywords=user, users, group, groups
 X-KDE-System-Settings-Parent-Category=system
 X-KDE-Weight=60
-X-DocPath=kcontrol/colors/index.html
+X-DocPath=userconfig/index.html
 
 Categories=Qt;KDE;System;
 
