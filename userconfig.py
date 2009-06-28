@@ -79,15 +79,9 @@ class UserConfigApp(programbase):
             self.setButtonIcon(KDialog.User1, KIcon('help-about'))
             self.connect(self, SIGNAL("user1Clicked()"), self.slotUser1)
             
-            # Load UI
-            self.userstab = uic.loadUi(pj(UI_DIR, 'users.ui'))
-            self.addPage(self.userstab, i18n("Users") )
-            self.groupstab = uic.loadUi(pj(UI_DIR, 'groups.ui'))
-            self.addPage(self.groupstab, i18n("Groups") )
-            #FIXME: SRSLY! Need to know where the ui crap'll be installed and
-            #check for it there too.
-            
             self.aboutus = KAboutApplicationDialog(self.aboutdata, self)
+            # Make UI set up code the same for standalone
+            tabcontrol = self
         else:
             KCModule.__init__(self, component_data, parent)
             self.setAboutData(self.aboutdata)
@@ -100,11 +94,12 @@ class UserConfigApp(programbase):
             tabcontrol = KPageWidget(self)
             tabcontrol.setFaceType(KPageWidget.Tabbed)
             toplayout.addWidget(tabcontrol)
-            # Load UI
-            self.userstab = uic.loadUi(pj(UI_DIR, 'users.ui'))
-            tabcontrol.addPage(self.userstab, i18n("Users") )
-            self.groupstab = uic.loadUi(pj(UI_DIR, 'groups.ui'))
-            tabcontrol.addPage(self.groupstab, i18n("Groups") )
+        
+        # Load UI
+        self.userstab = uic.loadUi(pj(UI_DIR, 'users.ui'))
+        userstab_pwi = tabcontrol.addPage(self.userstab, i18n("User Accounts") )
+        self.groupstab = uic.loadUi(pj(UI_DIR, 'groups.ui'))
+        groupstab_pwi = tabcontrol.addPage(self.groupstab, i18n("Groups") )
 
         # Create a configuration object.
         self.config = KConfig("userconfigrc")
@@ -122,9 +117,8 @@ class UserConfigApp(programbase):
 
         #######################################################################
         # Set up the users tab
-
-        self.userstab.accountIconLabel.setPixmap(
-            KIconLoader.global_().loadIcon('user-identity', KIconLoader.Small))
+        
+        userstab_pwi.setIcon(KIcon('user-identity'))
 
         self.userlistmodel = UserModel(None, self.admincontext.getUsers())
         self.userstab.userlistview.setModel(self.userlistmodel)
@@ -174,9 +168,7 @@ class UserConfigApp(programbase):
         # Set up the groups tab
 
         #FIXME: Need to find Oxygen group icon
-        self.groupstab.groupIconLabel.setPixmap(
-            KIconLoader.global_()\
-                .loadIcon('user-group-properties', KIconLoader.Small))
+        groupstab_pwi.setIcon(KIcon('user-group-properties'))
 
         self.grouplistmodel = GroupModel(None, self.admincontext.getGroups())
         self.groupstab.grouplistview.setModel(self.grouplistmodel)
