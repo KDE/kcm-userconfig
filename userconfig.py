@@ -243,6 +243,10 @@ class UserConfigApp(programbase):
         self.usereditdialog = UserEditDialog(None,self.admincontext)
         self.userdeletedialog = UserDeleteDialog(None,self.admincontext)
         self.groupeditdialog = GroupEditDialog(None,self.admincontext)
+        
+        # exec_ doesn't get called for a KCM
+        if not standalone:
+            self.__loadOptions()
 
     #######################################################################
     def exec_(self):
@@ -500,7 +504,9 @@ class UserConfigApp(programbase):
 
     #######################################################################
     def __loadOptions(self):
-        self.restoreDialogSize(self.generalconfiggroup)
+        global standalone
+        if standalone:
+            self.restoreDialogSize(self.generalconfiggroup)
         
         showsystemusers = self.optionsconfiggroup.readEntry("ShowSystemUsers")
         if showsystemusers:
