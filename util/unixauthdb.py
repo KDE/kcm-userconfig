@@ -686,6 +686,16 @@ class UnixUser(UnixAccount):
         """
         return self.isSystemUser()
 
+    def getDisplayName(self):
+        """ Returns the name of the object as it should be displayed on
+            the screen.  Real name with fallback to username.
+        """
+        name = self.getRealName()
+        if name:
+            return name
+        else:
+            return self.getSystemName()
+
 ###########################################################################
 class UnixGroup(UnixAccount):
     def __init__(self,context):

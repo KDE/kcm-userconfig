@@ -162,7 +162,9 @@ class UserConfigApp(programbase):
                       self.slotDeleteClicked)
         self.userstab.deletebutton.setIcon( SmallIconSet('list-remove-user') )
 
-        userdetails_groupbox = self.userstab.userdetails_groupbox
+        self.userstab.statusiconlabel.setPixmap(
+            KIconLoader.global_().loadIcon('object-locked', KIconLoader.Small))
+        self.__selectUser(None)
 
         #######################################################################
         # Set up the groups tab
@@ -421,24 +423,22 @@ class UserConfigApp(programbase):
         userobj = self.admincontext.lookupUID(userid)
 
         if userobj is None:
-            self.userstab.loginname.setText("")
-            self.userstab.realname.setText("")
-            self.userstab.uid.setText("")
-            self.userstab.status.setText("")
-            self.userstab.primarygroup.setText("")
-            self.userstab.secondarygroup.setText("")
+            self.userstab.userdetails_groupbox.hide();
             # Enable/disable buttons
             self.userstab.modifybutton.setEnabled(False)
             self.userstab.deletebutton.setEnabled(False)
             return
             
         self.userstab.loginname.setText(userobj.getUsername())
-        self.userstab.realname.setText(userobj.getRealName())
+        self.userstab.userdetails_groupbox.setTitle(
+            i18n("Details for %1", userobj.getDisplayName()))
         self.userstab.uid.setText(unicode(userid))
         if userobj.isLocked():
-            self.userstab.status.setText(i18n("Disabled"))
+            self.userstab.statuslabel.show()
+            self.userstab.statusiconlabel.show()
         else:
-            self.userstab.status.setText(i18n("Enabled"))
+            self.userstab.statuslabel.hide()
+            self.userstab.statusiconlabel.hide()
 
         # Primary Group
         primarygroupobj = userobj.getPrimaryGroup()
@@ -446,16 +446,18 @@ class UserConfigApp(programbase):
         self.userstab.primarygroup.setText(primarygroupname)
 
         # Secondary Groups
-        secondarygroups = [g.getGroupname() for g in userobj.getGroups()
-                                        if g is not userobj.getPrimaryGroup()]
-        self.userstab.secondarygroup.setText(
-                                     unicode(i18n(", ")).join(secondarygroups))
+        #secondarygroups = [g.getGroupname() for g in userobj.getGroups()
+                                        #if g is not userobj.getPrimaryGroup()]
+        #self.userstab.secondarygroup.setText(
+                                     #unicode(i18n(", ")).join(secondarygroups))
 
         if isroot:
             # Enable/disable buttons
             self.userstab.modifybutton.setEnabled(True)
             # Don't allow deletion the root account
             self.userstab.deletebutton.setDisabled(userobj.getUID() == 0)
+        
+        self.userstab.userdetails_groupbox.show()
 
     #######################################################################
     def __selectGroupInList(self, groupid):
