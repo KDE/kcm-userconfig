@@ -35,7 +35,8 @@ from PyKDE4.kdeui import *
 # Userconfig imports
 from util import unixauthdb
 from user_dialogs import UserEditDialog, UserDeleteDialog
-from models import UserModel, GroupModel, FilterSystemAcctsProxyModel
+from models import UserModel, GroupModel, FilterSystemAcctsProxyModel, \
+    GroupListModel, SimpleGroupListProxyModel
 from group_dialogs import GroupEditDialog
 
 import locale
@@ -446,11 +447,15 @@ class UserConfigApp(programbase):
         self.userstab.primarygroup.setText(primarygroupname)
 
         # Secondary Groups
-        #secondarygroups = [g.getGroupname() for g in userobj.getGroups()
-                                        #if g is not userobj.getPrimaryGroup()]
-        #self.userstab.secondarygroup.setText(
-                                     #unicode(i18n(", ")).join(secondarygroups))
-
+        #secondarygroups = [g for g in userobj.getGroups()
+        #                                if g is not userobj.getPrimaryGroup()]
+        secondary_groups_model = GroupListModel(None,
+                                                userobj.getGroups(),
+                                                userobj)
+        simple_groups_model = SimpleGroupListProxyModel(None)
+        simple_groups_model.setSourceModel(secondary_groups_model)
+        self.userstab.secondarygroupslist.setModel(simple_groups_model)
+        
         if isroot:
             # Enable/disable buttons
             self.userstab.modifybutton.setEnabled(True)
