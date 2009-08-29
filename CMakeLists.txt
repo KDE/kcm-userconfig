@@ -41,9 +41,9 @@ IF(INSTALL_USERCONFIG)
     install(FILES userconfig.desktop DESTINATION ${SERVICES_INSTALL_DIR})
     KDE4_CREATE_HANDBOOK( doc/userconfig/index.docbook )
     install(FILES
-	doc/userconfig/index.docbook
-	index.cache.bz2
-	DESTINATION ${HTML_INSTALL_DIR}/en/userconfig/ )
+        doc/userconfig/index.docbook
+        ${CMAKE_CURRENT_BINARY_DIR}/index.cache.bz2
+        DESTINATION ${HTML_INSTALL_DIR}/en/userconfig/ )
 ENDIF(INSTALL_USERCONFIG)
 
 macro_display_feature_log()
