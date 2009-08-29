@@ -135,6 +135,11 @@ class UserConfigApp(programbase):
                       SIGNAL("currentChanged(const QModelIndex&,const QModelIndex&)"),
                       self.slotUserSelected )
         
+        self.secondary_groups_model = GroupListModel(None, [], None)
+        simple_sec_groups_model = SimpleGroupListProxyModel(None)
+        simple_sec_groups_model.setSourceModel(self.secondary_groups_model)
+        self.userstab.secondarygroupslist.setModel(simple_sec_groups_model)
+        
         if isroot:
             self.connect( self.userstab.userlistview,
                           SIGNAL("doubleClicked(const QModelIndex&)"),
@@ -447,14 +452,10 @@ class UserConfigApp(programbase):
         self.userstab.primarygroup.setText(primarygroupname)
 
         # Secondary Groups
-        #secondarygroups = [g for g in userobj.getGroups()
-        #                                if g is not userobj.getPrimaryGroup()]
-        secondary_groups_model = GroupListModel(None,
-                                                userobj.getGroups(),
-                                                userobj)
-        simple_groups_model = SimpleGroupListProxyModel(None)
-        simple_groups_model.setSourceModel(secondary_groups_model)
-        self.userstab.secondarygroupslist.setModel(simple_groups_model)
+        secondarygroups = [g for g in userobj.getGroups()
+                                        if g is not userobj.getPrimaryGroup()]
+        self.secondary_groups_model.setItems(secondarygroups)
+        self.secondary_groups_model.setUser(userobj)
         
         if isroot:
             # Enable/disable buttons
