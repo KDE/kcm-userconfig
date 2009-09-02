@@ -1,4 +1,7 @@
-find_package( KDE4 REQUIRED )
+# search packages used by KDE
+find_package(KDE4 REQUIRED)
+include(KDE4Defaults)
+include(MacroLibrary)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules )
 
@@ -22,13 +25,17 @@ IF(PYQT4_FOUND AND PYKDE4_FOUND)
 ENDIF(PYQT4_FOUND AND PYKDE4_FOUND)
 
 IF(INSTALL_USERCONFIG)
-    python_install(__init__.py ${DATA_INSTALL_DIR}/userconfig/)
-    python_install(userconfig.py ${DATA_INSTALL_DIR}/userconfig/)
-    python_install(user_dialogs.py ${DATA_INSTALL_DIR}/userconfig/)
-    python_install(group_dialogs.py ${DATA_INSTALL_DIR}/userconfig/)
-    python_install(models.py ${DATA_INSTALL_DIR}/userconfig/)
-    python_install(util/__init__.py ${DATA_INSTALL_DIR}/userconfig/util/)
-    python_install(util/unixauthdb.py ${DATA_INSTALL_DIR}/userconfig/util/)
+    install ( FILES
+        __init__.py
+        userconfig.py
+        user_dialogs.py
+        group_dialogs.py
+        models.py
+        DESTINATION ${DATA_INSTALL_DIR}/userconfig/ )
+    install (FILES
+        util/__init__.py
+        util/unixauthdb.py
+        DESTINATION ${DATA_INSTALL_DIR}/userconfig/util/ )
     install( FILES
         ui/deleteuser.ui
         ui/groups.ui
