@@ -52,5 +52,7 @@ IF(INSTALL_USERCONFIG)
         ${CMAKE_CURRENT_BINARY_DIR}/index.cache.bz2
         DESTINATION ${HTML_INSTALL_DIR}/en/userconfig/ )
 ENDIF(INSTALL_USERCONFIG)
+find_package(Msgfmt REQUIRED)
+find_package(Gettext REQUIRED)
 
 macro_display_feature_log()
