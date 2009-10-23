@@ -39,7 +39,17 @@ from models import UserModel, GroupModel, FilterSystemAcctsProxyModel, \
     GroupListModel, SimpleGroupListProxyModel
 from group_dialogs import GroupEditDialog
 
-import locale
+def translate(self, prop):
+    """reimplement method from uic to change it to use gettext"""
+    if prop.get("notr", None) == "true":
+        return self._cstring(prop)
+    else:
+        if prop.text is None:
+            return ""
+        text = prop.text.encode("UTF-8")
+        return i18n(text)
+
+uic.properties.Properties._string = translate
 
 programname = "userconfig"
 version = "0.9.0"
@@ -66,7 +76,7 @@ else:
 class UserConfigApp(programbase):
     def __init__(self, component_data=None, parent=None):
         global standalone, isroot
-        KGlobal.locale().insertCatalog("guidance")
+        KGlobal.locale().insertCatalog("userconfig")
 
         self.aboutdata = MakeAboutData()
         
@@ -547,7 +557,7 @@ def fix_treeview(view):
 
 ##########################################################################
 def MakeAboutData():
-    aboutdata = KAboutData("guidance", "guidance", ki18n(programname), version,
+    aboutdata = KAboutData("userconfig", "userconfig", ki18n(programname), version,
         ki18n("User and Group Configuration Tool"),
         KAboutData.License_GPL,
         ki18n("Copyright (C) 2003-2007 Simon Edwards\n" +
