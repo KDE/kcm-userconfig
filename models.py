@@ -261,7 +261,8 @@ class PrivilegeListProxyModel(QSortFilterProxyModel):
     
     privilege_names = {
             "plugdev" : i18n("Access external storage devices automatically"),
-            "adm" : i18n("Administer the system"),
+            "admin" : i18n("Administer the system"),
+            "adm" : i18n("Access system logs"),
             "ltsp" : i18n("Allow use of FUSE filesystems like LTSP thin " +
                           "client block devices"),
             "dialout" : i18n("Connect to the Internet using a modem"),
