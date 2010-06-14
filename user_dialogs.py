@@ -289,7 +289,7 @@ class UserEditDialog(KPageDialog):
 
         # Add the new user to a default set of groups
         # TODO: move this list somewhere more general?
-        self.selectedgroups = [ u'dialout',u'cdrom',u'floppy',u'audio',u'video',
+        self.selectedgroups = [ u'dialout',u'cdrom',u'floppy',u'sambashare',
                                 u'plugdev',u'lpadmin',u'scanner']
         for groupname in self.selectedgroups:
             groupobj = self.admincontext.lookupGroupname(groupname)
