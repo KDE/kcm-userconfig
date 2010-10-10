@@ -157,6 +157,17 @@
    <header>kcombobox.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>loginnameedit</tabstop>
+  <tabstop>realnameedit</tabstop>
+  <tabstop>uidedit</tabstop>
+  <tabstop>primarygroupedit</tabstop>
+  <tabstop>homediredit</tabstop>
+  <tabstop>homedirbutton</tabstop>
+  <tabstop>shelledit</tabstop>
+  <tabstop>enabledradio</tabstop>
+  <tabstop>disabledradio</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
  <buttongroups>
