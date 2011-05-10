@@ -1,11 +1,9 @@
-# search packages used by KDE
 find_package(KDE4 REQUIRED)
 include(KDE4Defaults)
 include(MacroLibrary)
+include(PythonMacros)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} )
-
-INCLUDE(PythonMacros)
+include_directories(${KDE4_INCLUDES})
 
 macro_optional_find_package(PythonLibrary)
 macro_optional_find_package(SIP)
@@ -23,6 +21,9 @@ ENDIF(NOT PYKDE4_FOUND)
 IF(PYQT4_FOUND AND PYKDE4_FOUND)
     SET(INSTALL_USERCONFIG TRUE)
 ENDIF(PYQT4_FOUND AND PYKDE4_FOUND)
+
+kde4_add_executable(userconfig_helper helper/helper.cpp)
+target_link_libraries(userconfig_helper ${KDE4_KDECORE_LIBS})
 
 IF(INSTALL_USERCONFIG)
     install ( FILES
@@ -51,6 +52,9 @@ IF(INSTALL_USERCONFIG)
         doc/userconfig/index.docbook
         ${CMAKE_CURRENT_BINARY_DIR}/index.cache.bz2
         DESTINATION ${HTML_INSTALL_DIR}/en/userconfig/ )
+      kde4_install_auth_helper_files(userconfig_helper org.kde.kcontrol.userconfig root)
+      kde4_install_auth_actions(org.kde.kcontrol.userconfig helper/userconfig.actions)
+      install(TARGETS userconfig_helper DESTINATION ${LIBEXEC_INSTALL_DIR})
 ENDIF(INSTALL_USERCONFIG)
 find_package(Msgfmt REQUIRED)
 find_package(Gettext REQUIRED)

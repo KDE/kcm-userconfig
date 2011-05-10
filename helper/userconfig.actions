@@ -1,0 +1,26 @@
+[Domain]
+Name=Users and groups configuration module
+
+[org.kde.kcontrol.userconfig.load]
+Name=Load the users and groups settings
+Description=Administrator authorization is required to load users and groups settings
+Policy=auth_admin
+Persistence=session
+
+[org.kde.kcontrol.userconfig.save]
+Name=Save the users and groups settings
+Description=Administrator authorization is required to save users and groups settings
+Policy=auth_admin
+Persistence=session
+
+[org.kde.kcontrol.userconfig.createhomedirectory]
+Name=Create a user home directory
+Description=Administrator authorization is required to create an home directory
+Policy=auth_admin
+Persistence=session
+
+[org.kde.kcontrol.userconfig.removehomedirectory]
+Name=Remove a user home directory
+Description=Administrator authorization is required to remove an home directory
+Policy=auth_admin
+Persistence=session
