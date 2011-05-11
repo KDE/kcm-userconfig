@@ -33,7 +33,7 @@ from PyKDE4.kdecore import *
 from PyKDE4.kdeui import *
 
 # Userconfig imports
-from util import unixauthdb
+from authdb.util import getContext
 from user_dialogs import UserEditDialog, UserDeleteDialog
 from models import UserModel, GroupModel, FilterSystemAcctsProxyModel, \
     GroupListModel, SimpleGroupListProxyModel
@@ -119,7 +119,7 @@ class UserConfigApp(programbase):
 
         KIconLoader.global_().addAppDir("guidance")
         
-        self.admincontext = unixauthdb.getContext(isroot)
+        self.admincontext = getContext(isroot)
 
         self.selecteduserid = None
         self.selectedgroupid = None
