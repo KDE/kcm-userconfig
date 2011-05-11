@@ -1,0 +1,5 @@
+Things to get done before the 0.10:
+* Integrate the Kauth backend to the module (see the KAuth branch)
+* Apply changes only when the user clicks "apply"
+* Split the util package to: authdb.context, authdb.pwd, authdb.ldap
+* Finish the LDAP Backend
