@@ -1,5 +1,9 @@
 Things to get done before the 0.10:
-* Integrate the Kauth backend to the module (see the KAuth branch)
-* Apply changes only when the user clicks "apply"
-* Split the util package to: authdb.context, authdb.pwd, authdb.ldap
-* Finish the LDAP Backend
+* KAuth support:
+  Already a branch in this repository with a working helper, add the helper support to the module + fix bugs!
+* LDAP support:
+  There is experimental implementation already, make it work! Also Add a LDAP mode in the GUI.
+* /etc/gshadow support:
+  This file is used by shadow to store secrets about groups, in fact a group can has a password or a list of admins.
+  When a group is created it should be added into /etc/group and into /etc/gshadow, like kuser does! Features about group passwords and group admins can be planned for a next release.
+* Move it into reviewboard and get it approved
