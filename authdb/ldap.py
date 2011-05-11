@@ -2,10 +2,8 @@
 
 #############################################################################
 ##
-## Copyright 2004-2006 Simon Edwards
-## Copyright 2011 Romain Perier
-## Author: Romain Perier <romain.perier@gmail.com>
-##         Simon Edwards <simon@simonzone.com>
+## Copyright 2004-2006 Simon Edwards <simon@simonzone.com>
+## Copyright 2011 Romain Perier <romain.perier@gmail.com>
 ##
 ## This program is free software; you can redistribute it and/or
 ## modify it under the terms of the GNU General Public License as
