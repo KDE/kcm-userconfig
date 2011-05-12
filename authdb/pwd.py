@@ -66,11 +66,12 @@ def createTempFile(origfile):
 
 class PwdContext(Context):
     #def __init__(self,editmode,passwordfile="etc-passwd",groupfile='etc-group',shadowfile="etc-shadow"):
-    def __init__(self,editmode,passwordfile="/etc/passwd",groupfile='/etc/group',shadowfile="/etc/shadow"):
+    def __init__(self, editmode, passwordfile="/etc/passwd", groupfile="/etc/group", gshadowfile="/etc/gshadow", shadowfile="/etc/shadow"):
         Context.__init__(self)
         self.__editmode = editmode
         self.__passwordfile = passwordfile
         self.__groupfile = groupfile
+        self.__gshadowfile = gshadowfile
         self.__shadowfile = shadowfile
         self._setDefaultValues()
 
@@ -226,6 +227,24 @@ class PwdContext(Context):
             UnlockFD(grouplock)
             os.close(grouplock)
 
+        # Write out the new gshadow file
+        (fd, tmpname) = createTempFile(self.__gshadowfile)
+        origstat = os.stat(self.__gshadowfile)
+        for g in self._groups:
+            os.write(fd,g._getGShadowFileEntry().encode(locale.getpreferredencoding()))
+        os.close(fd)
+        os.chown(tmpname, origstat.st_uid, origstat.st_gid)
+
+        # Update the gshadow file.
+        gshadowlock = os.open(self.__gshadowfile, os.O_WRONLY)
+        if LockFDWrite(gshadowlock)==False:
+            raise IOError,"Couldn't get write lock on "+self.__gshadowfile
+        try:
+            os.rename(tmpname, self.__gshadowfile)
+        finally:
+            UnlockFD(gshadowlock)
+            os.close(gshadowlock)
+
         # Write out the new shadow file
         origstat = os.stat(self.__shadowfile)
         (fd, tmpname) = createTempFile(self.__shadowfile)
@@ -338,4 +357,8 @@ class PwdGroup(UnixGroup):
             self._encpass,
             unicode(self._gid),
             u",".join([u.getUsername() for u in self._members if u.getPrimaryGroup() is not self])]) + u"\n"
+    def _getGShadowFileEntry(self):
+        return u":".join( [ self._groupname, "!", "",
+            u",".join([u.getUsername() for u in self._members if u.getPrimaryGroup() is not self])]) + u"\n"
+
 
