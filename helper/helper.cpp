@@ -134,17 +134,19 @@ ActionReply Helper::load(QVariantMap args)
     return reply;
 }
 
-//FIXME: /etc/gshadow must be supported
 ActionReply Helper::save(QVariantMap args)
 {
     ActionReply reply;
     QString passwdFileContents = args["passwdFileContents"].toString();
     QString groupFileContents = args["groupFileContents"].toString();
+    QString gshadowFileContents = args["gshadowFileContents"].toString();
     QString shadowFileContents = args["shadowFileContents"].toString();
 
     if (!applyChanges("/etc/passwd", passwdFileContents))
         goto fail;
     if (!applyChanges("/etc/group", groupFileContents))
+        goto fail;
+    if (!applyChanges("/etc/gshadow", gshadowFileContents))
         goto fail;
     if (!applyChanges("/etc/shadow", shadowFileContents))
         goto fail;
