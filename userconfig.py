@@ -565,16 +565,17 @@ def fix_treeview(view):
 ##########################################################################
 def MakeAboutData():
     aboutdata = KAboutData("userconfig", "userconfig", ki18n(programname), version,
-        ki18n("User and Group Configuration Tool"),
-        KAboutData.License_GPL,
+        ki18n("A KCModule for users and groups configuration"),
+        KAboutData.License_GPL_V2,
         ki18n("Copyright (C) 2003-2007 Simon Edwards\n" +
-              "Copyright (C) 2008-2009 by Yuriy Kozlov, Jonathan Thomas, " +
-              "Ralph Janke"))
+              "Copyright (C) 2008-2009 by Yuriy Kozlov, Jonathan Thomas, Ralph Janke"
+              "Copyright (C) 2011 Romain Perier"))
     aboutdata.addAuthor(ki18n("Simon Edwards"), ki18n("Developer"), "simon@simonzone.com", "http://www.simonzone.com/software/")
     aboutdata.addAuthor(ki18n("Sebastian Kügler"), ki18n("Developer"), "sebas@kde.org", "http://vizZzion.org")
     aboutdata.addAuthor(ki18n("Yuriy Kozlov"), ki18n("Developer"), "yuriy-kozlov@kubuntu.org", "http://www.yktech.us")
     aboutdata.addAuthor(ki18n("Jonathan Thomas"), ki18n("Developer"), "", "")
     aboutdata.addAuthor(ki18n("Ralph Janke"), ki18n("Developer"), "", "")
+    aboutdata.addAuthor(ki18n("Romain Perier"), ki18n("Main Developer"), "romain.perier@gmail.com", "")
     return aboutdata
 
 if standalone:
