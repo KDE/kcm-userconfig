@@ -13,14 +13,8 @@ Description=Administrator authorization is required to save users and groups set
 Policy=auth_admin
 Persistence=session
 
-[org.kde.kcontrol.userconfig.createhomedirectory]
-Name=Create a user home directory
-Description=Administrator authorization is required to create a home directory
-Policy=auth_admin
-Persistence=session
-
-[org.kde.kcontrol.userconfig.removehomedirectory]
-Name=Remove a user home directory
-Description=Administrator authorization is required to remove a home directory
+[org.kde.kcontrol.userconfig.managehomedirectory]
+Name=Create or remove a user home directory
+Description=Administrator authorization is required to manage a home directory
 Policy=auth_admin
 Persistence=session

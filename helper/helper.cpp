@@ -32,61 +32,44 @@
 
 
 // FIXME: factorize these three functions
-static void copytree(const QString& src, const QString& dst)
+static void copytree(const QString &src, const QString &dst)
 {
     QDir srcDir(src);
     QDir dstDir(dst);
 
-    if(!srcDir.exists())
-        return;
-    if(!dstDir.exists())
-        dstDir.mkdir(dst);
-
-    QStringList files = srcDir.entryList(QDir::Files | QDir::Hidden);
-    for(int i = 0; i < files.count(); i++) {
-        QString srcName = src + "/" + files[i];
-        QString dstName = dst + "/" + files[i];
-        QFile::copy(srcName, dstName);
-    }
-    files.clear();
-    files = srcDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot);
-    for(int i = 0; i < files.count(); i++) {
-        QString srcName = src + "/" + files[i];
-        QString dstName = dst + "/" + files[i];
-        copytree(srcName, dstName);
+    foreach (const QFileInfo &entry, srcDir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
+        QString dstName = dst + "/" + entry.fileName();
+        if (entry.isDir()) {
+	    dstDir.mkdir(dstName);
+	    copytree(entry.absoluteFilePath(), dstName);
+        }
+	else
+	    QFile::copy(entry.absoluteFilePath(), dstName);
     }
 }
 
 static void rmtree(const QString &dir)
 {
     QDir currDir(dir);
-
-    if(!currDir.exists())
-        return;
-    QStringList files = currDir.entryList(QDir::Files | QDir::Hidden);
-    for(int i = 0; i < files.count(); i++)
-        QFile::remove(dir + "/" + files[i]);
-    files.clear();
-    files = currDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot);
-    for(int i = 0; i < files.count(); i++)
-        rmtree(dir + "/" + files[i]);
+    foreach (const QFileInfo &entry, currDir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
+        if (entry.isDir())
+	    rmtree(entry.absoluteFilePath());
+	else
+	    currDir.remove(entry.fileName());
+    }
     currDir.rmdir(dir);
 }
 
-static void lchowntree(const QString &path, uid_t owner, gid_t group)
+static void lchowntree(const QString &dir, uid_t owner, gid_t group)
 {
-    QDir currDir(path);
-
-    if(!currDir.exists())
-        return;
-    lchown(qPrintable(path), owner, group);
-    QStringList files = currDir.entryList(QDir::Files | QDir::Hidden);
-    for(int i = 0; i < files.count(); i++)
-        lchown(qPrintable(path + "/" + files[i]), owner, group);
-    files.clear();
-    files = currDir.entryList(QDir::AllDirs | QDir::NoDotAndDotDot);
-    for(int i = 0; i < files.count(); i++)
-        lchowntree(path + "/" + files[i], owner, group);
+    QDir currDir(dir);
+    foreach (const QFileInfo &entry, currDir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
+        if (entry.isDir())
+	    lchowntree(entry.absoluteFilePath(), owner, group);
+	else
+	    lchown(qPrintable(entry.absoluteFilePath()), owner, group);
+    }
+    lchown(qPrintable(dir), owner, group);
 }
 
 static bool applyChanges(const QString& path, const QString &content)
@@ -158,29 +141,31 @@ ok:
     return reply;
 }
 
-ActionReply Helper::createhomedirectory(QVariantMap args)
+ActionReply Helper::managehomedirectory(QVariantMap args)
 {
-    ActionReply reply;
-    QString skel = args["skel"].toString();
-    QString directory = args["directory"].toString();
-    mode_t mode = args["dir_mode"].toUInt();
-    uid_t owner = args["uid"].toUInt();
-    gid_t group = args["gid"].toUInt();
+    QString subaction = args["subaction"].toString();
 
-    copytree(skel, directory);
-    if (chmod(qPrintable(directory), mode) == -1) {
-        reply = ActionReply::HelperErrorReply;
-	reply.addData("output", strerror(errno));
-	return reply;
+    if (subaction == "createHomeDir") {
+        QString skel = args["skel"].toString();
+	QString directory = args["directory"].toString();
+	mode_t mode = args["dir_mode"].toUInt();
+	uid_t owner = args["uid"].toUInt();
+	gid_t group = args["gid"].toUInt();
+
+	copytree(skel, directory);
+	if (chmod(qPrintable(directory), mode) == -1) {
+            ActionReply reply = ActionReply::HelperErrorReply;
+	    reply.addData("output", strerror(errno));
+	    return reply;
+	}
+	lchowntree(directory, owner, group);
     }
-    lchowntree(directory, owner, group);
-    return reply;
-}
-
-ActionReply Helper::removehomedirectory(QVariantMap args)
-{
-    QString directory = args["directory"].toString();
-    rmtree(directory);
+    else if (subaction == "removeHomeDir") {
+        QString directory = args["directory"].toString();
+        rmtree(directory);
+    }
+    else
+        return ActionReply::HelperError;
     return ActionReply();
 }
 

@@ -28,8 +28,7 @@ class Helper: public QObject
 public Q_SLOTS:
     ActionReply load(QVariantMap args);
     ActionReply save(QVariantMap args);
-    ActionReply createhomedirectory(QVariantMap args);
-    ActionReply removehomedirectory(QVariantMap args);
+    ActionReply managehomedirectory(QVariantMap args);
 };
 
 #endif /* HELPER_H */
