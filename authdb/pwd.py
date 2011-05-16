@@ -23,7 +23,6 @@
 import fcntl
 import os
 import os.path
-
 from context import *
 
 def LockFDRead(fd):
@@ -103,7 +102,6 @@ class PwdContext(Context):
         finally:
             UnlockFD(fhandle.fileno())
             fhandle.close()
-        self.__editmode=False
         if self.__editmode:
             # Load up the info from the shadow file too.
             fhandle = codecs.open(shadowfile,'r',locale.getpreferredencoding())
