@@ -421,8 +421,7 @@ class UserEditDialog(KPageDialog):
 
             # Create the home directory if needed
             if deleteoldhomedir:
-                if os.path.exists(self.userobj.getHomeDirectory()):
-                    shutil.rmtree(self.userobj.getHomeDirectory())
+                self.admincontext.removeHomeDirectory(self.userobj)
             if makehomedir:
                 self.admincontext.createHomeDirectory(self.userobj)
         

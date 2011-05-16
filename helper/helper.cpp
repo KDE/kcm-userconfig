@@ -37,12 +37,11 @@ static void copytree(const QString &src, const QString &dst)
     QDir srcDir(src);
     QDir dstDir(dst);
 
+    dstDir.mkdir(dst);
     foreach (const QFileInfo &entry, srcDir.entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)) {
         QString dstName = dst + "/" + entry.fileName();
-        if (entry.isDir()) {
-	    dstDir.mkdir(dstName);
+        if (entry.isDir())
 	    copytree(entry.absoluteFilePath(), dstName);
-        }
 	else
 	    QFile::copy(entry.absoluteFilePath(), dstName);
     }
@@ -85,7 +84,6 @@ static bool applyChanges(const QString& path, const QString &content)
 
     if (!tmpFile.open())
         return false;
-    tmpFile.setAutoRemove(false);
     if (!tmpFile.setPermissions(QFile::ReadOwner|QFile::WriteOwner|QFile::ReadGroup|QFile::ReadOther))
         return false;
     if (tmpFile.write(content.toLocal8Bit()) == -1)
@@ -107,7 +105,7 @@ ActionReply Helper::load(QVariantMap args)
     QFile file(fileName);
 
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        reply = ActionReply::HelperErrorReply;
+        reply = ActionReply::HelperError;
 	reply.addData("output", file.errorString());
 	return reply;
     }
@@ -135,7 +133,7 @@ ActionReply Helper::save(QVariantMap args)
         goto fail;
     goto ok;
 fail:
-    reply = ActionReply::HelperErrorReply;
+    reply = ActionReply::HelperError;
     reply.addData("output", strerror(errno));
 ok:
     return reply;
@@ -154,7 +152,7 @@ ActionReply Helper::managehomedirectory(QVariantMap args)
 
 	copytree(skel, directory);
 	if (chmod(qPrintable(directory), mode) == -1) {
-            ActionReply reply = ActionReply::HelperErrorReply;
+            ActionReply reply = ActionReply::HelperError;
 	    reply.addData("output", strerror(errno));
 	    return reply;
 	}

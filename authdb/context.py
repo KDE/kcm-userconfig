@@ -32,6 +32,10 @@ import codecs
 import locale
 import tempfile
 
+from PyQt4.QtCore import QString
+from PyKDE4.kdecore import KAuth, i18n
+from PyKDE4.kdeui import KMessageBox
+
 ###########################################################################
 # Base classes.
 #
@@ -273,29 +277,53 @@ class Context(object):
         """
         raise NotImplementedError, "Context.save()"
 
-    def createHomeDirectory(self,userobj):
+    def createHomeDirectory(self, userobj):
         if os.path.exists(userobj.getHomeDirectory()):
             raise IOError, u"Home directory %s already exists." % userobj.getHomeDirectory()
+        action = KAuth.Action("org.kde.kcontrol.userconfig.managehomedirectory")
+        action.setHelperID("org.kde.kcontrol.userconfig")
 
-        # Copy the skeleton directory over
-        shutil.copytree(self._getSkeletonDirectory(),userobj.getHomeDirectory(),True)
+        action.addArgument("subaction", "createHomeDir")
+        action.addArgument("skel", self._getSkeletonDirectory())
+        action.addArgument("directory", userobj.getHomeDirectory())
+        action.addArgument("dir_mode", self.dir_mode)
+        action.addArgument("uid", userobj.getUID())
+        action.addArgument("gid", userobj.getPrimaryGroup().getGID())
 
-        # Fix the file ownership stuff
-        uid = userobj.getUID()
-        gid = userobj.getPrimaryGroup().getGID()
-        os.chmod(userobj.getHomeDirectory(),self.dir_mode)
-        #os.system("chmod "+self.dir_mode+" "+userobj.getHomeDirectory())
-        #print "Setting permissions:", userobj.getHomeDirectory(),self.dir_mode
-        os.lchown(userobj.getHomeDirectory(),uid,gid)
-        for root,dirs,files in os.walk(userobj.getHomeDirectory()):
-            for d in dirs:
-                os.lchown(os.path.join(root,d),uid,gid)
-            for f in files:
-                os.lchown(os.path.join(root,f),uid,gid)
+        reply = action.execute()
 
-    def removeHomeDirectory(self,userobj):
+        if reply.failed():
+            if reply.type() == KAuth.ActionReply.KAuthError:
+                KMessageBox.error(None, i18n("Unable to authenticate/execute the action: %1 (code %2)", reply.errorDescription(), reply.errorCode()))
+            else:
+                output = str(reply.data()[QString("output")].toString())
+                if len(output) != 0:
+                    KMessageBox.detailedError(None, i18n("Unable to create home directory %1 (code %2)", userobj.getHomeDirectory(), reply.errorCode()), output)
+                else:
+                    KMessageBox.error(None, i18n("Unable to create home directory %1 (code %2)", userobj.getHomeDirectory(), reply.errorCode()))
+            return False
+        return True
+
+    def removeHomeDirectory(self, userobj):
         if os.path.exists(userobj.getHomeDirectory()):
-            shutil.rmtree(userobj.getHomeDirectory())
+            action = KAuth.Action("org.kde.kcontrol.userconfig.managehomedirectory")
+            action.setHelperID("org.kde.kcontrol.userconfig")
+            action.addArgument("subaction", "removeHomeDir")
+            action.addArgument("directory", userobj.getHomeDirectory())
+
+            reply = action.execute()
+
+            if reply.failed():
+                if reply.type() == KAuth.ActionReply.KAuthError:
+                    KMessageBox.error(None, i18n("Unable to authenticate/execute the action: %1 (code %2)", reply.errorDescription(), reply.errorCode()))
+                else:
+                    output = str(reply.data()[QString("output")].toString())
+                    if len(output) != 0:
+                        KMessageBox.detailedError(None, i18n("Unable to remove home directory %1 (code %2)", userobj.getHomeDirectory(), reply.errorCode()), output)
+                    else:
+                        KMessageBox.error(None, i18n("Unable to remove home directory %1 (code %2)", userobj.getHomeDirectory(), reply.errorCode()))
+                return False
+        return True
 
     def _createUser(self):
         raise NotImplementedError, "Context._createUser()"

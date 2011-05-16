@@ -7,7 +7,6 @@ include_directories(${KDE4_INCLUDES})
 
 macro_optional_find_package(PythonLibrary)
 macro_optional_find_package(SIP)
-
 macro_optional_find_package(PyQt4)
 IF(NOT PYQT4_FOUND)
     macro_log_feature(PYQT4_FOUND "PyQt4" "PyQt4 was not found.  It is needed by userconfig to run. (Use -DINSTALL_USERCONFIG=TRUE to install anyway)" "http://www.riverbankcomputing.co.uk/pyqt/" FALSE)
@@ -34,9 +33,12 @@ IF(INSTALL_USERCONFIG)
         models.py
         DESTINATION ${DATA_INSTALL_DIR}/userconfig/ )
     install (FILES
-        util/__init__.py
-        util/unixauthdb.py
-        DESTINATION ${DATA_INSTALL_DIR}/userconfig/util/ )
+        authdb/__init__.py
+        authdb/context.py
+        authdb/util.py
+        authdb/pwd.py
+        authdb/ldap.py
+        DESTINATION ${DATA_INSTALL_DIR}/userconfig/authdb/ )
     install( FILES
         ui/deleteuser.ui
         ui/groups.ui
