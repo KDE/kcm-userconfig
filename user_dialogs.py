@@ -332,7 +332,9 @@ class UserEditDialog(KPageDialog):
         self.updatingGUI = False
         self.homedirectoryislinked = True
         self.primarygroupislinked = True
-        
+
+        self.details_tab.loginnameedit.setFocus(Qt.OtherFocusReason)
+
         if self.exec_() == QDialog.Accepted:
             result = self.applyChanges()
             self.pwsec_tab.passwordedit.clear()
